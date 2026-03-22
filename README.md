@@ -1,4 +1,8 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Together — Calendrier familial partagé
+
+Application de calendrier familial permettant de partager et visualiser les événements de tous les membres d'un groupe.
+
+Built with Next.js, Material UI, Supabase & FullCalendar.
 
 ## Getting Started
 
