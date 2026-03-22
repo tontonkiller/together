@@ -3,6 +3,10 @@ import { notFound } from 'next/navigation';
 import { routing } from '@/lib/i18n/routing';
 import ThemeRegistry from '@/components/layout/ThemeRegistry';
 
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
 export default async function LocaleLayout({
   children,
   params,
@@ -16,7 +20,13 @@ export default async function LocaleLayout({
     notFound();
   }
 
-  const messages = (await import(`@/lib/i18n/messages/${locale}.json`)).default;
+  let messages;
+  try {
+    messages = (await import(`@/lib/i18n/messages/${locale}.json`)).default;
+  } catch (error) {
+    console.error('[layout] Failed to load i18n messages for locale:', locale, error);
+    notFound();
+  }
 
   return (
     <html lang={locale}>

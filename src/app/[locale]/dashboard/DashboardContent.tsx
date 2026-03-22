@@ -14,10 +14,13 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import { useRouter } from '@/lib/i18n/navigation';
 
-interface DashboardContentProps {
+export interface DashboardContentProps {
   profile: { display_name: string } | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  groups: any[];
+  groups: Array<{
+    group_id: string;
+    role: string;
+    groups: { id: string; name: string; description: string | null }[] | null;
+  }>;
 }
 
 export default function DashboardContent({ profile, groups }: DashboardContentProps) {
@@ -64,11 +67,11 @@ export default function DashboardContent({ profile, groups }: DashboardContentPr
                     <GroupsIcon color="primary" />
                     <Box>
                       <Typography variant="subtitle1" fontWeight={600}>
-                        {gm.groups?.name}
+                        {gm.groups?.[0]?.name}
                       </Typography>
-                      {gm.groups?.description && (
+                      {gm.groups?.[0]?.description && (
                         <Typography variant="body2" color="text.secondary">
-                          {gm.groups.description}
+                          {gm.groups[0].description}
                         </Typography>
                       )}
                     </Box>

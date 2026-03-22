@@ -1,32 +1,43 @@
-import { redirect } from 'next/navigation';
+import { redirect } from '@/lib/i18n/navigation';
 import { createClient } from '@/lib/supabase/server';
-import DashboardContent from './DashboardContent';
+import DashboardContent, { type DashboardContentProps } from './DashboardContent';
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/login');
+    return redirect({ href: '/login', locale });
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single();
+  if (profileError) {
+    console.error('[dashboard] Profile fetch failed:', profileError.message);
+  }
 
-  const { data: groups } = await supabase
+  const { data: groups, error: groupsError } = await supabase
     .from('group_members')
     .select('group_id, role, groups(id, name, description)')
     .eq('user_id', user.id);
+  if (groupsError) {
+    console.error('[dashboard] Groups fetch failed:', groupsError.message);
+  }
 
   return (
     <DashboardContent
       profile={profile}
-      groups={groups ?? []}
+      groups={(groups ?? []) as DashboardContentProps['groups']}
     />
   );
 }

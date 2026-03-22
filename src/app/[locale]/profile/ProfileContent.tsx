@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
-import { useLocale } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { locales } from '@/lib/i18n/config';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
@@ -46,6 +46,16 @@ export default function ProfileContent({ profile, email }: ProfileContentProps) 
   const [error, setError] = useState('');
 
   const handleSave = async () => {
+    if (!profile) {
+      setError(tCommon('error'));
+      return;
+    }
+
+    if (!displayName.trim()) {
+      setError(t('displayNameRequired'));
+      return;
+    }
+
     setLoading(true);
     setError('');
     setSaved(false);
@@ -54,10 +64,10 @@ export default function ProfileContent({ profile, email }: ProfileContentProps) 
     const { error: updateError } = await supabase
       .from('profiles')
       .update({
-        display_name: displayName,
+        display_name: displayName.trim(),
         preferred_locale: preferredLocale,
       })
-      .eq('id', profile?.id);
+      .eq('id', profile.id);
 
     setLoading(false);
 
@@ -65,8 +75,9 @@ export default function ProfileContent({ profile, email }: ProfileContentProps) 
       setError(tCommon('error'));
     } else {
       setSaved(true);
-      if (preferredLocale !== locale) {
-        router.replace('/profile', { locale: preferredLocale as 'fr' | 'en' });
+      const validLocale = locales.find((l) => l === preferredLocale);
+      if (validLocale && validLocale !== locale) {
+        router.replace('/profile', { locale: validLocale });
       }
     }
   };
@@ -74,7 +85,7 @@ export default function ProfileContent({ profile, email }: ProfileContentProps) 
   const handleLogout = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    router.push('/');
+    router.push('/login');
   };
 
   return (
@@ -89,7 +100,7 @@ export default function ProfileContent({ profile, email }: ProfileContentProps) 
             sx={{ width: 80, height: 80, fontSize: '2rem', bgcolor: 'primary.main' }}
             alt={t('avatarAlt')}
           >
-            {displayName.charAt(0).toUpperCase()}
+            {displayName.charAt(0).toUpperCase() || '?'}
           </Avatar>
         </Box>
 
@@ -114,7 +125,7 @@ export default function ProfileContent({ profile, email }: ProfileContentProps) 
         />
 
         <TextField
-          label="Email"
+          label={t('email')}
           fullWidth
           value={email}
           disabled
@@ -128,7 +139,7 @@ export default function ProfileContent({ profile, email }: ProfileContentProps) 
             label={t('language')}
             onChange={(e) => setPreferredLocale(e.target.value)}
           >
-            <MenuItem value="fr">Fran\u00e7ais</MenuItem>
+            <MenuItem value="fr">Français</MenuItem>
             <MenuItem value="en">English</MenuItem>
           </Select>
         </FormControl>
@@ -137,7 +148,7 @@ export default function ProfileContent({ profile, email }: ProfileContentProps) 
           variant="contained"
           fullWidth
           onClick={handleSave}
-          disabled={loading}
+          disabled={loading || !profile}
           sx={{ mb: 2 }}
         >
           {loading ? <CircularProgress size={24} color="inherit" /> : tCommon('save')}

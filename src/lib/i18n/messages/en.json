@@ -33,6 +33,7 @@
     "linkSentDesc": "Check your inbox and click the link to sign in.",
     "checkSpam": "Don't forget to check your spam folder.",
     "invalidEmail": "Invalid email address",
+    "authError": "Authentication failed. Please try again.",
     "logout": "Sign out"
   },
   "profile": {
@@ -41,21 +42,29 @@
     "displayNamePlaceholder": "What does your family call you?",
     "language": "Language",
     "saved": "Profile saved",
-    "avatarAlt": "Profile picture"
+    "avatarAlt": "Profile picture",
+    "email": "Email",
+    "displayNameRequired": "Display name is required"
   },
   "dashboard": {
     "greeting": "Hello, {name}",
     "myGroups": "My groups",
     "createGroup": "Create a group",
     "noGroups": "You don't have any groups yet",
-    "noGroupsHint": "Create your first group to get started!",
-    "upcomingEvents": "Upcoming events",
-    "noEvents": "No upcoming events",
-    "members": "{count, plural, =1 {1 member} other {# members}}"
+    "noGroupsHint": "Create your first group to get started!"
+  },
+  "groups": {
+    "createGroup": "Create a group",
+    "groupName": "Group name",
+    "groupDescription": "Description (optional)",
+    "cancel": "Cancel",
+    "create": "Create",
+    "createError": "Failed to create group",
+    "comingSoon": "Group features coming soon..."
   },
   "nav": {
-    "calendar": "Calendar",
     "groups": "Groups",
-    "profile": "Profile"
+    "profile": "Profile",
+    "toggleLanguage": "Toggle language"
   }
 }

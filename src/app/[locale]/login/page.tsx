@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
@@ -15,6 +16,9 @@ import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
   const t = useTranslations('auth');
+  const locale = useLocale();
+  const searchParams = useSearchParams();
+  const callbackError = searchParams.get('error') === 'auth';
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -24,7 +28,7 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
 
-    if (!email || !email.includes('@')) {
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError(t('invalidEmail'));
       return;
     }
@@ -34,7 +38,7 @@ export default function LoginPage() {
     const { error: authError } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${window.location.origin}/${locale}/auth/callback`,
       },
     });
 
@@ -80,6 +84,11 @@ export default function LoginPage() {
           </Alert>
         ) : (
           <form onSubmit={handleSubmit}>
+            {callbackError && !error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {t('authError')}
+              </Alert>
+            )}
             {error && (
               <Alert severity="error" sx={{ mb: 2 }}>
                 {error}
