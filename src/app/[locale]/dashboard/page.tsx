@@ -1,15 +1,20 @@
-import { redirect } from 'next/navigation';
+import { redirect } from '@/lib/i18n/navigation';
 import { createClient } from '@/lib/supabase/server';
 import DashboardContent from './DashboardContent';
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect('/login');
+    return redirect({ href: '/login', locale });
   }
 
   const { data: profile } = await supabase

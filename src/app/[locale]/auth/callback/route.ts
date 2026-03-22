@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { defaultLocale } from '@/lib/i18n/config';
 
-export async function GET(request: Request) {
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ locale: string }> },
+) {
+  const { locale } = await params;
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
   const next = searchParams.get('next') ?? '/dashboard';
@@ -26,14 +31,14 @@ export async function GET(request: Request) {
           await supabase.from('profiles').insert({
             id: user.id,
             display_name: user.email?.split('@')[0] ?? 'User',
-            preferred_locale: 'fr',
+            preferred_locale: locale ?? defaultLocale,
           });
         }
       }
 
-      return NextResponse.redirect(`${origin}/fr${next}`);
+      return NextResponse.redirect(`${origin}/${locale}${next}`);
     }
   }
 
-  return NextResponse.redirect(`${origin}/fr/login?error=auth`);
+  return NextResponse.redirect(`${origin}/${locale}/login?error=auth`);
 }

@@ -53,6 +53,15 @@
     "noEvents": "Aucun événement à venir",
     "members": "{count, plural, =1 {1 membre} other {# membres}}"
   },
+  "groups": {
+    "createGroup": "Créer un groupe",
+    "groupName": "Nom du groupe",
+    "groupDescription": "Description (optionnel)",
+    "cancel": "Annuler",
+    "create": "Créer",
+    "createError": "Impossible de créer le groupe",
+    "comingSoon": "Fonctionnalités du groupe à venir..."
+  },
   "nav": {
     "calendar": "Calendrier",
     "groups": "Groupes",
