@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
@@ -16,6 +17,8 @@ import { createClient } from '@/lib/supabase/client';
 export default function LoginPage() {
   const t = useTranslations('auth');
   const locale = useLocale();
+  const searchParams = useSearchParams();
+  const callbackError = searchParams.get('error') === 'auth';
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -81,6 +84,11 @@ export default function LoginPage() {
           </Alert>
         ) : (
           <form onSubmit={handleSubmit}>
+            {callbackError && !error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {t('authError')}
+              </Alert>
+            )}
             {error && (
               <Alert severity="error" sx={{ mb: 2 }}>
                 {error}

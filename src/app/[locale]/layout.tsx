@@ -20,7 +20,13 @@ export default async function LocaleLayout({
     notFound();
   }
 
-  const messages = (await import(`@/lib/i18n/messages/${locale}.json`)).default;
+  let messages;
+  try {
+    messages = (await import(`@/lib/i18n/messages/${locale}.json`)).default;
+  } catch (error) {
+    console.error('[layout] Failed to load i18n messages for locale:', locale, error);
+    notFound();
+  }
 
   return (
     <html lang={locale}>

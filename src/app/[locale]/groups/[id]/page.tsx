@@ -19,11 +19,14 @@ export default async function GroupDetailPage({
     return redirect({ href: '/login', locale });
   }
 
-  const { data: group } = await supabase
+  const { data: group, error: groupError } = await supabase
     .from('groups')
     .select('id, name, description, created_by, created_at, updated_at')
     .eq('id', id)
     .single();
+  if (groupError) {
+    console.error('[groups/detail] Group fetch failed:', id, groupError.message);
+  }
 
   const t = await getTranslations('groups');
 

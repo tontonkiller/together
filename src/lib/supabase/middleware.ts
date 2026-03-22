@@ -26,7 +26,10 @@ export async function updateSession(request: NextRequest) {
   );
 
   // Refresh the session
-  await supabase.auth.getUser();
+  const { error } = await supabase.auth.getUser();
+  if (error) {
+    console.error('[middleware] Session refresh failed:', error.message);
+  }
 
   return supabaseResponse;
 }

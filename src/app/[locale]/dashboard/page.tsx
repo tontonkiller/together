@@ -17,16 +17,22 @@ export default async function DashboardPage({
     return redirect({ href: '/login', locale });
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single();
+  if (profileError) {
+    console.error('[dashboard] Profile fetch failed:', profileError.message);
+  }
 
-  const { data: groups } = await supabase
+  const { data: groups, error: groupsError } = await supabase
     .from('group_members')
     .select('group_id, role, groups(id, name, description)')
     .eq('user_id', user.id);
+  if (groupsError) {
+    console.error('[dashboard] Groups fetch failed:', groupsError.message);
+  }
 
   return (
     <DashboardContent

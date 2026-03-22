@@ -33,6 +33,7 @@
     "linkSentDesc": "Vérifiez votre boîte mail et cliquez sur le lien pour vous connecter.",
     "checkSpam": "Pensez à vérifier vos spams.",
     "invalidEmail": "Adresse email invalide",
+    "authError": "La connexion a échoué. Veuillez réessayer.",
     "logout": "Déconnexion"
   },
   "profile": {

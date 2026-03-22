@@ -1,15 +1,21 @@
 'use client';
 
+import { useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 
 export default function Error({
+  error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    console.error('[error boundary]', error);
+  }, [error]);
+
   return (
     <Box
       sx={{

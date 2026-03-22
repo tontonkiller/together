@@ -7,9 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ locale: string }> },
 ) {
   const { locale: rawLocale } = await params;
-  const locale = (locales as readonly string[]).includes(rawLocale)
-    ? rawLocale
-    : defaultLocale;
+  const locale = locales.find((l) => l === rawLocale) ?? defaultLocale;
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
   const next = searchParams.get('next') ?? '/dashboard';
@@ -21,40 +19,47 @@ export async function GET(
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
 
-      if (user) {
-        const { data: profile } = await supabase
+    if (error) {
+      console.error('[auth/callback] Code exchange failed:', error.message);
+      return NextResponse.redirect(`${origin}/${locale}/login?error=auth`);
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile) {
+        const { error: insertError } = await supabase
           .from('profiles')
-          .select('id')
-          .eq('id', user.id)
-          .single();
+          .insert({
+            id: user.id,
+            display_name: user.email?.split('@')[0] ?? 'User',
+            preferred_locale: locale,
+          });
 
-        if (!profile) {
-          const { error: insertError } = await supabase
-            .from('profiles')
-            .insert({
-              id: user.id,
-              display_name: user.email?.split('@')[0] ?? 'User',
-              preferred_locale: locale,
-            });
-
-          if (insertError) {
-            // Retry once — race condition with concurrent logins
-            await supabase.from('profiles').upsert({
-              id: user.id,
-              display_name: user.email?.split('@')[0] ?? 'User',
-              preferred_locale: locale,
-            });
+        if (insertError) {
+          console.error('[auth/callback] Profile insert failed, retrying with upsert:', insertError.message);
+          const { error: upsertError } = await supabase.from('profiles').upsert({
+            id: user.id,
+            display_name: user.email?.split('@')[0] ?? 'User',
+            preferred_locale: locale,
+          });
+          if (upsertError) {
+            console.error('[auth/callback] Profile upsert retry failed:', upsertError.message);
           }
         }
       }
-
-      return NextResponse.redirect(`${origin}/${locale}${safePath}`);
     }
+
+    return NextResponse.redirect(`${origin}/${locale}${safePath}`);
   }
 
   return NextResponse.redirect(`${origin}/${locale}/login?error=auth`);

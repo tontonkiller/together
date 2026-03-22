@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
+import { locales, type Locale } from '@/lib/i18n/config';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
@@ -74,8 +75,9 @@ export default function ProfileContent({ profile, email }: ProfileContentProps) 
       setError(tCommon('error'));
     } else {
       setSaved(true);
-      if (preferredLocale !== locale) {
-        router.replace('/profile', { locale: preferredLocale as 'fr' | 'en' });
+      const validLocale = locales.find((l) => l === preferredLocale);
+      if (validLocale && validLocale !== locale) {
+        router.replace('/profile', { locale: validLocale });
       }
     }
   };

@@ -33,6 +33,7 @@
     "linkSentDesc": "Check your inbox and click the link to sign in.",
     "checkSpam": "Don't forget to check your spam folder.",
     "invalidEmail": "Invalid email address",
+    "authError": "Authentication failed. Please try again.",
     "logout": "Sign out"
   },
   "profile": {

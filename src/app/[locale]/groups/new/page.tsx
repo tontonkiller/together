@@ -65,7 +65,10 @@ export default function NewGroupPage() {
 
     if (memberError) {
       // Clean up orphaned group
-      await supabase.from('groups').delete().eq('id', group.id);
+      const { error: deleteError } = await supabase.from('groups').delete().eq('id', group.id);
+      if (deleteError) {
+        console.error('[groups/new] Failed to clean up orphaned group:', group.id, deleteError.message);
+      }
       setError(memberError.message);
       setLoading(false);
       return;

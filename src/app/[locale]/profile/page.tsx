@@ -17,11 +17,14 @@ export default async function ProfilePage({
     return redirect({ href: '/login', locale });
   }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single();
+  if (profileError) {
+    console.error('[profile] Profile fetch failed:', profileError.message);
+  }
 
   return <ProfileContent profile={profile} email={user.email ?? ''} />;
 }
