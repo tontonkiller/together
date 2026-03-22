@@ -21,7 +21,7 @@ export default async function GroupDetailPage({
 
   const { data: group } = await supabase
     .from('groups')
-    .select('*')
+    .select('id, name, description, created_by, created_at, updated_at')
     .eq('id', id)
     .single();
 

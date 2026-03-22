@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Together - Calendrier Famille',
-  description: 'Synchronisez vos calendriers en famille, simplement.',
+  title: 'Together',
+  description: 'Sync your family calendars, simply.',
 };
 
 export default function RootLayout({

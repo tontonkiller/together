@@ -6,9 +6,10 @@ import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Box from '@mui/material/Box';
 import { useRouter, usePathname } from '@/lib/i18n/navigation';
-import { useLocale } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 export default function TopBar() {
+  const t = useTranslations('nav');
   const router = useRouter();
   const pathname = usePathname();
   const locale = useLocale();
@@ -33,7 +34,7 @@ export default function TopBar() {
           <IconButton
             color="inherit"
             onClick={toggleLocale}
-            aria-label="Toggle language"
+            aria-label={t('toggleLanguage')}
             sx={{
               fontSize: '0.875rem',
               fontWeight: 600,

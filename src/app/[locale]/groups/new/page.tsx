@@ -33,13 +33,18 @@ export default function NewGroupPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
+      setLoading(false);
       router.push('/login');
       return;
     }
 
     const { data: group, error: createError } = await supabase
       .from('groups')
-      .insert({ name: name.trim(), description: description.trim() || null })
+      .insert({
+        name: name.trim(),
+        description: description.trim() || null,
+        created_by: user.id,
+      })
       .select('id')
       .single();
 
@@ -50,12 +55,23 @@ export default function NewGroupPage() {
     }
 
     // Add creator as admin member
-    await supabase.from('group_members').insert({
-      group_id: group.id,
-      user_id: user.id,
-      role: 'admin',
-    });
+    const { error: memberError } = await supabase
+      .from('group_members')
+      .insert({
+        group_id: group.id,
+        user_id: user.id,
+        role: 'admin',
+      });
 
+    if (memberError) {
+      // Clean up orphaned group
+      await supabase.from('groups').delete().eq('id', group.id);
+      setError(memberError.message);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(false);
     router.push(`/groups/${group.id}`);
   };
 

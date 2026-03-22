@@ -15,7 +15,7 @@ export async function proxy(request: NextRequest) {
   // Merge cookies from Supabase into the intl response
   if (intlResponse) {
     supabaseResponse.cookies.getAll().forEach((cookie) => {
-      intlResponse.cookies.set(cookie.name, cookie.value);
+      intlResponse.cookies.set(cookie.name, cookie.value, cookie);
     });
     return intlResponse;
   }
@@ -24,5 +24,8 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/(fr|en)/:path*'],
+  matcher: [
+    '/',
+    '/(fr|en)/:path((?!_next/static|_next/image|icons|favicon\\.ico).*)',
+  ],
 };

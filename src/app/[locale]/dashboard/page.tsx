@@ -1,6 +1,6 @@
 import { redirect } from '@/lib/i18n/navigation';
 import { createClient } from '@/lib/supabase/server';
-import DashboardContent from './DashboardContent';
+import DashboardContent, { type DashboardContentProps } from './DashboardContent';
 
 export default async function DashboardPage({
   params,
@@ -31,7 +31,7 @@ export default async function DashboardPage({
   return (
     <DashboardContent
       profile={profile}
-      groups={groups ?? []}
+      groups={(groups ?? []) as DashboardContentProps['groups']}
     />
   );
 }

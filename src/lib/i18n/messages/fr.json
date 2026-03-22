@@ -41,17 +41,16 @@
     "displayNamePlaceholder": "Comment vous appelle votre famille ?",
     "language": "Langue",
     "saved": "Profil enregistré",
-    "avatarAlt": "Photo de profil"
+    "avatarAlt": "Photo de profil",
+    "email": "Email",
+    "displayNameRequired": "Le nom d'affichage est requis"
   },
   "dashboard": {
     "greeting": "Bonjour, {name}",
     "myGroups": "Mes groupes",
     "createGroup": "Créer un groupe",
     "noGroups": "Vous n'avez pas encore de groupe",
-    "noGroupsHint": "Créez votre premier groupe pour commencer !",
-    "upcomingEvents": "Prochains événements",
-    "noEvents": "Aucun événement à venir",
-    "members": "{count, plural, =1 {1 membre} other {# membres}}"
+    "noGroupsHint": "Créez votre premier groupe pour commencer !"
   },
   "groups": {
     "createGroup": "Créer un groupe",
@@ -63,8 +62,8 @@
     "comingSoon": "Fonctionnalités du groupe à venir..."
   },
   "nav": {
-    "calendar": "Calendrier",
     "groups": "Groupes",
-    "profile": "Profil"
+    "profile": "Profil",
+    "toggleLanguage": "Changer de langue"
   }
 }

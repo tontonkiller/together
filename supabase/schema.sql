@@ -81,6 +81,9 @@ create table if not exists group_members (
   unique(group_id, user_id)
 );
 
+-- Index for RLS subqueries (user_id is frequently filtered alone)
+create index if not exists idx_group_members_user_id on group_members(user_id);
+
 alter table group_members enable row level security;
 
 create policy "Group members can view other members in their groups"
@@ -89,9 +92,23 @@ create policy "Group members can view other members in their groups"
     group_id in (select group_id from group_members where user_id = auth.uid())
   );
 
-create policy "Users can join groups (insert themselves)"
+-- Users can only join groups they were invited to or that they just created
+create policy "Users can join groups via invitation or as creator"
   on group_members for insert to authenticated
-  with check (user_id = auth.uid());
+  with check (
+    user_id = auth.uid()
+    and (
+      -- Creator adding themselves as admin to their own group
+      group_id in (select id from groups where created_by = auth.uid())
+      -- Or user has a pending invitation
+      or group_id in (
+        select group_id from invitations
+        where invited_email = (select email from auth.users where id = auth.uid())
+          and status = 'pending'
+          and expires_at > now()
+      )
+    )
+  );
 
 create policy "Group admins can update members"
   on group_members for update to authenticated
@@ -100,6 +117,11 @@ create policy "Group admins can update members"
       select group_id from group_members
       where user_id = auth.uid() and role = 'admin'
     )
+  )
+  with check (
+    -- Prevent changing user_id (only role and color can be updated)
+    user_id = user_id
+    and group_id = group_id
   );
 
 create policy "Group admins can remove members"
@@ -133,6 +155,14 @@ create policy "Users can create custom event types"
   on event_types for insert to authenticated
   with check (created_by = auth.uid() and is_system = false);
 
+create policy "Users can update own custom event types"
+  on event_types for update to authenticated
+  using (created_by = auth.uid() and is_system = false);
+
+create policy "Users can delete own custom event types"
+  on event_types for delete to authenticated
+  using (created_by = auth.uid() and is_system = false);
+
 -- Seed system event types
 insert into event_types (name, icon, is_system) values
   ('Vacances', 'BeachAccess', true),
@@ -157,7 +187,12 @@ create table if not exists events (
   is_all_day boolean default true,
   is_private boolean default false,
   created_at timestamptz default now(),
-  updated_at timestamptz default now()
+  updated_at timestamptz default now(),
+  constraint events_date_order check (end_date >= start_date),
+  constraint events_time_required check (
+    is_all_day = true
+    or (start_time is not null and end_time is not null)
+  )
 );
 
 alter table events enable row level security;
@@ -169,7 +204,8 @@ create policy "Users can manage own events"
 create policy "Group members can view non-private events of co-members"
   on events for select to authenticated
   using (
-    user_id in (
+    is_private = false
+    and user_id in (
       select gm2.user_id from group_members gm1
       join group_members gm2 on gm1.group_id = gm2.group_id
       where gm1.user_id = auth.uid()
@@ -182,7 +218,7 @@ create policy "Group members can view non-private events of co-members"
 create table if not exists invitations (
   id uuid primary key default gen_random_uuid(),
   group_id uuid references groups(id) on delete cascade not null,
-  invited_email text,
+  invited_email text not null,
   invited_by uuid references profiles(id) not null,
   status text default 'pending' check (status in ('pending', 'accepted', 'expired')),
   expires_at timestamptz default now() + interval '7 days',
@@ -205,6 +241,25 @@ create policy "Group admins can create invitations"
       where user_id = auth.uid() and role = 'admin'
     )
     and invited_by = auth.uid()
+  );
+
+create policy "Invited users can accept their invitations"
+  on invitations for update to authenticated
+  using (
+    invited_email = (select email from auth.users where id = auth.uid())
+    and status = 'pending'
+  )
+  with check (
+    status = 'accepted'
+  );
+
+create policy "Group admins can delete invitations"
+  on invitations for delete to authenticated
+  using (
+    group_id in (
+      select group_id from group_members
+      where user_id = auth.uid() and role = 'admin'
+    )
   );
 
 -- ============================================

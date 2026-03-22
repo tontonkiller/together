@@ -3,6 +3,10 @@ import { notFound } from 'next/navigation';
 import { routing } from '@/lib/i18n/routing';
 import ThemeRegistry from '@/components/layout/ThemeRegistry';
 
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
 export default async function LocaleLayout({
   children,
   params,
