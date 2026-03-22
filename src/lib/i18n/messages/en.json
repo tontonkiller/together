@@ -1,0 +1,61 @@
+{
+  "common": {
+    "appName": "Together",
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "back": "Back",
+    "confirm": "Confirm",
+    "error": "Something went wrong",
+    "success": "Success"
+  },
+  "landing": {
+    "title": "Together",
+    "subtitle": "Sync your family calendars, simply.",
+    "cta": "Sign in with email",
+    "step1Title": "Create your group",
+    "step1Desc": "Bring your family together in one click",
+    "step2Title": "Add your holidays",
+    "step2Desc": "Share your availability and plans",
+    "step3Title": "See who's free",
+    "step3Desc": "A shared calendar for the whole family"
+  },
+  "auth": {
+    "loginTitle": "Sign in",
+    "loginSubtitle": "Enter your email to receive a sign-in link",
+    "emailLabel": "Email address",
+    "emailPlaceholder": "your@email.com",
+    "sendLink": "Send magic link",
+    "linkSent": "Link sent!",
+    "linkSentDesc": "Check your inbox and click the link to sign in.",
+    "checkSpam": "Don't forget to check your spam folder.",
+    "invalidEmail": "Invalid email address",
+    "logout": "Sign out"
+  },
+  "profile": {
+    "title": "My profile",
+    "displayName": "Display name",
+    "displayNamePlaceholder": "What does your family call you?",
+    "language": "Language",
+    "saved": "Profile saved",
+    "avatarAlt": "Profile picture"
+  },
+  "dashboard": {
+    "greeting": "Hello, {name}",
+    "myGroups": "My groups",
+    "createGroup": "Create a group",
+    "noGroups": "You don't have any groups yet",
+    "noGroupsHint": "Create your first group to get started!",
+    "upcomingEvents": "Upcoming events",
+    "noEvents": "No upcoming events",
+    "members": "{count, plural, =1 {1 member} other {# members}}"
+  },
+  "nav": {
+    "calendar": "Calendar",
+    "groups": "Groups",
+    "profile": "Profile"
+  }
+}

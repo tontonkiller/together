@@ -1,0 +1,13 @@
+/* Together - Global Styles */
+/* MUI handles most styling via ThemeRegistry */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Roboto', Arial, sans-serif;
+  background-color: #fafafa;
+}

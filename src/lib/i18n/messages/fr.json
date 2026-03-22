@@ -1,0 +1,61 @@
+{
+  "common": {
+    "appName": "Together",
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "create": "Créer",
+    "back": "Retour",
+    "confirm": "Confirmer",
+    "error": "Une erreur est survenue",
+    "success": "Opération réussie"
+  },
+  "landing": {
+    "title": "Together",
+    "subtitle": "Synchronisez vos calendriers en famille, simplement.",
+    "cta": "Se connecter avec un email",
+    "step1Title": "Créez votre groupe",
+    "step1Desc": "Rassemblez votre famille en un clic",
+    "step2Title": "Ajoutez vos vacances",
+    "step2Desc": "Indiquez vos disponibilités et vos projets",
+    "step3Title": "Voyez qui est dispo",
+    "step3Desc": "Un calendrier partagé pour toute la famille"
+  },
+  "auth": {
+    "loginTitle": "Connexion",
+    "loginSubtitle": "Entrez votre email pour recevoir un lien de connexion",
+    "emailLabel": "Adresse email",
+    "emailPlaceholder": "votre@email.com",
+    "sendLink": "Envoyer le lien magique",
+    "linkSent": "Lien envoyé !",
+    "linkSentDesc": "Vérifiez votre boîte mail et cliquez sur le lien pour vous connecter.",
+    "checkSpam": "Pensez à vérifier vos spams.",
+    "invalidEmail": "Adresse email invalide",
+    "logout": "Déconnexion"
+  },
+  "profile": {
+    "title": "Mon profil",
+    "displayName": "Nom d'affichage",
+    "displayNamePlaceholder": "Comment vous appelle votre famille ?",
+    "language": "Langue",
+    "saved": "Profil enregistré",
+    "avatarAlt": "Photo de profil"
+  },
+  "dashboard": {
+    "greeting": "Bonjour, {name}",
+    "myGroups": "Mes groupes",
+    "createGroup": "Créer un groupe",
+    "noGroups": "Vous n'avez pas encore de groupe",
+    "noGroupsHint": "Créez votre premier groupe pour commencer !",
+    "upcomingEvents": "Prochains événements",
+    "noEvents": "Aucun événement à venir",
+    "members": "{count, plural, =1 {1 membre} other {# membres}}"
+  },
+  "nav": {
+    "calendar": "Calendrier",
+    "groups": "Groupes",
+    "profile": "Profil"
+  }
+}
