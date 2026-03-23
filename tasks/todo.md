@@ -101,7 +101,7 @@
 - [x] 404 not-found page (i18n translated)
 - [x] Responsive complet (useMediaQuery, breakpoints, fullScreen dialogs)
 - [x] Build clean (0 ESLint errors, 0 warnings, TypeScript clean)
-- [x] Tests: 216 passing across 24 test files
+- [x] Tests: 217 passing across 24 test files
 - [x] QA: 3 successive QA + Debug passes — all clean
 
 ---

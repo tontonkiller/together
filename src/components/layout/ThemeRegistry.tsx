@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
+import { createContext, useContext, useState, useCallback, useMemo, useSyncExternalStore } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { defaultTheme, evaTheme } from '@/lib/theme';
@@ -18,13 +18,18 @@ export function useEvaMode() {
 
 const STORAGE_KEY = 'eva-mode';
 
-export default function ThemeRegistry({ children }: { children: React.ReactNode }) {
-  const [evaMode, setEvaMode] = useState(false);
+function getStoredEvaMode() {
+  return typeof window !== 'undefined' && localStorage.getItem(STORAGE_KEY) === 'true';
+}
 
-  useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored === 'true') setEvaMode(true);
-  }, []);
+function subscribeToStorage(callback: () => void) {
+  window.addEventListener('storage', callback);
+  return () => window.removeEventListener('storage', callback);
+}
+
+export default function ThemeRegistry({ children }: { children: React.ReactNode }) {
+  const storedEva = useSyncExternalStore(subscribeToStorage, getStoredEvaMode, () => false);
+  const [evaMode, setEvaMode] = useState(storedEva);
 
   const toggleEvaMode = useCallback(() => {
     setEvaMode((prev) => {
