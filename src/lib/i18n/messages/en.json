@@ -142,8 +142,15 @@
     "typeDisponible": "Available",
     "typeVoyage": "Travel"
   },
+  "calendar": {
+    "title": "My calendar",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "clickToCreate": "Click a day to create an event"
+  },
   "nav": {
     "groups": "Groups",
+    "calendar": "Calendar",
     "profile": "Profile",
     "toggleLanguage": "Toggle language"
   }

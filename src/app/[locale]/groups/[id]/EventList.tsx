@@ -22,15 +22,15 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LockIcon from '@mui/icons-material/Lock';
 import { createClient } from '@/lib/supabase/client';
 import EventDialog from './EventDialog';
-import type { GroupEvent, EventType } from './GroupDetailContent';
+import type { CalendarEvent, EventType } from '@/lib/types/events';
 
 interface EventListProps {
-  events: GroupEvent[];
+  events: CalendarEvent[];
   eventTypes: EventType[];
   groupId: string;
   currentUserId: string;
-  onEventCreated: (event: GroupEvent) => void;
-  onEventUpdated: (event: GroupEvent) => void;
+  onEventCreated: (event: CalendarEvent) => void;
+  onEventUpdated: (event: CalendarEvent) => void;
   onEventDeleted: (eventId: string) => void;
 }
 
@@ -65,7 +65,7 @@ export default function EventList({
   const tCommon = useTranslations('common');
 
   const [createOpen, setCreateOpen] = useState(false);
-  const [editEvent, setEditEvent] = useState<GroupEvent | null>(null);
+  const [editEvent, setEditEvent] = useState<CalendarEvent | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');

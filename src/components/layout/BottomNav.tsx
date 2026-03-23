@@ -7,6 +7,7 @@ import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import Paper from '@mui/material/Paper';
 import GroupsIcon from '@mui/icons-material/Groups';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import PersonIcon from '@mui/icons-material/Person';
 
 export default function BottomNav() {
@@ -16,7 +17,8 @@ export default function BottomNav() {
 
   const value = useMemo(() => {
     if (pathname.startsWith('/dashboard') || pathname.startsWith('/groups')) return 0;
-    if (pathname.startsWith('/profile')) return 1;
+    if (pathname.startsWith('/calendar')) return 1;
+    if (pathname.startsWith('/profile')) return 2;
     return 0;
   }, [pathname]);
 
@@ -26,6 +28,9 @@ export default function BottomNav() {
         router.push('/dashboard');
         break;
       case 1:
+        router.push('/calendar');
+        break;
+      case 2:
         router.push('/profile');
         break;
     }
@@ -40,6 +45,10 @@ export default function BottomNav() {
         <BottomNavigationAction
           label={t('groups')}
           icon={<GroupsIcon />}
+        />
+        <BottomNavigationAction
+          label={t('calendar')}
+          icon={<CalendarMonthIcon />}
         />
         <BottomNavigationAction
           label={t('profile')}
