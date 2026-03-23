@@ -266,7 +266,7 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
       >
         {calendarDays.map((cell, idx) => {
           if (!cell) {
-            return <Box key={`empty-${idx}`} sx={{ bgcolor: 'background.default', minHeight: isMobile ? 44 : 56 }} />;
+            return <Box key={`empty-${idx}`} sx={{ bgcolor: 'background.default', minHeight: isMobile ? 32 : 56 }} />;
           }
 
           const dayEvents = eventsByDate[cell.dateStr] ?? [];
@@ -279,8 +279,8 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
               role="gridcell"
               sx={{
                 bgcolor: 'background.paper',
-                minHeight: isMobile ? 44 : 56,
-                p: 0.5,
+                minHeight: isMobile ? 32 : 56,
+                p: isMobile ? 0.25 : 0.5,
                 position: 'relative',
               }}
             >
