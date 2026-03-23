@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { exchangeCodeForTokens } from '@/lib/google/tokens';
-import { fetchGoogleCalendars } from '@/lib/google/calendar';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -77,36 +76,6 @@ export async function GET(request: Request) {
     if (upsertError) {
       console.error('[google/callback] Upsert failed:', upsertError.message);
       return NextResponse.redirect(`${profileUrl}?google=error`);
-    }
-
-    // Auto-enable all calendars on first connection
-    try {
-      const { data: savedAccount } = await supabase
-        .from('google_accounts')
-        .select('id')
-        .eq('user_id', user.id)
-        .eq('google_email', googleEmail)
-        .single();
-
-      if (savedAccount) {
-        const googleCalendars = await fetchGoogleCalendars(tokens.access_token);
-
-        for (const gc of googleCalendars) {
-          await supabase.from('google_calendars').upsert(
-            {
-              google_account_id: savedAccount.id,
-              google_calendar_id: gc.id,
-              name: gc.summary,
-              color: gc.backgroundColor ?? null,
-              is_enabled: true,
-            },
-            { onConflict: 'google_account_id,google_calendar_id' },
-          );
-        }
-      }
-    } catch (calErr) {
-      // Non-blocking: calendars can still be enabled manually
-      console.error('[google/callback] Auto-enable calendars failed:', calErr);
     }
 
     return NextResponse.redirect(`${profileUrl}?google=success`);
