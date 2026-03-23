@@ -27,5 +27,6 @@ export const config = {
   matcher: [
     '/',
     '/(fr|en)/:path((?!_next/static|_next/image|icons|favicon\\.ico).*)',
+    '/invite/:path*',
   ],
 };
