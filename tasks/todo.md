@@ -94,12 +94,12 @@
 
 ## M8 — Polish & PWA
 
-- [ ] Service worker basique
-- [ ] PWA install iOS + Android
-- [ ] Loading states / Empty states
-- [ ] Error boundaries
-- [ ] Responsive complet
-- [ ] Build clean
+- [x] Service worker basique (public/sw.js — cache-first static, network-first nav/API)
+- [x] PWA install iOS + Android (meta tags, apple-touch-icon, manifest already done)
+- [x] Loading states / Empty states (Skeleton loaders per route: dashboard, group, calendar, profile)
+- [x] Error boundaries (nested per route + shared RouteErrorBoundary component)
+- [x] Responsive complet (already covered in M7 — useMediaQuery, breakpoints, fullScreen dialogs)
+- [x] Build clean (Next.js 16.2 Turbopack build passes, 206 tests green)
 - [ ] Parcours E2E
 - [ ] Audit Lighthouse
 
