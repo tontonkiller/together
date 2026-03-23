@@ -9,7 +9,9 @@ import Chip from '@mui/material/Chip';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import Button from '@mui/material/Button';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import AddIcon from '@mui/icons-material/Add';
 import LockIcon from '@mui/icons-material/Lock';
 import { getContrastTextColor } from '@/lib/utils/colors';
 import type { CalendarEvent, EventType } from '@/lib/types/events';
@@ -23,6 +25,7 @@ interface GroupCalendarProps {
   eventTypes: EventType[];
   onEventUpdated: (event: CalendarEvent) => void;
   onEventDeleted: (eventId: string) => void;
+  onCreateEvent?: () => void;
   googleEventIds?: string[];
 }
 
@@ -59,7 +62,7 @@ const MONTH_NAMES_EN = [
 const DAY_NAMES_FR = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 const DAY_NAMES_EN = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-export default function GroupCalendar({ events, members, currentUserId, eventTypes, onEventUpdated, onEventDeleted, googleEventIds = [] }: GroupCalendarProps) {
+export default function GroupCalendar({ events, members, currentUserId, eventTypes, onEventUpdated, onEventDeleted, onCreateEvent, googleEventIds = [] }: GroupCalendarProps) {
   const t = useTranslations('groupCalendar');
   const tEvents = useTranslations('events');
   const locale = useLocale();
@@ -175,7 +178,19 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
 
   return (
     <Box>
-      <Typography variant="h3" sx={{ mb: 1 }}>{t('title')}</Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+        <Typography variant="h3">{t('title')}</Typography>
+        {onCreateEvent && (
+          <Button
+            startIcon={<AddIcon />}
+            size="small"
+            variant="contained"
+            onClick={onCreateEvent}
+          >
+            {tEvents('create')}
+          </Button>
+        )}
+      </Box>
 
       {/* Month navigation */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>

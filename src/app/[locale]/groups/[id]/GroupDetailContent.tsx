@@ -28,6 +28,7 @@ import { useRouter } from '@/lib/i18n/navigation';
 import { createClient } from '@/lib/supabase/client';
 import InviteDialog from './InviteDialog';
 import EventList from './EventList';
+import EventDialog from './EventDialog';
 import GroupCalendar from './GroupCalendar';
 
 export interface GroupMember {
@@ -98,6 +99,7 @@ export default function GroupDetailContent({
 
   // Events
   const [events, setEvents] = useState(initialEvents);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const handleRename = async () => {
     if (!newName.trim()) return;
@@ -224,8 +226,46 @@ export default function GroupDetailContent({
         </Alert>
       )}
 
+      {/* Group Calendar (M6) — shown first */}
+      <GroupCalendar
+        events={events}
+        members={members}
+        currentUserId={currentUserId}
+        eventTypes={eventTypes}
+        onEventUpdated={handleEventUpdated}
+        onEventDeleted={handleEventDeleted}
+        onCreateEvent={() => setCreateOpen(true)}
+        googleEventIds={googleEventIds}
+      />
+
+      {/* Create event dialog (from calendar) */}
+      <EventDialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        event={null}
+        eventTypes={eventTypes}
+        groupId={group.id}
+        onEventCreated={handleEventCreated}
+        onEventUpdated={handleEventUpdated}
+      />
+
+      <Divider sx={{ my: 3 }} />
+
+      {/* Events list section (M4) */}
+      <EventList
+        events={events}
+        eventTypes={eventTypes}
+        groupId={group.id}
+        currentUserId={currentUserId}
+        onEventCreated={handleEventCreated}
+        onEventUpdated={handleEventUpdated}
+        onEventDeleted={handleEventDeleted}
+      />
+
+      <Divider sx={{ my: 3 }} />
+
       {/* Members section */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 3, mb: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
         <Typography variant="h3">
           {t('members')} ({members.length})
         </Typography>
@@ -287,32 +327,6 @@ export default function GroupDetailContent({
           </List>
         </>
       )}
-
-      <Divider sx={{ my: 3 }} />
-
-      {/* Events section (M4) */}
-      <EventList
-        events={events}
-        eventTypes={eventTypes}
-        groupId={group.id}
-        currentUserId={currentUserId}
-        onEventCreated={handleEventCreated}
-        onEventUpdated={handleEventUpdated}
-        onEventDeleted={handleEventDeleted}
-      />
-
-      <Divider sx={{ my: 3 }} />
-
-      {/* Group Calendar (M6) */}
-      <GroupCalendar
-        events={events}
-        members={members}
-        currentUserId={currentUserId}
-        eventTypes={eventTypes}
-        onEventUpdated={handleEventUpdated}
-        onEventDeleted={handleEventDeleted}
-        googleEventIds={googleEventIds}
-      />
 
       <Divider sx={{ my: 3 }} />
 
