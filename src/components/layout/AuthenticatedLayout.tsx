@@ -3,6 +3,7 @@
 import Box from '@mui/material/Box';
 import TopBar from './TopBar';
 import BottomNav from './BottomNav';
+import AutoSync from '@/components/google/AutoSync';
 
 export default function AuthenticatedLayout({
   children,
@@ -12,6 +13,7 @@ export default function AuthenticatedLayout({
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <TopBar />
+      <AutoSync />
       <Box
         component="main"
         sx={{

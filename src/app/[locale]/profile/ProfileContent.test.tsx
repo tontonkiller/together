@@ -23,6 +23,10 @@ vi.mock('@/lib/i18n/navigation', () => ({
   }),
 }));
 
+vi.mock('next/navigation', () => ({
+  useSearchParams: () => new URLSearchParams(),
+}));
+
 const mockUpdate = vi.fn();
 const mockEq = vi.fn();
 const mockSignOut = vi.fn();
@@ -58,30 +62,30 @@ describe('ProfileContent', () => {
   });
 
   it('renders with profile name pre-filled', () => {
-    render(<ProfileContent profile={defaultProfile} email="alice@test.com" />);
+    render(<ProfileContent profile={defaultProfile} email="alice@test.com" googleAccounts={[]} />);
     const input = screen.getByDisplayValue('Alice');
     expect(input).toBeInTheDocument();
   });
 
   it('shows email as disabled field', () => {
-    render(<ProfileContent profile={defaultProfile} email="alice@test.com" />);
+    render(<ProfileContent profile={defaultProfile} email="alice@test.com" googleAccounts={[]} />);
     const emailInput = screen.getByDisplayValue('alice@test.com');
     expect(emailInput).toBeDisabled();
   });
 
   it('renders avatar with first letter of name', () => {
-    render(<ProfileContent profile={defaultProfile} email="alice@test.com" />);
+    render(<ProfileContent profile={defaultProfile} email="alice@test.com" googleAccounts={[]} />);
     expect(screen.getByText('A')).toBeInTheDocument();
   });
 
   it('renders avatar with ? when name is empty', () => {
     const emptyProfile = { ...defaultProfile, display_name: '' };
-    render(<ProfileContent profile={emptyProfile} email="alice@test.com" />);
+    render(<ProfileContent profile={emptyProfile} email="alice@test.com" googleAccounts={[]} />);
     expect(screen.getByText('?')).toBeInTheDocument();
   });
 
   it('saves profile with trimmed display name', async () => {
-    render(<ProfileContent profile={defaultProfile} email="alice@test.com" />);
+    render(<ProfileContent profile={defaultProfile} email="alice@test.com" googleAccounts={[]} />);
 
     const input = screen.getByDisplayValue('Alice');
     fireEvent.change(input, { target: { value: '  Bob  ' } });
@@ -98,7 +102,7 @@ describe('ProfileContent', () => {
   });
 
   it('shows success message after save', async () => {
-    render(<ProfileContent profile={defaultProfile} email="alice@test.com" />);
+    render(<ProfileContent profile={defaultProfile} email="alice@test.com" googleAccounts={[]} />);
 
     fireEvent.click(screen.getByText('save'));
 
@@ -108,7 +112,7 @@ describe('ProfileContent', () => {
   });
 
   it('shows error for empty display name', async () => {
-    render(<ProfileContent profile={defaultProfile} email="alice@test.com" />);
+    render(<ProfileContent profile={defaultProfile} email="alice@test.com" googleAccounts={[]} />);
 
     const input = screen.getByDisplayValue('Alice');
     fireEvent.change(input, { target: { value: '   ' } });
@@ -123,7 +127,7 @@ describe('ProfileContent', () => {
   });
 
   it('shows error when profile is null', async () => {
-    render(<ProfileContent profile={null} email="alice@test.com" />);
+    render(<ProfileContent profile={null} email="alice@test.com" googleAccounts={[]} />);
 
     // Save button should be disabled
     const saveBtn = screen.getByText('save');
@@ -131,7 +135,7 @@ describe('ProfileContent', () => {
   });
 
   it('calls signOut and redirects to login on logout', async () => {
-    render(<ProfileContent profile={defaultProfile} email="alice@test.com" />);
+    render(<ProfileContent profile={defaultProfile} email="alice@test.com" googleAccounts={[]} />);
 
     fireEvent.click(screen.getByText('logout'));
 

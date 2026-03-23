@@ -73,6 +73,17 @@ export default async function GroupDetailPage({
     .select('id, name, icon, is_system')
     .order('is_system', { ascending: false });
 
+  // Fetch Google-imported event IDs for badge display
+  const { data: googleSyncedEvents } = await supabase
+    .from('google_synced_events')
+    .select('event_id')
+    .eq('status', 'accepted')
+    .not('event_id', 'is', null);
+
+  const googleEventIds = Array.from(
+    new Set((googleSyncedEvents ?? []).map((e) => e.event_id as string)),
+  );
+
   // Normalize Supabase's nested objects (profiles comes as array or object depending on query)
   const normalizedMembers: GroupMember[] = (members ?? []).map((m) => ({
     ...m,
@@ -93,6 +104,7 @@ export default async function GroupDetailPage({
       invitations={invitations}
       events={normalizedEvents}
       eventTypes={(eventTypes ?? []) as EventType[]}
+      googleEventIds={googleEventIds}
     />
   );
 }

@@ -30,6 +30,7 @@ interface EventDetailDialogProps {
   eventTypes: EventType[];
   onEventUpdated: (event: CalendarEvent) => void;
   onEventDeleted: (eventId: string) => void;
+  isGoogleImported?: boolean;
 }
 
 export default function EventDetailDialog({
@@ -41,6 +42,7 @@ export default function EventDetailDialog({
   eventTypes,
   onEventUpdated,
   onEventDeleted,
+  isGoogleImported = false,
 }: EventDetailDialogProps) {
   const t = useTranslations('events');
   const theme = useTheme();
@@ -169,6 +171,14 @@ export default function EventDetailDialog({
               </Typography>
             </Box>
           </Box>
+        )}
+        {isGoogleImported && (
+          <Chip
+            label="Google Calendar"
+            size="small"
+            variant="outlined"
+            sx={{ mt: 1, fontSize: '0.7rem' }}
+          />
         )}
       </DialogContent>
       <DialogActions>

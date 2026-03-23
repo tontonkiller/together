@@ -106,11 +106,54 @@
 
 ---
 
+## M9a — Google Calendar: OAuth + Connexion comptes ✅ DONE
+
+> Spec complète : `tasks/google-sync-spec.md`
+
+- [x] 3 tables: google_accounts, google_calendars, google_synced_events + RLS + indexes
+- [x] OAuth flow: POST /api/google/connect + GET /api/google/callback
+- [x] Token management: src/lib/google/tokens.ts + getAccessToken.ts
+- [x] Profile UI: connect/disconnect Google accounts
+- [x] Disconnect cascade via SECURITY DEFINER function
+- [x] i18n FR + EN (~30 keys)
+
+---
+
+## M9b — Google Calendar: Sélection des calendriers ✅ DONE
+
+- [x] GET/POST /api/google/calendars — list and save calendar selections
+- [x] GoogleCalendarSelect component — expandable per-account calendar toggles
+- [x] Integrated into profile page
+
+---
+
+## M9c — Google Calendar: Sync + Page dédiée ✅ DONE
+
+- [x] Sync engine: src/lib/google/sync.ts (fetchAndSyncEvents)
+- [x] POST /api/google/sync — trigger sync
+- [x] GET /api/google/sync/events — list synced events
+- [x] POST /api/google/sync/events — accept/refuse with visibility choice
+- [x] Google Sync page: /[locale]/google-sync with filter chips, checkboxes, bulk actions
+- [x] BottomNav: added Google Sync tab (4 tabs)
+
+---
+
+## M9d — Google Calendar: Sync automatique + Badge visuel ✅ DONE
+
+- [x] AutoSync component: triggers sync on app open, debounced 5min via localStorage
+- [x] "G" badge on CalendarContent + GroupCalendar event pills
+- [x] EventDetailDialog: "Google Calendar" chip for imported events
+- [x] googleEventIds passed through page → component chain
+- [x] Build clean, 219 tests passing
+
+---
+
 ## POST-V1 (ne PAS implémenter)
 
-- Événements récurrents
-- Statut tentatif/confirmé
-- Import/export iCal + synchro Google Calendar
+- Sync bidirectionnelle (Together → Google)
+- Export iCal
+- Import depuis Apple Calendar / Outlook
+- Notifications de rappel sur événements importés
 - Détection chevauchements + suggestions créneaux communs
 - Notifications push
 - Mode offline complet

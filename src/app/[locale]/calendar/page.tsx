@@ -49,6 +49,17 @@ export default async function CalendarPage({
     console.error('[calendar] Event types fetch failed:', typesError.message);
   }
 
+  // Fetch Google-imported event IDs for badge display
+  const { data: googleSyncedEvents } = await supabase
+    .from('google_synced_events')
+    .select('event_id')
+    .eq('status', 'accepted')
+    .not('event_id', 'is', null);
+
+  const googleEventIds = new Set(
+    (googleSyncedEvents ?? []).map((e) => e.event_id as string),
+  );
+
   // Fetch user's groups for the group selector
   const { data: groupMemberships, error: groupsError } = await supabase
     .from('group_members')
@@ -72,6 +83,7 @@ export default async function CalendarPage({
       eventTypes={(eventTypes ?? []) as EventType[]}
       userGroups={userGroups}
       currentUserId={user.id}
+      googleEventIds={Array.from(googleEventIds)}
     />
   );
 }
