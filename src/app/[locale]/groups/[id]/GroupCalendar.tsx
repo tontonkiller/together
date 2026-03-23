@@ -179,7 +179,7 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
 
   return (
     <Box>
-      <Typography variant="h3" sx={{ mb: 1 }}>{t('title')}</Typography>
+      <Typography variant="h6" sx={{ mb: 1 }}>{t('title')}</Typography>
 
       {/* Month navigation */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
