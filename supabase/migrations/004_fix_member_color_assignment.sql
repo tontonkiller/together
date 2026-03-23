@@ -75,7 +75,7 @@ begin
   values (result_group_id, auth.uid(), 'member', actual_color);
 
   -- Mark pending invitations as accepted
-  update group_invitations
+  update invitations
   set status = 'accepted'
   where group_id = result_group_id
     and invited_email = (select email from auth.users where id = auth.uid())
