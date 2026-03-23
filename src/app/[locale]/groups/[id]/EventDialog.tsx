@@ -31,6 +31,7 @@ interface EventDialogProps {
   groupId?: string;
   onEventCreated: (event: CalendarEvent) => void;
   onEventUpdated: (event: CalendarEvent) => void;
+  onEventDeleted?: (eventId: string) => void;
   defaultDate?: string;
 }
 
@@ -45,6 +46,7 @@ export default function EventDialog({
   eventTypes,
   onEventCreated,
   onEventUpdated,
+  onEventDeleted,
   defaultDate,
 }: EventDialogProps) {
   const t = useTranslations('events');
@@ -64,7 +66,22 @@ export default function EventDialog({
   const [eventTypeId, setEventTypeId] = useState(event?.event_type_id ?? '');
   const [isPrivate, setIsPrivate] = useState(event?.is_private ?? false);
   const [loading, setLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const handleDelete = async () => {
+    if (!event || !onEventDeleted) return;
+    setDeleteLoading(true);
+    const supabase = createClient();
+    const { error: deleteError } = await supabase.from('events').delete().eq('id', event.id);
+    setDeleteLoading(false);
+    if (deleteError) {
+      setError(t('deleteError'));
+    } else {
+      onEventDeleted(event.id);
+      onClose();
+    }
+  };
 
   const validate = (): boolean => {
     if (!title.trim()) {
@@ -264,6 +281,17 @@ export default function EventDialog({
         )}
       </DialogContent>
       <DialogActions>
+        {isEdit && onEventDeleted && (
+          <Button
+            color="error"
+            onClick={handleDelete}
+            disabled={deleteLoading || loading}
+            size="small"
+            sx={{ mr: 'auto' }}
+          >
+            {t('deleteEvent')}
+          </Button>
+        )}
         <Button onClick={onClose}>{tCommon('cancel')}</Button>
         <Button
           onClick={handleSubmit}

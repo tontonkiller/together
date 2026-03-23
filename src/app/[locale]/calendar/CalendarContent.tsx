@@ -400,6 +400,8 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
                   sx={{
                     bgcolor: 'background.paper',
                     minHeight: isMobile ? 32 : 64,
+                    minWidth: 0,
+                    overflow: 'hidden',
                     p: isMobile ? 0.25 : 0.5,
                     cursor: isGroupMode ? 'default' : 'pointer',
                     ...(!isGroupMode && { '&:hover': { bgcolor: 'action.hover' } }),
@@ -525,6 +527,10 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
           eventTypes={eventTypes}
           onEventCreated={handleEventCreated}
           onEventUpdated={handleEventUpdated}
+          onEventDeleted={(eventId) => {
+            handleEventDeleted(eventId);
+            setEditEvent(null);
+          }}
         />
       )}
 
