@@ -36,7 +36,14 @@ self.addEventListener('fetch', (event) => {
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request).catch(() =>
-        caches.match(request).then((cached) => cached || caches.match('/')),
+        caches.match(request).then(
+          (cached) =>
+            cached ||
+            new Response('Offline', {
+              status: 503,
+              headers: { 'Content-Type': 'text/html' },
+            }),
+        ),
       ),
     );
     return;
@@ -64,6 +71,12 @@ self.addEventListener('fetch', (event) => {
 
   // Network-first for API calls and everything else
   event.respondWith(
-    fetch(request).catch(() => caches.match(request)),
+    fetch(request).catch(() =>
+      caches.match(request).then(
+        (cached) =>
+          cached ||
+          new Response('Offline', { status: 503 }),
+      ),
+    ),
   );
 });

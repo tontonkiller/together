@@ -1,23 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 
-export default function Error({
-  error,
-  reset,
-}: {
-  error: Error & { digest?: string };
-  reset: () => void;
-}) {
+export default function NotFound() {
   const t = useTranslations('common');
-
-  useEffect(() => {
-    console.error('[error boundary]', error);
-  }, [error]);
 
   return (
     <Box
@@ -31,12 +20,14 @@ export default function Error({
         p: 3,
       }}
     >
-      <Typography variant="h2">{t('errorTitle')}</Typography>
-      <Typography variant="body1" color="text.secondary" textAlign="center">
-        {t('errorMessage')}
+      <Typography variant="h2" component="h1">
+        404
       </Typography>
-      <Button variant="contained" onClick={reset}>
-        {t('tryAgain')}
+      <Typography variant="body1" color="text.secondary" textAlign="center">
+        {t('notFoundMessage')}
+      </Typography>
+      <Button variant="contained" href="dashboard">
+        {t('goHome')}
       </Button>
     </Box>
   );

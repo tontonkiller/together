@@ -23,7 +23,6 @@ export default function InvitePage() {
 
   const [status, setStatus] = useState<'loading' | 'joining' | 'joined' | 'already-member' | 'need-login' | 'error'>('loading');
   const [error, setError] = useState('');
-  const [groupId, setGroupId] = useState<string | null>(null);
 
   useEffect(() => {
     if (joinAttempted.current) return;
@@ -57,8 +56,6 @@ export default function InvitePage() {
           setStatus('error');
           return;
         }
-
-        setGroupId(result.groupId);
 
         if (result.alreadyMember) {
           setStatus('already-member');

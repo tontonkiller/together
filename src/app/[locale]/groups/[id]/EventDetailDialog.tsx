@@ -43,7 +43,6 @@ export default function EventDetailDialog({
   onEventDeleted,
 }: EventDetailDialogProps) {
   const t = useTranslations('events');
-  const tCommon = useTranslations('common');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [editOpen, setEditOpen] = useState(false);

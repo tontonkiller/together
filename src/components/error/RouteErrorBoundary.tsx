@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
 
 export default function RouteErrorBoundary({
@@ -13,6 +13,8 @@ export default function RouteErrorBoundary({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations('common');
+
   useEffect(() => {
     console.error('[route error]', error);
   }, [error]);
@@ -32,10 +34,10 @@ export default function RouteErrorBoundary({
       }}
     >
       <Alert severity="error" sx={{ maxWidth: 400 }}>
-        Something went wrong loading this page.
+        {t('errorMessage')}
       </Alert>
       <Button variant="contained" onClick={reset}>
-        Try again
+        {t('tryAgain')}
       </Button>
     </Box>
   );

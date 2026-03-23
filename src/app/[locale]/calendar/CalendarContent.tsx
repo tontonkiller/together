@@ -115,7 +115,6 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
     if (!selectedGroupId) return;
 
     let cancelled = false;
-    setGroupLoading(true);
 
     async function fetchGroupData() {
       const supabase = createClient();
@@ -175,7 +174,7 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
       }
       return m - 1;
     });
-  }, []);
+  }, [setMonth, setYear]);
 
   const goToNext = useCallback(() => {
     setMonth((m) => {
@@ -185,7 +184,7 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
       }
       return m + 1;
     });
-  }, []);
+  }, [setMonth, setYear]);
 
   const daysInMonth = getDaysInMonth(year, month);
   const firstDayOffset = getFirstDayOfWeek(year, month);
@@ -287,7 +286,7 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
                 label={group.name}
                 size="small"
                 variant={selectedGroupId === group.id ? 'filled' : 'outlined'}
-                onClick={() => setSelectedGroupId(group.id)}
+                onClick={() => { setGroupLoading(true); setSelectedGroupId(group.id); }}
                 color={selectedGroupId === group.id ? 'primary' : 'default'}
                 sx={{ fontSize: '0.75rem' }}
               />
