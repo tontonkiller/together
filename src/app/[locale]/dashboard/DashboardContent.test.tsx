@@ -7,16 +7,41 @@ vi.mock('@/components/layout/AuthenticatedLayout', () => ({
   default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
+// Mock EventDialog to avoid heavy dialog rendering
+vi.mock('@/app/[locale]/groups/[id]/EventDialog', () => ({
+  default: () => null,
+}));
+
 const mockPush = vi.fn();
 vi.mock('@/lib/i18n/navigation', () => ({
   useRouter: () => ({ push: mockPush, replace: vi.fn(), refresh: vi.fn() }),
 }));
+
+function makeEvent(overrides: Partial<UpcomingEvent> = {}): UpcomingEvent {
+  return {
+    id: 'e1',
+    title: 'Test Event',
+    description: null,
+    location: null,
+    start_date: '2025-07-15',
+    end_date: '2025-07-15',
+    is_all_day: true,
+    is_private: false,
+    start_time: null,
+    end_time: null,
+    user_id: 'u1',
+    event_type_id: null,
+    event_types: null,
+    ...overrides,
+  };
+}
 
 function renderDashboard(overrides: Partial<DashboardContentProps> = {}) {
   const defaults: DashboardContentProps = {
     profile: { display_name: 'Alice' },
     groups: [],
     upcomingEvents: [],
+    eventTypes: [],
     ...overrides,
   };
   return render(<DashboardContent {...defaults} />);
@@ -25,7 +50,6 @@ function renderDashboard(overrides: Partial<DashboardContentProps> = {}) {
 describe('DashboardContent', () => {
   it('shows greeting with profile name', () => {
     renderDashboard({ profile: { display_name: 'Bob' } });
-    // Translation key is returned as-is by mock, but we check it was called
     expect(screen.getByText(/greeting/)).toBeInTheDocument();
   });
 
@@ -74,25 +98,10 @@ describe('DashboardContent', () => {
     });
 
     expect(screen.getByText('Family')).toBeInTheDocument();
-    // No description text should appear
   });
 
   it('shows upcoming events section when events exist', () => {
-    const events: UpcomingEvent[] = [
-      {
-        id: 'e1',
-        title: 'Beach Trip',
-        start_date: '2025-07-15',
-        end_date: '2025-07-15',
-        is_all_day: true,
-        start_time: null,
-        end_time: null,
-        event_type_id: null,
-        event_types: null,
-      },
-    ];
-
-    renderDashboard({ upcomingEvents: events });
+    renderDashboard({ upcomingEvents: [makeEvent({ title: 'Beach Trip' })] });
     expect(screen.getByText('upcomingEvents')).toBeInTheDocument();
     expect(screen.getByText('Beach Trip')).toBeInTheDocument();
   });
@@ -103,21 +112,17 @@ describe('DashboardContent', () => {
   });
 
   it('shows event type chip when event_types is present', () => {
-    const events: UpcomingEvent[] = [
-      {
-        id: 'e1',
-        title: 'Trip',
-        start_date: '2025-07-15',
-        end_date: '2025-07-20',
-        is_all_day: true,
-        start_time: null,
-        end_time: null,
-        event_type_id: 'type-1',
-        event_types: { name: 'Vacances', icon: null },
-      },
-    ];
-
-    renderDashboard({ upcomingEvents: events });
+    renderDashboard({
+      upcomingEvents: [
+        makeEvent({
+          title: 'Trip',
+          start_date: '2025-07-15',
+          end_date: '2025-07-20',
+          event_type_id: 'type-1',
+          event_types: { name: 'Vacances', icon: null },
+        }),
+      ],
+    });
     expect(screen.getByText('Vacances')).toBeInTheDocument();
   });
 
@@ -125,10 +130,30 @@ describe('DashboardContent', () => {
     renderDashboard();
     expect(screen.getByText('createGroup')).toBeInTheDocument();
   });
+
+  it('renders groups before events in the DOM', () => {
+    renderDashboard({
+      groups: [
+        {
+          group_id: 'g1',
+          role: 'admin',
+          groups: { id: 'g1', name: 'Family', description: null },
+        },
+      ],
+      upcomingEvents: [makeEvent({ title: 'Beach Trip' })],
+    });
+
+    const groupsHeading = screen.getByText('myGroups');
+    const eventsHeading = screen.getByText('upcomingEvents');
+
+    // Groups should come before events in the document
+    expect(
+      groupsHeading.compareDocumentPosition(eventsHeading) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
 });
 
 describe('formatEventDate (extracted logic)', () => {
-  // Test the pure function logic that lives in DashboardContent
   function formatEventDate(
     startDate: string,
     endDate: string,
@@ -167,7 +192,6 @@ describe('formatEventDate (extracted logic)', () => {
 
   it('handles null start time for non-all-day gracefully', () => {
     const result = formatEventDate('2025-03-15', '2025-03-15', false, null);
-    // Should just return date without time
     expect(result).not.toContain(':');
   });
 });
