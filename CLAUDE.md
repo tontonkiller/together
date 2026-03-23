@@ -1,5 +1,16 @@
 @AGENTS.md
 
+## Tech Stack
+
+- **Framework**: Next.js 16.2 (App Router) + React 19 + TypeScript 5
+- **UI**: MUI v7 (Material UI) + Emotion
+- **Backend**: Supabase (Auth magic link, PostgreSQL, RLS, SECURITY DEFINER functions)
+- **i18n**: next-intl v4 (FR/EN, locale routing)
+- **Tests**: Vitest 4 + Testing Library (React) + jsdom
+- **Lint**: ESLint 9 + eslint-config-next
+- **Deploy**: Vercel (preview deployments on branches, production on main)
+- **PWA**: manifest.ts, icônes 192/512
+
 ## Core Principles
 
 - **Simplicity First**: Make every change as simple as possible. Impact minimal code.
