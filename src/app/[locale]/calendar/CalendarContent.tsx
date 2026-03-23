@@ -377,7 +377,7 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
           >
             {calendarDays.map((cell, idx) => {
               if (!cell) {
-                return <Box key={`empty-${idx}`} sx={{ bgcolor: 'background.default', minHeight: isMobile ? 48 : 64 }} />;
+                return <Box key={`empty-${idx}`} sx={{ bgcolor: 'background.default', minHeight: isMobile ? 32 : 64 }} />;
               }
 
               const dayEvents = eventsByDate[cell.dateStr] ?? [];
@@ -399,8 +399,8 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
                   }}
                   sx={{
                     bgcolor: 'background.paper',
-                    minHeight: isMobile ? 48 : 64,
-                    p: 0.5,
+                    minHeight: isMobile ? 32 : 64,
+                    p: isMobile ? 0.25 : 0.5,
                     cursor: isGroupMode ? 'default' : 'pointer',
                     ...(!isGroupMode && { '&:hover': { bgcolor: 'action.hover' } }),
                     '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: -2 },
@@ -414,8 +414,8 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      width: 24,
-                      height: 24,
+                      width: isMobile ? 18 : 24,
+                      height: isMobile ? 18 : 24,
                       borderRadius: '50%',
                       bgcolor: isToday ? 'primary.main' : 'transparent',
                       color: isToday ? 'primary.contrastText' : 'text.primary',
