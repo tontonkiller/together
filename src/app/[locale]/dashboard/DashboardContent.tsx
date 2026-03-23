@@ -19,7 +19,7 @@ export interface DashboardContentProps {
   groups: Array<{
     group_id: string;
     role: string;
-    groups: { id: string; name: string; description: string | null }[] | null;
+    groups: { id: string; name: string; description: string | null } | null;
   }>;
 }
 
@@ -67,11 +67,11 @@ export default function DashboardContent({ profile, groups }: DashboardContentPr
                     <GroupsIcon color="primary" />
                     <Box>
                       <Typography variant="subtitle1" fontWeight={600}>
-                        {gm.groups?.[0]?.name}
+                        {gm.groups?.name}
                       </Typography>
-                      {gm.groups?.[0]?.description && (
+                      {gm.groups?.description && (
                         <Typography variant="body2" color="text.secondary">
-                          {gm.groups[0].description}
+                          {gm.groups.description}
                         </Typography>
                       )}
                     </Box>
