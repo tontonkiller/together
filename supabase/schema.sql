@@ -40,10 +40,11 @@ create table if not exists groups (
 
 alter table groups enable row level security;
 
-create policy "Group members can view their groups"
+create policy "Group members and creators can view their groups"
   on groups for select to authenticated
   using (
-    id in (select group_id from group_members where user_id = auth.uid())
+    created_by = auth.uid()
+    or id in (select group_id from group_members where user_id = auth.uid())
   );
 
 create policy "Authenticated users can create groups"
