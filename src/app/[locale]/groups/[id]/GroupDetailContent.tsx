@@ -28,6 +28,7 @@ import { useRouter } from '@/lib/i18n/navigation';
 import { createClient } from '@/lib/supabase/client';
 import InviteDialog from './InviteDialog';
 import EventList from './EventList';
+import EventDialog from './EventDialog';
 import GroupCalendar from './GroupCalendar';
 
 export interface GroupMember {
@@ -98,6 +99,8 @@ export default function GroupDetailContent({
 
   // Events
   const [events, setEvents] = useState(initialEvents);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createDefaultDate, setCreateDefaultDate] = useState<string | undefined>(undefined);
 
   const handleRename = async () => {
     if (!newName.trim()) return;
@@ -290,19 +293,6 @@ export default function GroupDetailContent({
 
       <Divider sx={{ my: 3 }} />
 
-      {/* Events section (M4) */}
-      <EventList
-        events={events}
-        eventTypes={eventTypes}
-        groupId={group.id}
-        currentUserId={currentUserId}
-        onEventCreated={handleEventCreated}
-        onEventUpdated={handleEventUpdated}
-        onEventDeleted={handleEventDeleted}
-      />
-
-      <Divider sx={{ my: 3 }} />
-
       {/* Group Calendar (M6) */}
       <GroupCalendar
         events={events}
@@ -311,7 +301,36 @@ export default function GroupDetailContent({
         eventTypes={eventTypes}
         onEventUpdated={handleEventUpdated}
         onEventDeleted={handleEventDeleted}
+        onDayClick={(date) => {
+          setCreateDefaultDate(date);
+          setCreateOpen(true);
+        }}
         googleEventIds={googleEventIds}
+      />
+
+      {/* Create event dialog (from calendar day click) */}
+      <EventDialog
+        open={createOpen}
+        onClose={() => { setCreateOpen(false); setCreateDefaultDate(undefined); }}
+        event={null}
+        eventTypes={eventTypes}
+        groupId={group.id}
+        onEventCreated={handleEventCreated}
+        onEventUpdated={handleEventUpdated}
+        defaultDate={createDefaultDate}
+      />
+
+      <Divider sx={{ my: 3 }} />
+
+      {/* Events list section (M4) */}
+      <EventList
+        events={events}
+        eventTypes={eventTypes}
+        groupId={group.id}
+        currentUserId={currentUserId}
+        onEventCreated={handleEventCreated}
+        onEventUpdated={handleEventUpdated}
+        onEventDeleted={handleEventDeleted}
       />
 
       <Divider sx={{ my: 3 }} />

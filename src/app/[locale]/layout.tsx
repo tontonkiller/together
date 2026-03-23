@@ -1,8 +1,16 @@
+import { Roboto } from 'next/font/google';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { notFound } from 'next/navigation';
 import { routing } from '@/lib/i18n/routing';
 import ThemeRegistry from '@/components/layout/ThemeRegistry';
 import ServiceWorkerRegistration from '@/components/pwa/ServiceWorkerRegistration';
+
+const roboto = Roboto({
+  weight: ['400', '500', '600', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-roboto',
+});
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -30,7 +38,7 @@ export default async function LocaleLayout({
   }
 
   return (
-    <html lang={locale}>
+    <html lang={locale} className={roboto.variable}>
       <head>
         <meta name="theme-color" content="#1976D2" />
         <meta name="apple-mobile-web-app-capable" content="yes" />

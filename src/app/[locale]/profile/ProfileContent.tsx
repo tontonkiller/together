@@ -5,7 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { locales } from '@/lib/i18n/config';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Container from '@mui/material/Container';
+
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import MenuItem from '@mui/material/MenuItem';
@@ -178,7 +178,7 @@ export default function ProfileContent({ profile, email, googleAccounts: initial
 
   return (
     <AuthenticatedLayout>
-      <Container maxWidth="sm" sx={{ py: 2 }}>
+      <Box sx={{ maxWidth: 'sm', mx: 'auto', py: 2 }}>
         <Typography variant="h2" sx={{ mb: 3 }}>
           {t('title')}
         </Typography>
@@ -338,7 +338,7 @@ export default function ProfileContent({ profile, email, googleAccounts: initial
         >
           {tAuth('logout')}
         </Button>
-      </Container>
+      </Box>
     </AuthenticatedLayout>
   );
 }

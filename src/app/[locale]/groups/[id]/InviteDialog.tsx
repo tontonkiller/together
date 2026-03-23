@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Box from '@mui/material/Box';
@@ -156,6 +157,9 @@ export default function InviteDialog({
           </Button>
         </Box>
       </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>{tCommon('done')}</Button>
+      </DialogActions>
     </Dialog>
   );
 }

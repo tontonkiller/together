@@ -11,6 +11,7 @@ import { useTheme } from '@mui/material/styles';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import LockIcon from '@mui/icons-material/Lock';
+import { getContrastTextColor } from '@/lib/utils/colors';
 import type { CalendarEvent, EventType } from '@/lib/types/events';
 import type { GroupMember } from './GroupDetailContent';
 import EventDetailDialog from './EventDetailDialog';
@@ -22,6 +23,7 @@ interface GroupCalendarProps {
   eventTypes: EventType[];
   onEventUpdated: (event: CalendarEvent) => void;
   onEventDeleted: (eventId: string) => void;
+  onDayClick?: (date: string) => void;
   googleEventIds?: string[];
 }
 
@@ -58,7 +60,7 @@ const MONTH_NAMES_EN = [
 const DAY_NAMES_FR = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 const DAY_NAMES_EN = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-export default function GroupCalendar({ events, members, currentUserId, eventTypes, onEventUpdated, onEventDeleted, googleEventIds = [] }: GroupCalendarProps) {
+export default function GroupCalendar({ events, members, currentUserId, eventTypes, onEventUpdated, onEventDeleted, onDayClick, googleEventIds = [] }: GroupCalendarProps) {
   const t = useTranslations('groupCalendar');
   const tEvents = useTranslations('events');
   const locale = useLocale();
@@ -174,7 +176,7 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
 
   return (
     <Box>
-      <Typography variant="h6" sx={{ mb: 1 }}>{t('title')}</Typography>
+      <Typography variant="h3" sx={{ mb: 1 }}>{t('title')}</Typography>
 
       {/* Month navigation */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
@@ -200,15 +202,8 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
           size="small"
           variant={allSelected ? 'filled' : 'outlined'}
           onClick={toggleAll}
-          sx={{
-            fontWeight: 600,
-            fontSize: '0.75rem',
-            ...(allSelected && {
-              bgcolor: 'primary.main',
-              color: 'primary.contrastText',
-              '&:hover': { bgcolor: 'primary.dark' },
-            }),
-          }}
+          color={allSelected ? 'primary' : 'default'}
+          sx={{ fontWeight: 600, fontSize: '0.75rem' }}
         />
         {members.map((member) => {
           const selected = visibleMembers.has(member.user_id);
@@ -225,7 +220,7 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
                 ...(selected
                   ? {
                       bgcolor: member.color,
-                      color: '#fff',
+                      color: getContrastTextColor(member.color),
                       '&:hover': { bgcolor: member.color, opacity: 0.85 },
                     }
                   : {
@@ -280,11 +275,14 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
             <Box
               key={cell.dateStr}
               role="gridcell"
+              aria-label={`${cell.day} ${monthNames[month]}${dayEvents.length > 0 ? ` — ${dayEvents.length} ${tEvents('title').toLowerCase()}` : ''}`}
+              onClick={() => onDayClick?.(cell.dateStr)}
               sx={{
                 bgcolor: 'background.paper',
-                minHeight: isMobile ? 32 : 56,
+                minHeight: isMobile ? 40 : 56,
                 p: isMobile ? 0.25 : 0.5,
                 position: 'relative',
+                cursor: onDayClick ? 'pointer' : undefined,
               }}
             >
               <Typography
@@ -316,7 +314,7 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
                       role="button"
                       tabIndex={0}
                       aria-label={getDisplayTitle(event)}
-                      onClick={() => setSelectedEvent(event)}
+                      onClick={(e) => { e.stopPropagation(); setSelectedEvent(event); }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
@@ -325,7 +323,7 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
                       }}
                       sx={{
                         ...(event.is_all_day
-                          ? { bgcolor: memberColor, color: '#fff' }
+                          ? { bgcolor: memberColor, color: getContrastTextColor(memberColor) }
                           : {
                               bgcolor: `${memberColor}22`,
                               color: 'text.primary',
@@ -337,7 +335,7 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
                         mb: 0.25,
                         fontSize: isMobile ? '0.5rem' : '0.6rem',
                         lineHeight: 1.2,
-                        minHeight: isMobile ? 14 : 16,
+                        minHeight: isMobile ? 20 : 16,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
@@ -347,6 +345,7 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
                         opacity: isPrivateOther ? 0.7 : 1,
                         cursor: 'pointer',
                         '&:hover': { opacity: 0.85 },
+                        '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: -1 },
                       }}
                     >
                       {isPrivateOther && <LockIcon sx={{ fontSize: 9 }} />}
