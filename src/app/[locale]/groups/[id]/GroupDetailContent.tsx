@@ -306,6 +306,9 @@ export default function GroupDetailContent({
         events={events}
         members={members}
         currentUserId={currentUserId}
+        eventTypes={eventTypes}
+        onEventUpdated={handleEventUpdated}
+        onEventDeleted={handleEventDeleted}
       />
 
       <Divider sx={{ my: 3 }} />

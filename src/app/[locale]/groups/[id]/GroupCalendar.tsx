@@ -5,16 +5,23 @@ import { useTranslations, useLocale } from 'next-intl';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
+import Chip from '@mui/material/Chip';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import LockIcon from '@mui/icons-material/Lock';
-import type { CalendarEvent } from '@/lib/types/events';
+import type { CalendarEvent, EventType } from '@/lib/types/events';
 import type { GroupMember } from './GroupDetailContent';
+import EventDetailDialog from './EventDetailDialog';
 
 interface GroupCalendarProps {
   events: CalendarEvent[];
   members: GroupMember[];
   currentUserId: string;
+  eventTypes: EventType[];
+  onEventUpdated: (event: CalendarEvent) => void;
+  onEventDeleted: (eventId: string) => void;
 }
 
 function getDaysInMonth(year: number, month: number): number {
@@ -50,17 +57,48 @@ const MONTH_NAMES_EN = [
 const DAY_NAMES_FR = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 const DAY_NAMES_EN = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-export default function GroupCalendar({ events, members, currentUserId }: GroupCalendarProps) {
+export default function GroupCalendar({ events, members, currentUserId, eventTypes, onEventUpdated, onEventDeleted }: GroupCalendarProps) {
   const t = useTranslations('groupCalendar');
   const tEvents = useTranslations('events');
   const locale = useLocale();
 
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
   const monthNames = locale === 'fr' ? MONTH_NAMES_FR : MONTH_NAMES_EN;
   const dayNames = locale === 'fr' ? DAY_NAMES_FR : DAY_NAMES_EN;
+
+  // Member filter state: set of visible user_ids (all visible by default)
+  const [visibleMembers, setVisibleMembers] = useState<Set<string>>(() =>
+    new Set(members.map((m) => m.user_id))
+  );
+
+  const allSelected = visibleMembers.size === members.length;
+
+  const toggleMember = useCallback((userId: string) => {
+    setVisibleMembers((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
+  }, []);
+
+  const toggleAll = useCallback(() => {
+    if (allSelected) {
+      setVisibleMembers(new Set());
+    } else {
+      setVisibleMembers(new Set(members.map((m) => m.user_id)));
+    }
+  }, [allSelected, members]);
 
   // Build member color map: user_id → color
   const memberColorMap = useMemo(() => {
@@ -79,6 +117,12 @@ export default function GroupCalendar({ events, members, currentUserId }: GroupC
     }
     return map;
   }, [members]);
+
+  // Filter events by visible members
+  const filteredEvents = useMemo(
+    () => events.filter((e) => visibleMembers.has(e.user_id)),
+    [events, visibleMembers]
+  );
 
   const goToPrev = useCallback(() => {
     setMonth((m) => {
@@ -110,20 +154,25 @@ export default function GroupCalendar({ events, members, currentUserId }: GroupC
     const map: Record<string, CalendarEvent[]> = {};
     for (const cell of calendarDays) {
       if (!cell) continue;
-      const dayEvents = events.filter((e) => isEventOnDay(e, cell.dateStr));
+      const dayEvents = filteredEvents.filter((e) => isEventOnDay(e, cell.dateStr));
       if (dayEvents.length > 0) {
         map[cell.dateStr] = dayEvents;
       }
     }
     return map;
-  }, [calendarDays, events]);
+  }, [calendarDays, filteredEvents]);
 
   const todayStr = getTodayStr();
 
   // Determine display title: private events from others show as "Busy"
+  // Timed events get a time prefix (e.g. "10:00 Meeting")
   function getDisplayTitle(event: CalendarEvent): string {
     if (event.is_private && event.user_id !== currentUserId) {
       return tEvents('busy');
+    }
+    if (!event.is_all_day && event.start_time) {
+      const time = event.start_time.slice(0, 5); // "HH:MM"
+      return `${time} ${event.title}`;
     }
     return event.title;
   }
@@ -145,6 +194,54 @@ export default function GroupCalendar({ events, members, currentUserId }: GroupC
         </IconButton>
       </Box>
 
+      {/* Member filter chips */}
+      <Box
+        sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 1.5 }}
+        role="group"
+        aria-label={t('filterByMember')}
+      >
+        <Chip
+          label={t('allMembers')}
+          size="small"
+          variant={allSelected ? 'filled' : 'outlined'}
+          onClick={toggleAll}
+          sx={{
+            fontWeight: 600,
+            fontSize: '0.75rem',
+            ...(allSelected && {
+              bgcolor: 'primary.main',
+              color: 'primary.contrastText',
+              '&:hover': { bgcolor: 'primary.dark' },
+            }),
+          }}
+        />
+        {members.map((member) => {
+          const selected = visibleMembers.has(member.user_id);
+          return (
+            <Chip
+              key={member.user_id}
+              label={member.profiles?.display_name ?? '?'}
+              size="small"
+              variant={selected ? 'filled' : 'outlined'}
+              onClick={() => toggleMember(member.user_id)}
+              sx={{
+                fontSize: '0.75rem',
+                borderColor: member.color,
+                ...(selected
+                  ? {
+                      bgcolor: member.color,
+                      color: '#fff',
+                      '&:hover': { bgcolor: member.color, opacity: 0.85 },
+                    }
+                  : {
+                      color: member.color,
+                    }),
+              }}
+            />
+          );
+        })}
+      </Box>
+
       {/* Day names */}
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', mb: 0.5 }} role="row">
         {dayNames.map((name) => (
@@ -153,7 +250,7 @@ export default function GroupCalendar({ events, members, currentUserId }: GroupC
             variant="caption"
             align="center"
             role="columnheader"
-            sx={{ fontWeight: 600, color: 'text.secondary', py: 0.25 }}
+            sx={{ fontWeight: 600, color: 'text.secondary', py: 0.25, fontSize: isMobile ? '0.6rem' : undefined }}
           >
             {name}
           </Typography>
@@ -177,11 +274,12 @@ export default function GroupCalendar({ events, members, currentUserId }: GroupC
       >
         {calendarDays.map((cell, idx) => {
           if (!cell) {
-            return <Box key={`empty-${idx}`} sx={{ bgcolor: 'background.default', minHeight: 56 }} />;
+            return <Box key={`empty-${idx}`} sx={{ bgcolor: 'background.default', minHeight: isMobile ? 44 : 56 }} />;
           }
 
           const dayEvents = eventsByDate[cell.dateStr] ?? [];
           const isToday = cell.dateStr === todayStr;
+          const maxVisible = isMobile ? 2 : 3;
 
           return (
             <Box
@@ -189,7 +287,7 @@ export default function GroupCalendar({ events, members, currentUserId }: GroupC
               role="gridcell"
               sx={{
                 bgcolor: 'background.paper',
-                minHeight: 56,
+                minHeight: isMobile ? 44 : 56,
                 p: 0.5,
                 position: 'relative',
               }}
@@ -201,35 +299,50 @@ export default function GroupCalendar({ events, members, currentUserId }: GroupC
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  width: 22,
-                  height: 22,
+                  width: isMobile ? 18 : 22,
+                  height: isMobile ? 18 : 22,
                   borderRadius: '50%',
                   bgcolor: isToday ? 'primary.main' : 'transparent',
                   color: isToday ? 'primary.contrastText' : 'text.primary',
-                  fontSize: '0.7rem',
+                  fontSize: isMobile ? '0.6rem' : '0.7rem',
                 }}
               >
                 {cell.day}
               </Typography>
 
               <Box sx={{ mt: 0.25 }}>
-                {dayEvents.slice(0, 3).map((event) => {
+                {dayEvents.slice(0, maxVisible).map((event) => {
                   const memberColor = memberColorMap[event.user_id] ?? '#999';
                   const isPrivateOther = event.is_private && event.user_id !== currentUserId;
 
                   return (
                     <Box
                       key={event.id}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={getDisplayTitle(event)}
+                      onClick={() => setSelectedEvent(event)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedEvent(event);
+                        }
+                      }}
                       sx={{
-                        bgcolor: memberColor,
-                        color: '#fff',
+                        ...(event.is_all_day
+                          ? { bgcolor: memberColor, color: '#fff' }
+                          : {
+                              bgcolor: `${memberColor}22`,
+                              color: 'text.primary',
+                              borderLeft: `3px solid ${memberColor}`,
+                            }),
                         borderRadius: 0.5,
                         px: 0.5,
                         py: 0.25,
                         mb: 0.25,
-                        fontSize: '0.6rem',
+                        fontSize: isMobile ? '0.5rem' : '0.6rem',
                         lineHeight: 1.2,
-                        minHeight: 16,
+                        minHeight: isMobile ? 14 : 16,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
@@ -237,6 +350,8 @@ export default function GroupCalendar({ events, members, currentUserId }: GroupC
                         alignItems: 'center',
                         gap: 0.25,
                         opacity: isPrivateOther ? 0.7 : 1,
+                        cursor: 'pointer',
+                        '&:hover': { opacity: 0.85 },
                       }}
                     >
                       {isPrivateOther && <LockIcon sx={{ fontSize: 9 }} />}
@@ -244,9 +359,9 @@ export default function GroupCalendar({ events, members, currentUserId }: GroupC
                     </Box>
                   );
                 })}
-                {dayEvents.length > 3 && (
+                {dayEvents.length > maxVisible && (
                   <Typography variant="caption" sx={{ fontSize: '0.55rem', color: 'text.secondary' }}>
-                    +{dayEvents.length - 3}
+                    +{dayEvents.length - maxVisible}
                   </Typography>
                 )}
               </Box>
@@ -255,25 +370,25 @@ export default function GroupCalendar({ events, members, currentUserId }: GroupC
         })}
       </Box>
 
-      {/* Member color legend */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mt: 1.5 }}>
-        {members.map((member) => (
-          <Box key={member.id} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Box
-              sx={{
-                width: 12,
-                height: 12,
-                borderRadius: '50%',
-                bgcolor: member.color,
-                flexShrink: 0,
-              }}
-            />
-            <Typography variant="caption" color="text.secondary">
-              {member.profiles?.display_name ?? '?'}
-            </Typography>
-          </Box>
-        ))}
-      </Box>
+      {/* Event detail dialog */}
+      {selectedEvent && (
+        <EventDetailDialog
+          open
+          onClose={() => setSelectedEvent(null)}
+          event={selectedEvent}
+          currentUserId={currentUserId}
+          members={members}
+          eventTypes={eventTypes}
+          onEventUpdated={(updated) => {
+            onEventUpdated(updated);
+            setSelectedEvent(null);
+          }}
+          onEventDeleted={(id) => {
+            onEventDeleted(id);
+            setSelectedEvent(null);
+          }}
+        />
+      )}
     </Box>
   );
 }

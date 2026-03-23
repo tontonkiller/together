@@ -16,6 +16,10 @@ vi.mock('@/lib/i18n/navigation', () => ({
   usePathname: () => '/groups/123',
 }));
 
+vi.mock('./EventDetailDialog', () => ({
+  default: () => null,
+}));
+
 const mockMembers: GroupMember[] = [
   {
     id: 'gm-1',
@@ -34,6 +38,9 @@ const mockMembers: GroupMember[] = [
     profiles: { display_name: 'Bob', avatar_url: null },
   },
 ];
+
+const noopUpdate = vi.fn();
+const noopDelete = vi.fn();
 
 function makeEvent(overrides: Partial<CalendarEvent> = {}): CalendarEvent {
   const now = new Date();
@@ -57,6 +64,15 @@ function makeEvent(overrides: Partial<CalendarEvent> = {}): CalendarEvent {
   };
 }
 
+const defaultProps = {
+  events: [] as CalendarEvent[],
+  members: mockMembers,
+  currentUserId: 'user-1',
+  eventTypes: [],
+  onEventUpdated: noopUpdate,
+  onEventDeleted: noopDelete,
+};
+
 describe('GroupCalendar', () => {
   beforeEach(() => {
     mockLocale = 'fr';
@@ -64,32 +80,32 @@ describe('GroupCalendar', () => {
   });
 
   it('renders month navigation', () => {
-    render(<GroupCalendar events={[]} members={mockMembers} currentUserId="user-1" />);
+    render(<GroupCalendar {...defaultProps} />);
     expect(screen.getByLabelText('previousMonth')).toBeInTheDocument();
     expect(screen.getByLabelText('nextMonth')).toBeInTheDocument();
   });
 
   it('renders current month and year', () => {
-    render(<GroupCalendar events={[]} members={mockMembers} currentUserId="user-1" />);
+    render(<GroupCalendar {...defaultProps} />);
     const year = new Date().getFullYear().toString();
     expect(screen.getByText(new RegExp(year))).toBeInTheDocument();
   });
 
   it('renders day names in French', () => {
-    render(<GroupCalendar events={[]} members={mockMembers} currentUserId="user-1" />);
+    render(<GroupCalendar {...defaultProps} />);
     expect(screen.getByText('Lun')).toBeInTheDocument();
     expect(screen.getByText('Dim')).toBeInTheDocument();
   });
 
   it('renders day names in English', () => {
     mockLocale = 'en';
-    render(<GroupCalendar events={[]} members={mockMembers} currentUserId="user-1" />);
+    render(<GroupCalendar {...defaultProps} />);
     expect(screen.getByText('Mon')).toBeInTheDocument();
     expect(screen.getByText('Sun')).toBeInTheDocument();
   });
 
   it('navigates months', () => {
-    render(<GroupCalendar events={[]} members={mockMembers} currentUserId="user-1" />);
+    render(<GroupCalendar {...defaultProps} />);
     const monthsFR = [
       'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
       'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
@@ -101,14 +117,17 @@ describe('GroupCalendar', () => {
 
   it('displays events on calendar', () => {
     const event = makeEvent({ title: 'Sprint Planning' });
-    render(<GroupCalendar events={[event]} members={mockMembers} currentUserId="user-1" />);
+    render(<GroupCalendar {...defaultProps} events={[event]} />);
     expect(screen.getByText('Sprint Planning')).toBeInTheDocument();
   });
 
-  it('renders member color legend', () => {
-    render(<GroupCalendar events={[]} members={mockMembers} currentUserId="user-1" />);
+  it('renders member filter chips (replaces old legend)', () => {
+    render(<GroupCalendar {...defaultProps} />);
+    // Filter chips contain member names
     expect(screen.getByText('Alice')).toBeInTheDocument();
     expect(screen.getByText('Bob')).toBeInTheDocument();
+    // "All" chip
+    expect(screen.getByText('allMembers')).toBeInTheDocument();
   });
 
   it('shows private events from others as "Busy"', () => {
@@ -118,7 +137,7 @@ describe('GroupCalendar', () => {
       is_private: true,
       user_id: 'user-2', // not currentUser
     });
-    render(<GroupCalendar events={[privateEvent]} members={mockMembers} currentUserId="user-1" />);
+    render(<GroupCalendar {...defaultProps} events={[privateEvent]} />);
     expect(screen.getByText('busy')).toBeInTheDocument();
     expect(screen.queryByText('Secret Meeting')).not.toBeInTheDocument();
   });
@@ -130,7 +149,7 @@ describe('GroupCalendar', () => {
       is_private: true,
       user_id: 'user-1', // currentUser
     });
-    render(<GroupCalendar events={[privateEvent]} members={mockMembers} currentUserId="user-1" />);
+    render(<GroupCalendar {...defaultProps} events={[privateEvent]} />);
     expect(screen.getByText('My Private Event')).toBeInTheDocument();
     expect(screen.queryByText('busy')).not.toBeInTheDocument();
   });
@@ -144,9 +163,58 @@ describe('GroupCalendar', () => {
       end_date: `${y}-${m}-07`,
       title: 'Conference',
     });
-    render(<GroupCalendar events={[event]} members={mockMembers} currentUserId="user-1" />);
+    render(<GroupCalendar {...defaultProps} events={[event]} />);
     const elements = screen.getAllByText('Conference');
     expect(elements.length).toBeGreaterThanOrEqual(2);
+  });
+
+  // Filter tests
+  it('filters events when a member chip is toggled off', () => {
+    const aliceEvent = makeEvent({ id: 'evt-alice', title: 'Alice Task', user_id: 'user-1' });
+    const bobEvent = makeEvent({ id: 'evt-bob', title: 'Bob Task', user_id: 'user-2' });
+    render(<GroupCalendar {...defaultProps} events={[aliceEvent, bobEvent]} />);
+
+    // Both visible initially
+    expect(screen.getByText('Alice Task')).toBeInTheDocument();
+    expect(screen.getByText('Bob Task')).toBeInTheDocument();
+
+    // Click Bob's chip to toggle off
+    fireEvent.click(screen.getByText('Bob'));
+
+    // Bob's event should be hidden
+    expect(screen.getByText('Alice Task')).toBeInTheDocument();
+    expect(screen.queryByText('Bob Task')).not.toBeInTheDocument();
+  });
+
+  it('toggles all members off and on with "All" chip', () => {
+    const event = makeEvent({ title: 'Visible Event' });
+    render(<GroupCalendar {...defaultProps} events={[event]} />);
+
+    // Click "All" to deselect all
+    fireEvent.click(screen.getByText('allMembers'));
+    expect(screen.queryByText('Visible Event')).not.toBeInTheDocument();
+
+    // Click "All" again to select all
+    fireEvent.click(screen.getByText('allMembers'));
+    expect(screen.getByText('Visible Event')).toBeInTheDocument();
+  });
+
+  // Time display test
+  it('shows time prefix for timed events', () => {
+    const timedEvent = makeEvent({
+      title: 'Standup',
+      is_all_day: false,
+      start_time: '09:30:00',
+      end_time: '10:00:00',
+    });
+    render(<GroupCalendar {...defaultProps} events={[timedEvent]} />);
+    expect(screen.getByText('09:30 Standup')).toBeInTheDocument();
+  });
+
+  it('does not show time prefix for all-day events', () => {
+    const allDayEvent = makeEvent({ title: 'Holiday', is_all_day: true });
+    render(<GroupCalendar {...defaultProps} events={[allDayEvent]} />);
+    expect(screen.getByText('Holiday')).toBeInTheDocument();
   });
 });
 

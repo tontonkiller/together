@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -47,6 +49,8 @@ export default function EventDialog({
 }: EventDialogProps) {
   const t = useTranslations('events');
   const tCommon = useTranslations('common');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isEdit = !!event;
 
   const [title, setTitle] = useState(event?.title ?? '');
@@ -142,7 +146,7 @@ export default function EventDialog({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm" fullScreen={isMobile}>
       <DialogTitle>{isEdit ? t('editEvent') : t('createEvent')}</DialogTitle>
       <DialogContent>
         {error && (

@@ -1,15 +1,23 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
+import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import LockIcon from '@mui/icons-material/Lock';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import EventDialog from '@/app/[locale]/groups/[id]/EventDialog';
+import EventDetailDialog from '@/app/[locale]/groups/[id]/EventDetailDialog';
 import type { CalendarEvent, EventType } from '@/lib/types/events';
+import type { GroupMember } from '@/app/[locale]/groups/[id]/GroupDetailContent';
+import { createClient } from '@/lib/supabase/client';
 
 // Color map for system event types (keyed by DB name)
 const EVENT_TYPE_COLORS: Record<string, string> = {
@@ -25,9 +33,16 @@ function getEventColor(event: CalendarEvent): string {
   return EVENT_TYPE_COLORS[event.event_types.name] ?? DEFAULT_EVENT_COLOR;
 }
 
+interface UserGroup {
+  id: string;
+  name: string;
+}
+
 interface CalendarContentProps {
   events: CalendarEvent[];
   eventTypes: EventType[];
+  userGroups?: UserGroup[];
+  currentUserId?: string;
 }
 
 function getDaysInMonth(year: number, month: number): number {
@@ -65,23 +80,92 @@ const MONTH_NAMES_EN = [
 const DAY_NAMES_FR = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 const DAY_NAMES_EN = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-export default function CalendarContent({ events, eventTypes }: CalendarContentProps) {
+export default function CalendarContent({ events, eventTypes, userGroups = [], currentUserId }: CalendarContentProps) {
   const tEvents = useTranslations('events');
   const t = useTranslations('calendar');
   const locale = useLocale();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
-  const [allEvents, setAllEvents] = useState<CalendarEvent[]>(events);
+  const [myEvents, setMyEvents] = useState<CalendarEvent[]>(events);
+
+  // Group mode state
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [groupEvents, setGroupEvents] = useState<CalendarEvent[]>([]);
+  const [groupMembers, setGroupMembers] = useState<GroupMember[]>([]);
+  const [groupLoading, setGroupLoading] = useState(false);
 
   // Dialog state
   const [createOpen, setCreateOpen] = useState(false);
   const [createDate, setCreateDate] = useState<string | null>(null);
   const [editEvent, setEditEvent] = useState<CalendarEvent | null>(null);
+  const [detailEvent, setDetailEvent] = useState<CalendarEvent | null>(null);
 
   const monthNames = locale === 'fr' ? MONTH_NAMES_FR : MONTH_NAMES_EN;
   const dayNames = locale === 'fr' ? DAY_NAMES_FR : DAY_NAMES_EN;
+
+  const isGroupMode = selectedGroupId !== null;
+  const displayEvents = isGroupMode ? groupEvents : myEvents;
+
+  // Fetch group events & members when a group is selected
+  useEffect(() => {
+    if (!selectedGroupId) return;
+
+    let cancelled = false;
+    setGroupLoading(true);
+
+    async function fetchGroupData() {
+      const supabase = createClient();
+
+      // Fetch members
+      const { data: members } = await supabase
+        .from('group_members')
+        .select('id, user_id, role, color, joined_at, profiles(display_name, avatar_url)')
+        .eq('group_id', selectedGroupId!)
+        .order('joined_at', { ascending: true });
+
+      // Get member user_ids
+      const memberIds = (members ?? []).map((m) => m.user_id);
+
+      // Fetch events for all group members
+      const { data: events } = await supabase
+        .from('events')
+        .select('id, title, description, location, start_date, end_date, start_time, end_time, is_all_day, is_private, user_id, event_type_id, event_types(name, icon)')
+        .in('user_id', memberIds)
+        .order('start_date', { ascending: true });
+
+      if (cancelled) return;
+
+      const normalizedMembers = (members ?? []).map((m) => ({
+        ...m,
+        profiles: Array.isArray(m.profiles) ? m.profiles[0] ?? null : m.profiles,
+      })) as GroupMember[];
+
+      const normalizedEvents = (events ?? []).map((e) => ({
+        ...e,
+        event_types: Array.isArray(e.event_types) ? e.event_types[0] ?? null : e.event_types,
+      })) as CalendarEvent[];
+
+      setGroupMembers(normalizedMembers);
+      setGroupEvents(normalizedEvents);
+      setGroupLoading(false);
+    }
+
+    fetchGroupData();
+    return () => { cancelled = true; };
+  }, [selectedGroupId]);
+
+  // Build member color map for group mode
+  const memberColorMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const m of groupMembers) {
+      map[m.user_id] = m.color;
+    }
+    return map;
+  }, [groupMembers]);
 
   const goToPrev = useCallback(() => {
     setMonth((m) => {
@@ -121,34 +205,103 @@ export default function CalendarContent({ events, eventTypes }: CalendarContentP
     const map: Record<string, CalendarEvent[]> = {};
     for (const cell of calendarDays) {
       if (!cell) continue;
-      const dayEvents = allEvents.filter((e) => isEventOnDay(e, cell.dateStr));
+      const dayEvents = displayEvents.filter((e) => isEventOnDay(e, cell.dateStr));
       if (dayEvents.length > 0) {
         map[cell.dateStr] = dayEvents;
       }
     }
     return map;
-  }, [calendarDays, allEvents]);
+  }, [calendarDays, displayEvents]);
 
   const todayStr = getTodayStr();
 
   const handleDayClick = (dateStr: string) => {
-    // Always open create dialog when clicking the day cell
-    // Individual events can be clicked directly via their pill
+    if (isGroupMode) return; // No creation from group view
     setCreateDate(dateStr);
     setCreateOpen(true);
   };
 
   const handleEventCreated = (event: CalendarEvent) => {
-    setAllEvents((prev) => [...prev, event].sort((a, b) => a.start_date.localeCompare(b.start_date)));
+    setMyEvents((prev) => [...prev, event].sort((a, b) => a.start_date.localeCompare(b.start_date)));
   };
 
   const handleEventUpdated = (event: CalendarEvent) => {
-    setAllEvents((prev) => prev.map((e) => (e.id === event.id ? event : e)));
+    if (isGroupMode) {
+      setGroupEvents((prev) => prev.map((e) => (e.id === event.id ? event : e)));
+    } else {
+      setMyEvents((prev) => prev.map((e) => (e.id === event.id ? event : e)));
+    }
   };
+
+  const handleEventDeleted = (eventId: string) => {
+    if (isGroupMode) {
+      setGroupEvents((prev) => prev.filter((e) => e.id !== eventId));
+    } else {
+      setMyEvents((prev) => prev.filter((e) => e.id !== eventId));
+    }
+  };
+
+  function getEventPillColor(event: CalendarEvent): string {
+    if (isGroupMode) {
+      return memberColorMap[event.user_id] ?? '#999';
+    }
+    return getEventColor(event);
+  }
+
+  function getDisplayTitle(event: CalendarEvent): string {
+    if (isGroupMode && event.is_private && event.user_id !== currentUserId) {
+      return tEvents('busy');
+    }
+    const title = event.title;
+    if (!event.is_all_day && event.start_time) {
+      return `${event.start_time.slice(0, 5)} ${title}`;
+    }
+    return title;
+  }
+
+  function handleEventClick(event: CalendarEvent) {
+    if (isGroupMode) {
+      setDetailEvent(event);
+    } else {
+      setEditEvent(event);
+    }
+  }
 
   return (
     <AuthenticatedLayout>
       <Box sx={{ maxWidth: 600, mx: 'auto' }}>
+        {/* Group selector chips */}
+        {userGroups.length > 0 && (
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 2 }} role="group" aria-label={t('selectGroup')}>
+            <Chip
+              label={t('myEvents')}
+              size="small"
+              variant={!isGroupMode ? 'filled' : 'outlined'}
+              onClick={() => setSelectedGroupId(null)}
+              color={!isGroupMode ? 'primary' : 'default'}
+              sx={{ fontWeight: 600, fontSize: '0.75rem' }}
+            />
+            {userGroups.map((group) => (
+              <Chip
+                key={group.id}
+                label={group.name}
+                size="small"
+                variant={selectedGroupId === group.id ? 'filled' : 'outlined'}
+                onClick={() => setSelectedGroupId(group.id)}
+                color={selectedGroupId === group.id ? 'primary' : 'default'}
+                sx={{ fontSize: '0.75rem' }}
+              />
+            ))}
+          </Box>
+        )}
+
+        {/* Loading indicator for group data */}
+        {groupLoading && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+            <CircularProgress size={24} />
+          </Box>
+        )}
+
         {/* Header: month navigation */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <IconButton onClick={goToPrev} aria-label={t('previousMonth')}>
@@ -161,6 +314,28 @@ export default function CalendarContent({ events, eventTypes }: CalendarContentP
             <ChevronRightIcon />
           </IconButton>
         </Box>
+
+        {/* Member legend in group mode */}
+        {isGroupMode && !groupLoading && groupMembers.length > 0 && (
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1.5 }}>
+            {groupMembers.map((member) => (
+              <Box key={member.id} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Box
+                  sx={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: '50%',
+                    bgcolor: member.color,
+                    flexShrink: 0,
+                  }}
+                />
+                <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                  {member.profiles?.display_name ?? '?'}
+                </Typography>
+              </Box>
+            ))}
+          </Box>
+        )}
 
         {/* Day names header */}
         <Box
@@ -178,7 +353,7 @@ export default function CalendarContent({ events, eventTypes }: CalendarContentP
               variant="caption"
               align="center"
               role="columnheader"
-              sx={{ fontWeight: 600, color: 'text.secondary', py: 0.5 }}
+              sx={{ fontWeight: 600, color: 'text.secondary', py: 0.5, fontSize: isMobile ? '0.6rem' : undefined }}
             >
               {name}
             </Typography>
@@ -186,127 +361,147 @@ export default function CalendarContent({ events, eventTypes }: CalendarContentP
         </Box>
 
         {/* Calendar grid */}
-        <Box
-          role="grid"
-          aria-label={t('title')}
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(7, 1fr)',
-            gap: '1px',
-            bgcolor: 'divider',
-            border: '1px solid',
-            borderColor: 'divider',
-            borderRadius: 1,
-            overflow: 'hidden',
-          }}
-        >
-          {calendarDays.map((cell, idx) => {
-            if (!cell) {
-              return <Box key={`empty-${idx}`} sx={{ bgcolor: 'background.default', minHeight: 64 }} />;
-            }
+        {!groupLoading && (
+          <Box
+            role="grid"
+            aria-label={t('title')}
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(7, 1fr)',
+              gap: '1px',
+              bgcolor: 'divider',
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 1,
+              overflow: 'hidden',
+            }}
+          >
+            {calendarDays.map((cell, idx) => {
+              if (!cell) {
+                return <Box key={`empty-${idx}`} sx={{ bgcolor: 'background.default', minHeight: isMobile ? 48 : 64 }} />;
+              }
 
-            const dayEvents = eventsByDate[cell.dateStr] ?? [];
-            const isToday = cell.dateStr === todayStr;
+              const dayEvents = eventsByDate[cell.dateStr] ?? [];
+              const isToday = cell.dateStr === todayStr;
+              const maxVisible = isMobile ? 2 : 3;
 
-            return (
-              <Box
-                key={cell.dateStr}
-                role="gridcell"
-                tabIndex={0}
-                aria-label={`${cell.day} ${monthNames[month]}${dayEvents.length > 0 ? ` — ${dayEvents.length} ${tEvents('title').toLowerCase()}` : ''}`}
-                onClick={() => handleDayClick(cell.dateStr)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    handleDayClick(cell.dateStr);
-                  }
-                }}
-                sx={{
-                  bgcolor: 'background.paper',
-                  minHeight: 64,
-                  p: 0.5,
-                  cursor: 'pointer',
-                  '&:hover': { bgcolor: 'action.hover' },
-                  '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: -2 },
-                  position: 'relative',
-                }}
-              >
-                <Typography
-                  variant="caption"
+              return (
+                <Box
+                  key={cell.dateStr}
+                  role="gridcell"
+                  tabIndex={0}
+                  aria-label={`${cell.day} ${monthNames[month]}${dayEvents.length > 0 ? ` — ${dayEvents.length} ${tEvents('title').toLowerCase()}` : ''}`}
+                  onClick={() => handleDayClick(cell.dateStr)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleDayClick(cell.dateStr);
+                    }
+                  }}
                   sx={{
-                    fontWeight: isToday ? 700 : 400,
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: 24,
-                    height: 24,
-                    borderRadius: '50%',
-                    bgcolor: isToday ? 'primary.main' : 'transparent',
-                    color: isToday ? 'primary.contrastText' : 'text.primary',
+                    bgcolor: 'background.paper',
+                    minHeight: isMobile ? 48 : 64,
+                    p: 0.5,
+                    cursor: isGroupMode ? 'default' : 'pointer',
+                    ...(!isGroupMode && { '&:hover': { bgcolor: 'action.hover' } }),
+                    '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: -2 },
+                    position: 'relative',
                   }}
                 >
-                  {cell.day}
-                </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontWeight: isToday ? 700 : 400,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      bgcolor: isToday ? 'primary.main' : 'transparent',
+                      color: isToday ? 'primary.contrastText' : 'text.primary',
+                    }}
+                  >
+                    {cell.day}
+                  </Typography>
 
-                {/* Event indicators */}
-                <Box sx={{ mt: 0.25 }}>
-                  {dayEvents.slice(0, 3).map((event) => (
-                    <Box
-                      key={event.id}
-                      role="button"
-                      tabIndex={0}
-                      aria-label={event.title}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setEditEvent(event);
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setEditEvent(event);
-                        }
-                      }}
-                      sx={{
-                        bgcolor: getEventColor(event),
-                        color: '#fff',
-                        borderRadius: 0.5,
-                        px: 0.5,
-                        py: 0.25,
-                        mb: 0.25,
-                        fontSize: '0.65rem',
-                        lineHeight: 1.3,
-                        minHeight: 18,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        cursor: 'pointer',
-                        '&:hover': { opacity: 0.85 },
-                        '&:focus-visible': { outline: '2px solid #fff', outlineOffset: -1 },
-                      }}
-                    >
-                      {event.title}
-                    </Box>
-                  ))}
-                  {dayEvents.length > 3 && (
-                    <Typography variant="caption" sx={{ fontSize: '0.6rem', color: 'text.secondary' }}>
-                      +{dayEvents.length - 3}
-                    </Typography>
-                  )}
+                  {/* Event indicators */}
+                  <Box sx={{ mt: 0.25 }}>
+                    {dayEvents.slice(0, maxVisible).map((event) => {
+                      const pillColor = getEventPillColor(event);
+                      const isPrivateOther = isGroupMode && event.is_private && event.user_id !== currentUserId;
+
+                      return (
+                        <Box
+                          key={event.id}
+                          role="button"
+                          tabIndex={0}
+                          aria-label={getDisplayTitle(event)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEventClick(event);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleEventClick(event);
+                            }
+                          }}
+                          sx={{
+                            ...(event.is_all_day
+                              ? { bgcolor: pillColor, color: '#fff' }
+                              : {
+                                  bgcolor: `${pillColor}22`,
+                                  color: 'text.primary',
+                                  borderLeft: `3px solid ${pillColor}`,
+                                }),
+                            borderRadius: 0.5,
+                            px: 0.5,
+                            py: 0.25,
+                            mb: 0.25,
+                            fontSize: isMobile ? '0.55rem' : '0.65rem',
+                            lineHeight: 1.3,
+                            minHeight: isMobile ? 14 : 18,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.25,
+                            opacity: isPrivateOther ? 0.7 : 1,
+                            '&:hover': { opacity: 0.85 },
+                            '&:focus-visible': { outline: '2px solid #fff', outlineOffset: -1 },
+                          }}
+                        >
+                          {isPrivateOther && <LockIcon sx={{ fontSize: 9 }} />}
+                          {getDisplayTitle(event)}
+                        </Box>
+                      );
+                    })}
+                    {dayEvents.length > maxVisible && (
+                      <Typography variant="caption" sx={{ fontSize: '0.6rem', color: 'text.secondary' }}>
+                        +{dayEvents.length - maxVisible}
+                      </Typography>
+                    )}
+                  </Box>
                 </Box>
-              </Box>
-            );
-          })}
-        </Box>
+              );
+            })}
+          </Box>
+        )}
 
-        {/* Hint */}
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block', textAlign: 'center' }}>
-          {t('clickToCreate')}
-        </Typography>
+        {/* Hint (only in personal mode) */}
+        {!isGroupMode && (
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block', textAlign: 'center' }}>
+            {t('clickToCreate')}
+          </Typography>
+        )}
       </Box>
 
-      {/* Create dialog */}
-      {createOpen && (
+      {/* Create dialog (personal mode only) */}
+      {createOpen && !isGroupMode && (
         <EventDialog
           open
           onClose={() => {
@@ -321,8 +516,8 @@ export default function CalendarContent({ events, eventTypes }: CalendarContentP
         />
       )}
 
-      {/* Edit dialog */}
-      {editEvent && (
+      {/* Edit dialog (personal mode) */}
+      {editEvent && !isGroupMode && (
         <EventDialog
           key={editEvent.id}
           open
@@ -331,6 +526,20 @@ export default function CalendarContent({ events, eventTypes }: CalendarContentP
           eventTypes={eventTypes}
           onEventCreated={handleEventCreated}
           onEventUpdated={handleEventUpdated}
+        />
+      )}
+
+      {/* Detail dialog (group mode) */}
+      {detailEvent && isGroupMode && currentUserId && (
+        <EventDetailDialog
+          open
+          onClose={() => setDetailEvent(null)}
+          event={detailEvent}
+          currentUserId={currentUserId}
+          members={groupMembers}
+          eventTypes={eventTypes}
+          onEventUpdated={handleEventUpdated}
+          onEventDeleted={handleEventDeleted}
         />
       )}
     </AuthenticatedLayout>
