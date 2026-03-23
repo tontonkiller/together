@@ -1,6 +1,7 @@
 import { redirect } from '@/lib/i18n/navigation';
 import { createClient } from '@/lib/supabase/server';
-import DashboardContent, { type DashboardContentProps } from './DashboardContent';
+import { normalizeGroupMembers } from '@/lib/data/normalize';
+import DashboardContent from './DashboardContent';
 
 export default async function DashboardPage({
   params,
@@ -34,18 +35,10 @@ export default async function DashboardPage({
     console.error('[dashboard] Groups fetch failed:', groupsError.message);
   }
 
-  // Supabase JS types joins as arrays, but many-to-one returns an object at runtime.
-  // Map to normalize the shape.
-  const normalizedGroups = (groups ?? []).map((gm) => ({
-    group_id: gm.group_id,
-    role: gm.role,
-    groups: Array.isArray(gm.groups) ? gm.groups[0] ?? null : gm.groups,
-  }));
-
   return (
     <DashboardContent
       profile={profile}
-      groups={normalizedGroups}
+      groups={normalizeGroupMembers(groups ?? [])}
     />
   );
 }
