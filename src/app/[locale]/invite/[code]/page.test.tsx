@@ -42,7 +42,7 @@ describe('InvitePage', () => {
     render(<InvitePage />);
 
     await waitFor(() => {
-      expect(screen.getByText('loginFirst')).toBeInTheDocument();
+      expect(screen.getAllByText('loginFirst').length).toBeGreaterThanOrEqual(1);
     });
 
     // Should not call the API

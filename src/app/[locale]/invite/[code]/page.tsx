@@ -17,6 +17,7 @@ import { useRouter } from '@/lib/i18n/navigation';
 
 export default function InvitePage() {
   const t = useTranslations('invite');
+  const tCommon = useTranslations('common');
   const params = useParams<{ code: string }>();
   const router = useRouter();
   const joinAttempted = useRef(false);
@@ -112,7 +113,7 @@ export default function InvitePage() {
                   fullWidth
                   onClick={() => router.push('/login')}
                 >
-                  {t('joining')}
+                  {t('loginFirst')}
                 </Button>
               </>
             ) : status === 'joined' ? (
@@ -137,7 +138,7 @@ export default function InvitePage() {
                   fullWidth
                   onClick={() => router.push('/')}
                 >
-                  {t('joining')}
+                  {tCommon('goHome')}
                 </Button>
               </>
             ) : null}

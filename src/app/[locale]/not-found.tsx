@@ -26,7 +26,7 @@ export default function NotFound() {
       <Typography variant="body1" color="text.secondary" textAlign="center">
         {t('notFoundMessage')}
       </Typography>
-      <Button variant="contained" href="dashboard">
+      <Button variant="contained" href="/dashboard">
         {t('goHome')}
       </Button>
     </Box>
