@@ -34,6 +34,7 @@ export default function GoogleCalendarSelect({ accountId, accountEmail }: Google
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [autoExpanded, setAutoExpanded] = useState(false);
 
   const fetchCalendars = useCallback(async () => {
     setLoading(true);
@@ -43,18 +44,25 @@ export default function GoogleCalendarSelect({ accountId, accountEmail }: Google
         const data = await res.json();
         setCalendars(data.calendars);
         setLoaded(true);
+        // Auto-expand on first connection (no calendars enabled yet)
+        const hasAnyEnabled = data.calendars.some((c: CalendarItem) => c.is_enabled);
+        if (!hasAnyEnabled && !autoExpanded) {
+          setExpanded(true);
+          setAutoExpanded(true);
+        }
       }
     } catch {
       // Silently fail — user can retry
     }
     setLoading(false);
-  }, [accountId]);
+  }, [accountId, autoExpanded]);
 
+  // Fetch calendars on mount to check if we need to auto-expand
   useEffect(() => {
-    if (expanded && !loaded) {
+    if (!loaded) {
       fetchCalendars();
     }
-  }, [expanded, loaded, fetchCalendars]);
+  }, [loaded, fetchCalendars]);
 
   const handleToggle = (calendarId: string) => {
     setCalendars((prev) =>
