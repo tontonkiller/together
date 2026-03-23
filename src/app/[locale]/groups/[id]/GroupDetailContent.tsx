@@ -28,6 +28,7 @@ import { useRouter } from '@/lib/i18n/navigation';
 import { createClient } from '@/lib/supabase/client';
 import InviteDialog from './InviteDialog';
 import EventList from './EventList';
+import GroupCalendar from './GroupCalendar';
 
 export interface GroupMember {
   id: string;
@@ -296,6 +297,15 @@ export default function GroupDetailContent({
         onEventCreated={handleEventCreated}
         onEventUpdated={handleEventUpdated}
         onEventDeleted={handleEventDeleted}
+      />
+
+      <Divider sx={{ my: 3 }} />
+
+      {/* Group Calendar (M6) */}
+      <GroupCalendar
+        events={events}
+        members={members}
+        currentUserId={currentUserId}
       />
 
       <Divider sx={{ my: 3 }} />

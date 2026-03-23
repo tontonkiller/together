@@ -108,18 +108,19 @@
 
 ---
 
-## M6 — Calendrier de groupe
+## M6 — Calendrier de groupe ✅ DONE
 
 **Objectif** : Vue calendrier agrégée avec les événements de tous les membres.
 
-- [ ] Composant `GroupCalendar` sur la page `/groups/[id]`
-- [ ] Afficher les événements de tous les membres du groupe
-- [ ] Couleur par membre (utilise `group_members.color`, 10 couleurs auto)
-- [ ] Événements privés → affichés comme "Occupé" (titre masqué, couleur du membre)
-- [ ] Légende des couleurs (nom + couleur de chaque membre)
-- [ ] Navigation entre mois
-- [ ] Clés i18n (FR + EN)
-- [ ] Tests unitaires
+- [x] Composant `GroupCalendar` sur la page `/groups/[id]`
+- [x] Afficher les événements de tous les membres du groupe
+- [x] Couleur par membre (utilise `group_members.color`, 10 couleurs auto)
+- [x] Événements privés → affichés comme "Occupé" (titre masqué, icône cadenas, couleur du membre)
+- [x] Légende des couleurs (nom + couleur de chaque membre)
+- [x] Navigation entre mois
+- [x] Clés i18n (FR + EN)
+- [x] Tests unitaires (15 tests)
+- [x] RLS fix: migration 003 permet aux co-membres de voir les événements privés (redactés côté client)
 
 **Tables utilisées** : `events`, `group_members`, `profiles`
 **Critère de done** : Sur la page groupe, on voit le calendrier avec les events de tous les membres, colorés par personne. Les events privés sont masqués.

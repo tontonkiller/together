@@ -142,6 +142,11 @@
     "typeDisponible": "Disponible",
     "typeVoyage": "Voyage"
   },
+  "groupCalendar": {
+    "title": "Calendrier du groupe",
+    "previousMonth": "Mois précédent",
+    "nextMonth": "Mois suivant"
+  },
   "calendar": {
     "title": "Mon calendrier",
     "previousMonth": "Mois précédent",
