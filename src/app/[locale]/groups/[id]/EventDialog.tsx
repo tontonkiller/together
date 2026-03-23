@@ -31,6 +31,7 @@ interface EventDialogProps {
   groupId?: string;
   onEventCreated: (event: CalendarEvent) => void;
   onEventUpdated: (event: CalendarEvent) => void;
+  onEventDeleted?: (eventId: string) => void;
   defaultDate?: string;
 }
 
@@ -45,6 +46,7 @@ export default function EventDialog({
   eventTypes,
   onEventCreated,
   onEventUpdated,
+  onEventDeleted,
   defaultDate,
 }: EventDialogProps) {
   const t = useTranslations('events');
@@ -64,6 +66,7 @@ export default function EventDialog({
   const [eventTypeId, setEventTypeId] = useState(event?.event_type_id ?? '');
   const [isPrivate, setIsPrivate] = useState(event?.is_private ?? false);
   const [loading, setLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const [error, setError] = useState('');
 
   const validate = (): boolean => {
@@ -263,7 +266,26 @@ export default function EventDialog({
           </Typography>
         )}
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ justifyContent: isEdit && onEventDeleted ? 'space-between' : 'flex-end' }}>
+        {isEdit && onEventDeleted && event && (
+          <Button
+            color="error"
+            disabled={deleteLoading}
+            onClick={async () => {
+              setDeleteLoading(true);
+              const supabase = createClient();
+              const { error: delError } = await supabase.from('events').delete().eq('id', event.id);
+              setDeleteLoading(false);
+              if (!delError) {
+                onEventDeleted(event.id);
+                onClose();
+              }
+            }}
+          >
+            {deleteLoading ? <CircularProgress size={20} color="inherit" /> : t('deleteEvent')}
+          </Button>
+        )}
+        <div>
         <Button onClick={onClose}>{tCommon('cancel')}</Button>
         <Button
           onClick={handleSubmit}
@@ -278,6 +300,7 @@ export default function EventDialog({
             t('create')
           )}
         </Button>
+        </div>
       </DialogActions>
     </Dialog>
   );

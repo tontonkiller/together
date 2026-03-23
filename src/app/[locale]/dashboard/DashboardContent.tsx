@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -14,19 +15,11 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import EventIcon from '@mui/icons-material/Event';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
+import EventDialog from '@/app/[locale]/groups/[id]/EventDialog';
 import { useRouter } from '@/lib/i18n/navigation';
+import type { CalendarEvent, EventType } from '@/lib/types/events';
 
-export interface UpcomingEvent {
-  id: string;
-  title: string;
-  start_date: string;
-  end_date: string;
-  is_all_day: boolean;
-  start_time: string | null;
-  end_time: string | null;
-  event_type_id: string | null;
-  event_types: { name: string; icon: string | null } | null;
-}
+export type UpcomingEvent = CalendarEvent;
 
 export interface DashboardContentProps {
   profile: { display_name: string } | null;
@@ -36,6 +29,7 @@ export interface DashboardContentProps {
     groups: { id: string; name: string; description: string | null } | null;
   }>;
   upcomingEvents: UpcomingEvent[];
+  eventTypes: EventType[];
 }
 
 function formatEventDate(startDate: string, endDate: string, isAllDay: boolean, startTime: string | null): string {
@@ -53,9 +47,19 @@ function formatEventDate(startDate: string, endDate: string, isAllDay: boolean, 
   return dateStr;
 }
 
-export default function DashboardContent({ profile, groups, upcomingEvents }: DashboardContentProps) {
+export default function DashboardContent({ profile, groups, upcomingEvents, eventTypes }: DashboardContentProps) {
   const t = useTranslations('dashboard');
   const router = useRouter();
+  const [events, setEvents] = useState(upcomingEvents);
+  const [editEvent, setEditEvent] = useState<CalendarEvent | null>(null);
+
+  const handleEventUpdated = (updated: CalendarEvent) => {
+    setEvents((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
+  };
+
+  const handleEventDeleted = (eventId: string) => {
+    setEvents((prev) => prev.filter((e) => e.id !== eventId));
+  };
 
   return (
     <AuthenticatedLayout>
@@ -63,40 +67,7 @@ export default function DashboardContent({ profile, groups, upcomingEvents }: Da
         {t('greeting', { name: profile?.display_name ?? 'User' })}
       </Typography>
 
-      {/* Upcoming events */}
-      {upcomingEvents.length > 0 && (
-        <>
-          <Typography variant="h3" sx={{ mb: 1.5 }}>
-            {t('upcomingEvents')}
-          </Typography>
-          <Stack spacing={1} sx={{ mb: 3 }}>
-            {upcomingEvents.map((event) => (
-              <Card key={event.id} variant="outlined">
-                <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
-                      <EventIcon color="primary" sx={{ fontSize: 20 }} />
-                      <Box sx={{ minWidth: 0 }}>
-                        <Typography variant="subtitle2" noWrap>
-                          {event.title}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {formatEventDate(event.start_date, event.end_date, event.is_all_day, event.start_time)}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    {event.event_types && (
-                      <Chip label={event.event_types.name} size="small" variant="outlined" />
-                    )}
-                  </Box>
-                </CardContent>
-              </Card>
-            ))}
-          </Stack>
-        </>
-      )}
-
-      {/* Groups */}
+      {/* Groups first */}
       <Typography variant="h3" sx={{ mb: 2 }}>
         {t('myGroups')}
       </Typography>
@@ -153,9 +124,65 @@ export default function DashboardContent({ profile, groups, upcomingEvents }: Da
         startIcon={<AddIcon />}
         fullWidth
         onClick={() => router.push('/groups/new')}
+        sx={{ mb: 3 }}
       >
         {t('createGroup')}
       </Button>
+
+      {/* Upcoming events below */}
+      {events.length > 0 && (
+        <>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>
+            {t('upcomingEvents')}
+          </Typography>
+          <Stack spacing={1}>
+            {events.map((event) => (
+              <Card key={event.id} variant="outlined">
+                <CardActionArea onClick={() => setEditEvent(event)}>
+                  <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
+                        <EventIcon color="primary" sx={{ fontSize: 20 }} />
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography variant="subtitle2" noWrap>
+                            {event.title}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {formatEventDate(event.start_date, event.end_date, event.is_all_day, event.start_time)}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        {event.event_types && (
+                          <Chip label={event.event_types.name} size="small" variant="outlined" />
+                        )}
+                        <ChevronRightIcon color="action" sx={{ fontSize: 20 }} />
+                      </Box>
+                    </Box>
+                  </CardContent>
+                </CardActionArea>
+              </Card>
+            ))}
+          </Stack>
+        </>
+      )}
+
+      {/* Edit event dialog */}
+      {editEvent && (
+        <EventDialog
+          key={editEvent.id}
+          open
+          onClose={() => setEditEvent(null)}
+          event={editEvent}
+          eventTypes={eventTypes}
+          onEventCreated={() => {}}
+          onEventUpdated={(updated) => {
+            handleEventUpdated(updated);
+            setEditEvent(null);
+          }}
+          onEventDeleted={handleEventDeleted}
+        />
+      )}
     </AuthenticatedLayout>
   );
 }
