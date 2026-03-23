@@ -111,7 +111,7 @@ export default function InvitePage() {
                 <Button
                   variant="contained"
                   fullWidth
-                  onClick={() => router.push('/login')}
+                  onClick={() => router.push(`/login?next=${encodeURIComponent(`/invite/${params.code}`)}`)}
                 >
                   {t('loginFirst')}
                 </Button>

@@ -20,6 +20,12 @@ export default function LoginPage() {
   const locale = useLocale();
   const searchParams = useSearchParams();
   const callbackError = searchParams.get('error') === 'auth';
+  const next = searchParams.get('next');
+
+  function getCallbackUrl() {
+    const base = `${window.location.origin}/${locale}/auth/callback`;
+    return next ? `${base}?next=${encodeURIComponent(next)}` : base;
+  }
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -40,7 +46,7 @@ export default function LoginPage() {
     const { error: authError } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/${locale}/auth/callback`,
+        emailRedirectTo: getCallbackUrl(),
       },
     });
 
@@ -60,7 +66,7 @@ export default function LoginPage() {
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/${locale}/auth/callback`,
+        redirectTo: getCallbackUrl(),
       },
     });
 
