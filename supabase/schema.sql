@@ -216,11 +216,10 @@ create policy "Users can manage own events"
   on events for all to authenticated
   using (user_id = auth.uid());
 
-create policy "Group members can view non-private events of co-members"
+create policy "Group members can view all events of co-members"
   on events for select to authenticated
   using (
-    is_private = false
-    and user_id in (
+    user_id in (
       select gm2.user_id from group_members gm1
       join group_members gm2 on gm1.group_id = gm2.group_id
       where gm1.user_id = auth.uid()
