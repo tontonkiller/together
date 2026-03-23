@@ -9,9 +9,7 @@ import Chip from '@mui/material/Chip';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import Button from '@mui/material/Button';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import AddIcon from '@mui/icons-material/Add';
 import LockIcon from '@mui/icons-material/Lock';
 import { getContrastTextColor } from '@/lib/utils/colors';
 import type { CalendarEvent, EventType } from '@/lib/types/events';
@@ -25,7 +23,7 @@ interface GroupCalendarProps {
   eventTypes: EventType[];
   onEventUpdated: (event: CalendarEvent) => void;
   onEventDeleted: (eventId: string) => void;
-  onCreateEvent?: () => void;
+  onDayClick?: (date: string) => void;
   googleEventIds?: string[];
 }
 
@@ -62,7 +60,7 @@ const MONTH_NAMES_EN = [
 const DAY_NAMES_FR = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 const DAY_NAMES_EN = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-export default function GroupCalendar({ events, members, currentUserId, eventTypes, onEventUpdated, onEventDeleted, onCreateEvent, googleEventIds = [] }: GroupCalendarProps) {
+export default function GroupCalendar({ events, members, currentUserId, eventTypes, onEventUpdated, onEventDeleted, onDayClick, googleEventIds = [] }: GroupCalendarProps) {
   const t = useTranslations('groupCalendar');
   const tEvents = useTranslations('events');
   const locale = useLocale();
@@ -178,19 +176,7 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-        <Typography variant="h3">{t('title')}</Typography>
-        {onCreateEvent && (
-          <Button
-            startIcon={<AddIcon />}
-            size="small"
-            variant="contained"
-            onClick={onCreateEvent}
-          >
-            {tEvents('create')}
-          </Button>
-        )}
-      </Box>
+      <Typography variant="h3" sx={{ mb: 1 }}>{t('title')}</Typography>
 
       {/* Month navigation */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
@@ -290,11 +276,13 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
               key={cell.dateStr}
               role="gridcell"
               aria-label={`${cell.day} ${monthNames[month]}${dayEvents.length > 0 ? ` — ${dayEvents.length} ${tEvents('title').toLowerCase()}` : ''}`}
+              onClick={() => onDayClick?.(cell.dateStr)}
               sx={{
                 bgcolor: 'background.paper',
                 minHeight: isMobile ? 40 : 56,
                 p: isMobile ? 0.25 : 0.5,
                 position: 'relative',
+                cursor: onDayClick ? 'pointer' : undefined,
               }}
             >
               <Typography
@@ -326,7 +314,7 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
                       role="button"
                       tabIndex={0}
                       aria-label={getDisplayTitle(event)}
-                      onClick={() => setSelectedEvent(event)}
+                      onClick={(e) => { e.stopPropagation(); setSelectedEvent(event); }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
