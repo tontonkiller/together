@@ -59,6 +59,7 @@ interface GroupDetailContentProps {
   invitations: PendingInvitation[];
   events: GroupEvent[];
   eventTypes: EventType[];
+  googleEventIds?: string[];
 }
 
 export default function GroupDetailContent({
@@ -69,6 +70,7 @@ export default function GroupDetailContent({
   invitations,
   events: initialEvents,
   eventTypes,
+  googleEventIds = [],
 }: GroupDetailContentProps) {
   const t = useTranslations('groups');
   const tCommon = useTranslations('common');
@@ -309,6 +311,7 @@ export default function GroupDetailContent({
         eventTypes={eventTypes}
         onEventUpdated={handleEventUpdated}
         onEventDeleted={handleEventDeleted}
+        googleEventIds={googleEventIds}
       />
 
       <Divider sx={{ my: 3 }} />
