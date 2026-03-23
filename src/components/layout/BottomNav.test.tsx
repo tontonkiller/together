@@ -20,9 +20,10 @@ describe('BottomNav', () => {
     mockPathname = '/dashboard';
   });
 
-  it('renders groups and profile tabs', () => {
+  it('renders groups, calendar, and profile tabs', () => {
     render(<BottomNav />);
     expect(screen.getByText('groups')).toBeInTheDocument();
+    expect(screen.getByText('calendar')).toBeInTheDocument();
     expect(screen.getByText('profile')).toBeInTheDocument();
   });
 
@@ -38,6 +39,13 @@ describe('BottomNav', () => {
     render(<BottomNav />);
     const groupsBtn = screen.getByText('groups').closest('button');
     expect(groupsBtn).toHaveClass('Mui-selected');
+  });
+
+  it('highlights calendar tab on /calendar', () => {
+    mockPathname = '/calendar';
+    render(<BottomNav />);
+    const calendarBtn = screen.getByText('calendar').closest('button');
+    expect(calendarBtn).toHaveClass('Mui-selected');
   });
 
   it('highlights profile tab on /profile', () => {
@@ -58,7 +66,8 @@ describe('BottomNav', () => {
 describe('BottomNav path logic (unit)', () => {
   function getValue(pathname: string): number {
     if (pathname.startsWith('/dashboard') || pathname.startsWith('/groups')) return 0;
-    if (pathname.startsWith('/profile')) return 1;
+    if (pathname.startsWith('/calendar')) return 1;
+    if (pathname.startsWith('/profile')) return 2;
     return 0;
   }
 
@@ -67,8 +76,9 @@ describe('BottomNav path logic (unit)', () => {
   it('/groups → 0', () => expect(getValue('/groups')).toBe(0));
   it('/groups/123 → 0', () => expect(getValue('/groups/123')).toBe(0));
   it('/groups/new → 0', () => expect(getValue('/groups/new')).toBe(0));
-  it('/profile → 1', () => expect(getValue('/profile')).toBe(1));
-  it('/profile/settings → 1', () => expect(getValue('/profile/settings')).toBe(1));
+  it('/calendar → 1', () => expect(getValue('/calendar')).toBe(1));
+  it('/profile → 2', () => expect(getValue('/profile')).toBe(2));
+  it('/profile/settings → 2', () => expect(getValue('/profile/settings')).toBe(2));
   it('/ → 0 (default)', () => expect(getValue('/')).toBe(0));
   it('/unknown → 0 (default)', () => expect(getValue('/unknown')).toBe(0));
 });

@@ -87,19 +87,21 @@
 
 ---
 
-## M5 — Calendrier personnel
+## M5 — Calendrier personnel ✅ DONE
 
 **Objectif** : Vue calendrier mensuelle pour voir ses propres événements.
 
-- [ ] Installer FullCalendar (`@fullcalendar/core`, `daygrid`, `react`, `interaction`)
-- [ ] Composant `PersonalCalendar` avec vue mois
-- [ ] Page `/calendar` accessible depuis le BottomNav
-- [ ] Afficher mes événements sur le calendrier (barres colorées par type)
-- [ ] Clic sur un jour → ouvrir le formulaire de création (date pré-remplie)
-- [ ] Clic sur un événement → voir détail / modifier
-- [ ] Navigation entre mois (< > + titre mois/année)
-- [ ] Clés i18n (FR + EN)
-- [ ] Tests unitaires
+- [x] Calendrier custom (grille CSS, pas FullCalendar — plus léger)
+- [x] Composant `CalendarContent` avec vue mois
+- [x] Page `/calendar` accessible depuis le BottomNav
+- [x] Afficher mes événements sur le calendrier (barres colorées par type)
+- [x] Clic sur un jour → ouvrir le formulaire de création (date pré-remplie)
+- [x] Clic sur un événement → voir détail / modifier
+- [x] Navigation entre mois (< > + titre mois/année)
+- [x] Clés i18n (FR + EN)
+- [x] Tests unitaires
+- [x] Types partagés (`@/lib/types/events`) entre calendrier et groupes
+- [x] Accessibilité (role="grid", tabIndex, aria-labels, focus-visible)
 
 **Tables utilisées** : `events`, `event_types`
 **Critère de done** : L'utilisateur voit ses events dans un calendrier mensuel et peut créer/modifier depuis le calendrier.

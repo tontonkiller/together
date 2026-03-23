@@ -19,16 +19,17 @@ import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 import { createClient } from '@/lib/supabase/client';
-import type { GroupEvent, EventType } from './GroupDetailContent';
+import type { CalendarEvent, EventType } from '@/lib/types/events';
 
 interface EventDialogProps {
   open: boolean;
   onClose: () => void;
-  event: GroupEvent | null; // null = create mode
+  event: CalendarEvent | null; // null = create mode
   eventTypes: EventType[];
-  groupId: string;
-  onEventCreated: (event: GroupEvent) => void;
-  onEventUpdated: (event: GroupEvent) => void;
+  groupId?: string;
+  onEventCreated: (event: CalendarEvent) => void;
+  onEventUpdated: (event: CalendarEvent) => void;
+  defaultDate?: string;
 }
 
 function todayStr() {
@@ -42,6 +43,7 @@ export default function EventDialog({
   eventTypes,
   onEventCreated,
   onEventUpdated,
+  defaultDate,
 }: EventDialogProps) {
   const t = useTranslations('events');
   const tCommon = useTranslations('common');
@@ -50,8 +52,8 @@ export default function EventDialog({
   const [title, setTitle] = useState(event?.title ?? '');
   const [description, setDescription] = useState(event?.description ?? '');
   const [location, setLocation] = useState(event?.location ?? '');
-  const [startDate, setStartDate] = useState(event?.start_date ?? todayStr());
-  const [endDate, setEndDate] = useState(event?.end_date ?? todayStr());
+  const [startDate, setStartDate] = useState(event?.start_date ?? defaultDate ?? todayStr());
+  const [endDate, setEndDate] = useState(event?.end_date ?? defaultDate ?? todayStr());
   const [isAllDay, setIsAllDay] = useState(event?.is_all_day ?? true);
   const [startTime, setStartTime] = useState(event?.start_time ?? '09:00');
   const [endTime, setEndTime] = useState(event?.end_time ?? '17:00');
@@ -119,7 +121,7 @@ export default function EventDialog({
       if (updateError) {
         setError(t('updateError'));
       } else if (data) {
-        onEventUpdated(data as GroupEvent);
+        onEventUpdated(data as CalendarEvent);
         onClose();
       }
     } else {
@@ -133,7 +135,7 @@ export default function EventDialog({
       if (createError) {
         setError(t('createError'));
       } else if (data) {
-        onEventCreated(data as GroupEvent);
+        onEventCreated(data as CalendarEvent);
         onClose();
       }
     }
