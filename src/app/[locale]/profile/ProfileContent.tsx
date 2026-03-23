@@ -26,6 +26,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
 import DeleteIcon from '@mui/icons-material/Delete';
+import GoogleCalendarSelect from './GoogleCalendarSelect';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from '@/lib/i18n/navigation';
@@ -262,24 +263,27 @@ export default function ProfileContent({ profile, email, googleAccounts: initial
         {googleAccounts.length > 0 && (
           <List disablePadding>
             {googleAccounts.map((account) => (
-              <ListItem
-                key={account.id}
-                secondaryAction={
-                  <IconButton
-                    edge="end"
-                    color="error"
-                    onClick={() => setDisconnectDialogId(account.id)}
-                    aria-label={tGoogle('disconnect')}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                }
-                sx={{ pl: 0 }}
-              >
-                <ListItemText
-                  primary={account.google_email}
+              <Box key={account.id}>
+                <ListItem
+                  secondaryAction={
+                    <IconButton
+                      edge="end"
+                      color="error"
+                      onClick={() => setDisconnectDialogId(account.id)}
+                      aria-label={tGoogle('disconnect')}
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  }
+                  sx={{ pl: 0 }}
+                >
+                  <ListItemText primary={account.google_email} />
+                </ListItem>
+                <GoogleCalendarSelect
+                  accountId={account.id}
+                  accountEmail={account.google_email}
                 />
-              </ListItem>
+              </Box>
             ))}
           </List>
         )}
