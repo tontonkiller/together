@@ -34,10 +34,29 @@ export default async function DashboardPage({
     console.error('[dashboard] Groups fetch failed:', groupsError.message);
   }
 
+  // Fetch upcoming events (next 30 days)
+  const today = new Date().toISOString().split('T')[0];
+  const { data: upcomingEvents, error: eventsError } = await supabase
+    .from('events')
+    .select('id, title, start_date, end_date, is_all_day, start_time, end_time, event_type_id, event_types(name, icon)')
+    .eq('user_id', user.id)
+    .gte('end_date', today)
+    .order('start_date', { ascending: true })
+    .limit(5);
+  if (eventsError) {
+    console.error('[dashboard] Events fetch failed:', eventsError.message);
+  }
+
+  const normalizedEvents = (upcomingEvents ?? []).map((e) => ({
+    ...e,
+    event_types: Array.isArray(e.event_types) ? e.event_types[0] ?? null : e.event_types,
+  }));
+
   return (
     <DashboardContent
       profile={profile}
       groups={(groups ?? []) as DashboardContentProps['groups']}
+      upcomingEvents={normalizedEvents as DashboardContentProps['upcomingEvents']}
     />
   );
 }

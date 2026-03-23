@@ -8,11 +8,25 @@ import CardActionArea from '@mui/material/CardActionArea';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
+import Chip from '@mui/material/Chip';
 import AddIcon from '@mui/icons-material/Add';
 import GroupsIcon from '@mui/icons-material/Groups';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import EventIcon from '@mui/icons-material/Event';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import { useRouter } from '@/lib/i18n/navigation';
+
+export interface UpcomingEvent {
+  id: string;
+  title: string;
+  start_date: string;
+  end_date: string;
+  is_all_day: boolean;
+  start_time: string | null;
+  end_time: string | null;
+  event_type_id: string | null;
+  event_types: { name: string; icon: string | null } | null;
+}
 
 export interface DashboardContentProps {
   profile: { display_name: string } | null;
@@ -21,9 +35,25 @@ export interface DashboardContentProps {
     role: string;
     groups: { id: string; name: string; description: string | null }[] | null;
   }>;
+  upcomingEvents: UpcomingEvent[];
 }
 
-export default function DashboardContent({ profile, groups }: DashboardContentProps) {
+function formatEventDate(startDate: string, endDate: string, isAllDay: boolean, startTime: string | null): string {
+  const start = new Date(startDate + 'T00:00:00');
+  const dateOpts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+  const dateStr = start.toLocaleDateString(undefined, dateOpts);
+
+  if (startDate !== endDate) {
+    const end = new Date(endDate + 'T00:00:00');
+    return `${dateStr} → ${end.toLocaleDateString(undefined, dateOpts)}`;
+  }
+  if (!isAllDay && startTime) {
+    return `${dateStr} ${startTime.slice(0, 5)}`;
+  }
+  return dateStr;
+}
+
+export default function DashboardContent({ profile, groups, upcomingEvents }: DashboardContentProps) {
   const t = useTranslations('dashboard');
   const router = useRouter();
 
@@ -33,6 +63,40 @@ export default function DashboardContent({ profile, groups }: DashboardContentPr
         {t('greeting', { name: profile?.display_name ?? 'User' })}
       </Typography>
 
+      {/* Upcoming events */}
+      {upcomingEvents.length > 0 && (
+        <>
+          <Typography variant="h3" sx={{ mb: 1.5 }}>
+            {t('upcomingEvents')}
+          </Typography>
+          <Stack spacing={1} sx={{ mb: 3 }}>
+            {upcomingEvents.map((event) => (
+              <Card key={event.id} variant="outlined">
+                <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
+                      <EventIcon color="primary" sx={{ fontSize: 20 }} />
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="subtitle2" noWrap>
+                          {event.title}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {formatEventDate(event.start_date, event.end_date, event.is_all_day, event.start_time)}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    {event.event_types && (
+                      <Chip label={event.event_types.name} size="small" variant="outlined" />
+                    )}
+                  </Box>
+                </CardContent>
+              </Card>
+            ))}
+          </Stack>
+        </>
+      )}
+
+      {/* Groups */}
       <Typography variant="h3" sx={{ mb: 2 }}>
         {t('myGroups')}
       </Typography>

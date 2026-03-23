@@ -25,17 +25,17 @@
 
 ---
 
-## M2 — Page groupe enrichie
+## M2 — Page groupe enrichie ✅ DONE
 
 **Objectif** : La page `/groups/[id]` affiche les membres et permet de gérer le groupe.
 
-- [ ] Afficher la liste des membres du groupe (nom, avatar, rôle, couleur)
-- [ ] Badge admin/membre à côté de chaque nom
-- [ ] Bouton "Quitter le groupe" (pour les membres non-admin)
-- [ ] Si admin quitte : transfert automatique au membre le plus ancien
-- [ ] Bouton supprimer le groupe (admin only)
-- [ ] Renommer le groupe (admin only, inline edit ou dialog)
-- [ ] Clés i18n pour les nouvelles strings (FR + EN)
+- [x] Afficher la liste des membres du groupe (nom, avatar, rôle, couleur)
+- [x] Badge admin/membre à côté de chaque nom
+- [x] Bouton "Quitter le groupe" (pour les membres non-admin)
+- [x] Si admin quitte : transfert automatique au membre le plus ancien
+- [x] Bouton supprimer le groupe (admin only)
+- [x] Renommer le groupe (admin only, inline edit ou dialog)
+- [x] Clés i18n pour les nouvelles strings (FR + EN)
 - [ ] Tests unitaires
 
 **Tables utilisées** : `groups`, `group_members`, `profiles`
@@ -43,42 +43,43 @@
 
 ---
 
-## M3 — Invitations
+## M3 — Invitations ✅ DONE
 
 **Objectif** : Inviter des gens à rejoindre un groupe, accepter une invitation.
 
-- [ ] Bouton "Inviter" sur la page groupe (admin only)
-- [ ] Dialog d'invitation avec 2 options :
+- [x] Bouton "Inviter" sur la page groupe (admin only)
+- [x] Dialog d'invitation avec 2 options :
   - Saisir un email → crée une invitation en DB
   - Copier le lien d'invitation (utilise `invite_code` du groupe)
-- [ ] Page `/invite/[code]` : accepter une invitation par lien
+- [x] Page `/invite/[code]` : accepter une invitation par lien
   - Si connecté → rejoint le groupe directement
   - Si pas connecté → login puis rejoint
 - [ ] Acceptation par email : l'utilisateur reçoit un email, clique, et rejoint
-- [ ] Afficher les invitations en attente sur la page groupe (admin)
-- [ ] Expiration auto après 7 jours (géré par la DB, afficher le statut)
-- [ ] Clés i18n (FR + EN)
+- [x] Afficher les invitations en attente sur la page groupe (admin)
+- [x] Expiration auto après 7 jours (géré par la DB, afficher le statut)
+- [x] Clés i18n (FR + EN)
 - [ ] Tests unitaires
+- [x] SQL functions (SECURITY DEFINER) pour join-by-invite-code
 
 **Tables utilisées** : `invitations`, `group_members`
 **Critère de done** : Un admin peut inviter par email ou lien. L'invité peut accepter et apparaît dans le groupe.
 
 ---
 
-## M4 — CRUD événements
+## M4 — CRUD événements ✅ DONE
 
 **Objectif** : Créer, voir, modifier et supprimer des événements.
 
-- [ ] Page/dialog création d'événement depuis la page groupe
-- [ ] Formulaire : titre, description, lieu (texte libre), dates début/fin
-- [ ] Toggle journée entière vs créneau horaire (start_time/end_time)
-- [ ] Sélecteur de type d'événement (Vacances, Disponible, Voyage, Custom)
-- [ ] Checkbox "Événement privé" (apparaîtra comme "Occupé" dans le groupe)
-- [ ] Liste des événements sur la page groupe (triés par date)
-- [ ] Modifier un événement (owner only)
-- [ ] Supprimer un événement (owner only, avec confirmation)
-- [ ] Section "Prochains événements" sur le dashboard
-- [ ] Clés i18n (FR + EN)
+- [x] Page/dialog création d'événement depuis la page groupe
+- [x] Formulaire : titre, description, lieu (texte libre), dates début/fin
+- [x] Toggle journée entière vs créneau horaire (start_time/end_time)
+- [x] Sélecteur de type d'événement (Vacances, Disponible, Voyage, Custom)
+- [x] Checkbox "Événement privé" (apparaîtra comme "Occupé" dans le groupe)
+- [x] Liste des événements sur la page groupe (triés par date)
+- [x] Modifier un événement (owner only)
+- [x] Supprimer un événement (owner only, avec confirmation)
+- [x] Section "Prochains événements" sur le dashboard
+- [x] Clés i18n (FR + EN)
 - [ ] Tests unitaires
 
 **Tables utilisées** : `events`, `event_types`

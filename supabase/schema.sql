@@ -281,3 +281,63 @@ create trigger groups_updated_at before update on groups
 
 create trigger events_updated_at before update on events
   for each row execute function update_updated_at();
+
+-- ============================================
+-- HELPER: Find group by invite code (SECURITY DEFINER)
+-- Allows non-members to look up a group by its secret invite code
+-- ============================================
+create or replace function find_group_by_invite_code(code_param text)
+returns table(id uuid, name text)
+language sql
+security definer
+set search_path = public
+as $$
+  select g.id, g.name
+  from groups g
+  where g.invite_code = code_param
+  limit 1;
+$$;
+
+-- ============================================
+-- HELPER: Join group by invite code (SECURITY DEFINER)
+-- Atomically finds group + inserts member + marks invitations accepted
+-- ============================================
+create or replace function join_group_by_invite_code(code_param text, member_color text)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  group_record record;
+  result_group_id uuid;
+begin
+  select g.id, g.name into group_record
+  from groups g
+  where g.invite_code = code_param;
+
+  if group_record is null then
+    raise exception 'Invalid invite code';
+  end if;
+
+  result_group_id := group_record.id;
+
+  if exists (
+    select 1 from group_members
+    where group_id = result_group_id and user_id = auth.uid()
+  ) then
+    return result_group_id;
+  end if;
+
+  insert into group_members (group_id, user_id, role, color)
+  values (result_group_id, auth.uid(), 'member', member_color);
+
+  update invitations
+  set status = 'accepted'
+  where group_id = result_group_id
+    and invited_email = (select email from auth.users where id = auth.uid())
+    and status = 'pending';
+
+  return result_group_id;
+end;
+$$;
