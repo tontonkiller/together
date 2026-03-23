@@ -40,10 +40,11 @@ create table if not exists groups (
 
 alter table groups enable row level security;
 
-create policy "Group members can view their groups"
+create policy "Group members and creators can view their groups"
   on groups for select to authenticated
   using (
-    id in (select group_id from group_members where user_id = auth.uid())
+    created_by = auth.uid()
+    or id in (select group_id from group_members where user_id = auth.uid())
   );
 
 create policy "Authenticated users can create groups"
@@ -84,12 +85,33 @@ create table if not exists group_members (
 -- Index for RLS subqueries (user_id is frequently filtered alone)
 create index if not exists idx_group_members_user_id on group_members(user_id);
 
+-- Helper functions (SECURITY DEFINER) to avoid infinite recursion in RLS policies
+create or replace function is_group_creator(p_group_id uuid, p_user_id uuid)
+returns boolean language sql security definer set search_path = public as $$
+  select exists (select 1 from groups where id = p_group_id and created_by = p_user_id);
+$$;
+
+create or replace function has_pending_invitation(p_group_id uuid, p_user_id uuid)
+returns boolean language sql security definer set search_path = public as $$
+  select exists (
+    select 1 from invitations
+    where group_id = p_group_id
+      and invited_email = (select email from auth.users where id = p_user_id)
+      and status = 'pending' and expires_at > now()
+  );
+$$;
+
+create or replace function is_group_member(p_group_id uuid, p_user_id uuid)
+returns boolean language sql security definer set search_path = public as $$
+  select exists (select 1 from group_members where group_id = p_group_id and user_id = p_user_id);
+$$;
+
 alter table group_members enable row level security;
 
 create policy "Group members can view other members in their groups"
   on group_members for select to authenticated
   using (
-    group_id in (select group_id from group_members where user_id = auth.uid())
+    is_group_member(group_id, auth.uid())
   );
 
 -- Users can only join groups they were invited to or that they just created
@@ -98,15 +120,8 @@ create policy "Users can join groups via invitation or as creator"
   with check (
     user_id = auth.uid()
     and (
-      -- Creator adding themselves as admin to their own group
-      group_id in (select id from groups where created_by = auth.uid())
-      -- Or user has a pending invitation
-      or group_id in (
-        select group_id from invitations
-        where invited_email = (select email from auth.users where id = auth.uid())
-          and status = 'pending'
-          and expires_at > now()
-      )
+      is_group_creator(group_id, auth.uid())
+      or has_pending_invitation(group_id, auth.uid())
     )
   );
 

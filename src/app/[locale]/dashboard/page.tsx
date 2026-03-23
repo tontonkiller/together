@@ -34,6 +34,14 @@ export default async function DashboardPage({
     console.error('[dashboard] Groups fetch failed:', groupsError.message);
   }
 
+  // Supabase JS types joins as arrays, but many-to-one returns an object at runtime.
+  // Map to normalize the shape.
+  const normalizedGroups = (groups ?? []).map((gm) => ({
+    group_id: gm.group_id,
+    role: gm.role,
+    groups: Array.isArray(gm.groups) ? gm.groups[0] ?? null : gm.groups,
+  }));
+
   // Fetch upcoming events (next 30 days)
   const today = new Date().toISOString().split('T')[0];
   const { data: upcomingEvents, error: eventsError } = await supabase
@@ -55,7 +63,7 @@ export default async function DashboardPage({
   return (
     <DashboardContent
       profile={profile}
-      groups={(groups ?? []) as DashboardContentProps['groups']}
+      groups={normalizedGroups}
       upcomingEvents={normalizedEvents as DashboardContentProps['upcomingEvents']}
     />
   );
