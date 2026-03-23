@@ -106,11 +106,120 @@
 
 ---
 
+## M9a — Google Calendar: OAuth + Connexion comptes
+
+> Spec complète : `tasks/google-sync-spec.md`
+
+### Database (migration SQL à exécuter manuellement dans Supabase)
+- [ ] Table `google_accounts` (id, user_id, google_email, encrypted_refresh_token, access_token, token_expires_at, created_at)
+- [ ] Table `google_calendars` (id, google_account_id, google_calendar_id, name, color, is_enabled, created_at)
+- [ ] Table `google_synced_events` (id, google_calendar_id, google_event_id, event_id FK→events, status pending/accepted/refused, visibility details/busy, cached fields, google_updated_at, last_synced_at)
+- [ ] RLS policies : user peut CRUD ses propres google_accounts/calendars/synced_events
+- [ ] Index sur google_synced_events(google_calendar_id, google_event_id) UNIQUE
+
+### Google OAuth flow (scope calendar.readonly)
+- [ ] API route `POST /api/google/connect` — génère l'URL OAuth Google avec state=userId, scope=calendar.readonly, access_type=offline, prompt=consent
+- [ ] API route `GET /api/google/callback` — échange code → tokens, stocke refresh_token dans google_accounts, redirige vers /profile
+- [ ] Env vars : `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` (+ doc dans README)
+
+### Token management (lib utilitaire)
+- [ ] `src/lib/google/tokens.ts` — getValidAccessToken(googleAccountId) : vérifie expiry, refresh si besoin via Google API, met à jour en DB
+- [ ] Utilise le service account Supabase (service_role key) pour lire/écrire les tokens côté serveur
+
+### Profile UI
+- [ ] Section "Google Calendar" sur la page profil avec :
+  - Bouton "Connecter Google Calendar" → redirige vers /api/google/connect
+  - Liste des comptes connectés (email + bouton déconnecter)
+  - Déconnexion → supprime google_account + cascade google_calendars + cascade google_synced_events + supprime events liés
+
+### i18n
+- [ ] Clés FR + EN pour la section Google Calendar du profil
+
+---
+
+## M9b — Google Calendar: Sélection des calendriers
+
+### API
+- [ ] API route `GET /api/google/calendars?accountId=X` — récupère la liste des calendriers Google via API, compare avec google_calendars en DB, retourne les deux
+- [ ] API route `POST /api/google/calendars` — sauvegarde la sélection (enabled/disabled) en DB
+
+### UI (page profil ou sous-page)
+- [ ] Après connexion d'un compte, afficher la liste des calendriers Google avec toggle on/off
+- [ ] Sauvegarder les choix en DB
+
+### i18n
+- [ ] Clés FR + EN pour sélection calendriers
+
+---
+
+## M9c — Google Calendar: Sync + Page dédiée
+
+### Sync engine
+- [ ] `src/lib/google/sync.ts` — fetchAndSyncEvents(userId) :
+  1. Pour chaque google_account du user
+  2. Pour chaque google_calendar enabled
+  3. Appeler Google Calendar Events API (timeMin=now, timeMax=now+3mois)
+  4. Pour chaque événement Google :
+     - Si nouveau → insert google_synced_events status=pending
+     - Si existant + modifié (google_updated_at changé) → update cached fields + si accepted, update l'event Together lié
+     - Si existant en DB mais absent de Google → si accepted, supprimer l'event Together + supprimer la ligne synced_events
+  5. Gérer les événements récurrents : expand en occurrences individuelles (singleEvents=true dans l'API call)
+
+### API routes
+- [ ] API route `POST /api/google/sync` — déclenche fetchAndSyncEvents pour le user authentifié
+- [ ] API route `GET /api/google/sync/events` — retourne les google_synced_events du user (pending + accepted + refused) pour la page
+- [ ] API route `POST /api/google/sync/events/accept` — body: { ids: [...], visibility: 'details'|'busy' } → crée les events Together, lie google_synced_events.event_id, status=accepted
+- [ ] API route `POST /api/google/sync/events/refuse` — body: { ids: [...] } → status=refused
+
+### Page Google Sync (`/[locale]/google-sync`)
+- [ ] Page server component avec layout AuthenticatedLayout
+- [ ] Client component `GoogleSyncContent.tsx` :
+  - Bouton "Synchroniser" (appelle POST /api/google/sync)
+  - Liste de tous les événements avec filtres par statut (pending/accepted/refused)
+  - Checkboxes pour sélection multiple
+  - Pour chaque événement : titre, date, heure, calendrier source, statut
+  - Boutons d'action : "Accepter (détails)", "Accepter (occupé)", "Refuser"
+  - Loading state pendant la sync
+
+### Navigation
+- [ ] Ajouter "Google Sync" dans la nav (BottomNav + TopBar) — icône Sync ou Google
+
+### i18n
+- [ ] Clés FR + EN pour la page Google Sync (~20 clés)
+
+---
+
+## M9d — Google Calendar: Sync automatique + Badge visuel
+
+### Sync à l'ouverture
+- [ ] Hook dans le layout principal ou dashboard : si l'user a des google_accounts, déclencher POST /api/google/sync en background à chaque chargement de l'app
+- [ ] Debounce : ne pas re-sync si dernière sync < 5 minutes (stocker last_sync_at en localStorage)
+
+### Badge "G" sur les événements importés
+- [ ] Ajouter colonne `google_synced_event_id` sur la table `events` (nullable, FK → google_synced_events) — ou simplement vérifier via JOIN
+- [ ] Modifier `CalendarContent.tsx` et `GroupCalendar.tsx` : si l'événement a un lien google_synced_events, afficher un petit badge "G"
+- [ ] Modifier `EventDetailDialog.tsx` : afficher "Importé depuis Google Calendar" si lié
+- [ ] Style du badge : petit chip/icône discret, couleur neutre
+
+### Déconnexion cascade
+- [ ] Quand un compte Google est déconnecté : supprimer les events Together liés via google_synced_events.event_id (SECURITY DEFINER function)
+
+### i18n
+- [ ] Clés FR + EN pour le badge et l'indicateur Google
+
+### QA finale
+- [ ] 3 passes QA + Debug agents
+- [ ] Build clean + tests passent
+- [ ] Test manuel du flow complet : connect → select calendars → sync → accept/refuse → badge visible → disconnect
+
+---
+
 ## POST-V1 (ne PAS implémenter)
 
-- Événements récurrents
-- Statut tentatif/confirmé
-- Import/export iCal + synchro Google Calendar
+- Sync bidirectionnelle (Together → Google)
+- Export iCal
+- Import depuis Apple Calendar / Outlook
+- Notifications de rappel sur événements importés
 - Détection chevauchements + suggestions créneaux communs
 - Notifications push
 - Mode offline complet
