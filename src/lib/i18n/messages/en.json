@@ -142,18 +142,26 @@
     "dateOrderError": "End date must be after start date",
     "typeVacances": "Holiday",
     "typeDisponible": "Available",
-    "typeVoyage": "Travel"
+    "typeVoyage": "Travel",
+    "eventDetails": "Event details",
+    "createdBy": "Created by",
+    "edit": "Edit",
+    "close": "Close"
   },
   "groupCalendar": {
     "title": "Group calendar",
     "previousMonth": "Previous month",
-    "nextMonth": "Next month"
+    "nextMonth": "Next month",
+    "allMembers": "All",
+    "filterByMember": "Filter by member"
   },
   "calendar": {
     "title": "My calendar",
     "previousMonth": "Previous month",
     "nextMonth": "Next month",
-    "clickToCreate": "Click a day to create an event"
+    "clickToCreate": "Click a day to create an event",
+    "myEvents": "My events",
+    "selectGroup": "View group"
   },
   "nav": {
     "groups": "Groups",

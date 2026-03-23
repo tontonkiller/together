@@ -3,6 +3,11 @@ import { createClient } from '@/lib/supabase/server';
 import CalendarContent from './CalendarContent';
 import type { CalendarEvent, EventType } from '@/lib/types/events';
 
+interface UserGroup {
+  id: string;
+  name: string;
+}
+
 export default async function CalendarPage({
   params,
 }: {
@@ -44,10 +49,29 @@ export default async function CalendarPage({
     console.error('[calendar] Event types fetch failed:', typesError.message);
   }
 
+  // Fetch user's groups for the group selector
+  const { data: groupMemberships, error: groupsError } = await supabase
+    .from('group_members')
+    .select('group_id, groups(id, name)')
+    .eq('user_id', user.id);
+
+  if (groupsError) {
+    console.error('[calendar] Groups fetch failed:', groupsError.message);
+  }
+
+  const userGroups: UserGroup[] = (groupMemberships ?? [])
+    .map((gm) => {
+      const g = Array.isArray(gm.groups) ? gm.groups[0] : gm.groups;
+      return g ? { id: g.id, name: g.name } : null;
+    })
+    .filter((g): g is UserGroup => g !== null);
+
   return (
     <CalendarContent
       events={normalizedEvents}
       eventTypes={(eventTypes ?? []) as EventType[]}
+      userGroups={userGroups}
+      currentUserId={user.id}
     />
   );
 }

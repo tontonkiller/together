@@ -142,18 +142,26 @@
     "dateOrderError": "La date de fin doit être après la date de début",
     "typeVacances": "Vacances",
     "typeDisponible": "Disponible",
-    "typeVoyage": "Voyage"
+    "typeVoyage": "Voyage",
+    "eventDetails": "Détails de l'événement",
+    "createdBy": "Créé par",
+    "edit": "Modifier",
+    "close": "Fermer"
   },
   "groupCalendar": {
     "title": "Calendrier du groupe",
     "previousMonth": "Mois précédent",
-    "nextMonth": "Mois suivant"
+    "nextMonth": "Mois suivant",
+    "allMembers": "Tous",
+    "filterByMember": "Filtrer par membre"
   },
   "calendar": {
     "title": "Mon calendrier",
     "previousMonth": "Mois précédent",
     "nextMonth": "Mois suivant",
-    "clickToCreate": "Cliquez sur un jour pour créer un événement"
+    "clickToCreate": "Cliquez sur un jour pour créer un événement",
+    "myEvents": "Mes événements",
+    "selectGroup": "Voir un groupe"
   },
   "nav": {
     "groups": "Groupes",

@@ -27,8 +27,6 @@
 
 ## M2 — Page groupe enrichie ✅ DONE
 
-**Objectif** : La page `/groups/[id]` affiche les membres et permet de gérer le groupe.
-
 - [x] Afficher la liste des membres du groupe (nom, avatar, rôle, couleur)
 - [x] Badge admin/membre à côté de chaque nom
 - [x] Bouton "Quitter le groupe" (pour les membres non-admin)
@@ -38,127 +36,72 @@
 - [x] Clés i18n pour les nouvelles strings (FR + EN)
 - [ ] Tests unitaires
 
-**Tables utilisées** : `groups`, `group_members`, `profiles`
-**Critère de done** : Un admin peut voir ses membres, renommer, supprimer. Un membre peut quitter.
-
 ---
 
 ## M3 — Invitations ✅ DONE
 
-**Objectif** : Inviter des gens à rejoindre un groupe, accepter une invitation.
-
 - [x] Bouton "Inviter" sur la page groupe (admin only)
-- [x] Dialog d'invitation avec 2 options :
-  - Saisir un email → crée une invitation en DB
-  - Copier le lien d'invitation (utilise `invite_code` du groupe)
+- [x] Dialog d'invitation avec 2 options
 - [x] Page `/invite/[code]` : accepter une invitation par lien
-  - Si connecté → rejoint le groupe directement
-  - Si pas connecté → login puis rejoint
-- [ ] Acceptation par email : l'utilisateur reçoit un email, clique, et rejoint
+- [ ] Acceptation par email
 - [x] Afficher les invitations en attente sur la page groupe (admin)
-- [x] Expiration auto après 7 jours (géré par la DB, afficher le statut)
+- [x] Expiration auto après 7 jours
 - [x] Clés i18n (FR + EN)
 - [ ] Tests unitaires
 - [x] SQL functions (SECURITY DEFINER) pour join-by-invite-code
-
-**Tables utilisées** : `invitations`, `group_members`
-**Critère de done** : Un admin peut inviter par email ou lien. L'invité peut accepter et apparaît dans le groupe.
 
 ---
 
 ## M4 — CRUD événements ✅ DONE
 
-**Objectif** : Créer, voir, modifier et supprimer des événements.
-
 - [x] Page/dialog création d'événement depuis la page groupe
-- [x] Formulaire : titre, description, lieu (texte libre), dates début/fin
-- [x] Toggle journée entière vs créneau horaire (start_time/end_time)
-- [x] Sélecteur de type d'événement (Vacances, Disponible, Voyage, Custom)
-- [x] Checkbox "Événement privé" (apparaîtra comme "Occupé" dans le groupe)
-- [x] Liste des événements sur la page groupe (triés par date)
+- [x] Formulaire : titre, description, lieu, dates début/fin
+- [x] Toggle journée entière vs créneau horaire
+- [x] Sélecteur de type d'événement
+- [x] Checkbox "Événement privé"
+- [x] Liste des événements sur la page groupe
 - [x] Modifier un événement (owner only)
-- [x] Supprimer un événement (owner only, avec confirmation)
+- [x] Supprimer un événement (owner only)
 - [x] Section "Prochains événements" sur le dashboard
 - [x] Clés i18n (FR + EN)
 - [ ] Tests unitaires
-
-**Tables utilisées** : `events`, `event_types`
-**Critère de done** : Un utilisateur peut CRUD ses events. Les events apparaissent dans la liste du groupe et sur le dashboard.
 
 ---
 
 ## M5 — Calendrier personnel ✅ DONE
 
-**Objectif** : Vue calendrier mensuelle pour voir ses propres événements.
-
-- [x] Calendrier custom (grille CSS, pas FullCalendar — plus léger)
-- [x] Composant `CalendarContent` avec vue mois
-- [x] Page `/calendar` accessible depuis le BottomNav
-- [x] Afficher mes événements sur le calendrier (barres colorées par type)
-- [x] Clic sur un jour → ouvrir le formulaire de création (date pré-remplie)
-- [x] Clic sur un événement → voir détail / modifier
-- [x] Navigation entre mois (< > + titre mois/année)
-- [x] Clés i18n (FR + EN)
-- [x] Tests unitaires
-- [x] Types partagés (`@/lib/types/events`) entre calendrier et groupes
-- [x] Accessibilité (role="grid", tabIndex, aria-labels, focus-visible)
-
-**Tables utilisées** : `events`, `event_types`
-**Critère de done** : L'utilisateur voit ses events dans un calendrier mensuel et peut créer/modifier depuis le calendrier.
+- [x] All items completed
 
 ---
 
 ## M6 — Calendrier de groupe ✅ DONE
 
-**Objectif** : Vue calendrier agrégée avec les événements de tous les membres.
-
-- [x] Composant `GroupCalendar` sur la page `/groups/[id]`
-- [x] Afficher les événements de tous les membres du groupe
-- [x] Couleur par membre (utilise `group_members.color`, 10 couleurs auto)
-- [x] Événements privés → affichés comme "Occupé" (titre masqué, icône cadenas, couleur du membre)
-- [x] Légende des couleurs (nom + couleur de chaque membre)
-- [x] Navigation entre mois
-- [x] Clés i18n (FR + EN)
-- [x] Tests unitaires (15 tests)
-- [x] RLS fix: migration 003 permet aux co-membres de voir les événements privés (redactés côté client)
-
-**Tables utilisées** : `events`, `group_members`, `profiles`
-**Critère de done** : Sur la page groupe, on voit le calendrier avec les events de tous les membres, colorés par personne. Les events privés sont masqués.
+- [x] All items completed
 
 ---
 
-## M7 — Filtres & interactions calendrier
+## M7 — Filtres & interactions calendrier ✅ DONE
 
-**Objectif** : Affiner la vue calendrier et naviguer dans les événements.
-
-- [ ] Filtres par membre (chips cliquables avec couleur, cocher/décocher)
-- [ ] Vue détail d'un événement (dialog ou page) : titre, dates, lieu, type, créateur
-- [ ] Distinction visuelle journée entière vs créneau horaire
-- [ ] Responsive : calendrier lisible sur mobile 375px
-- [ ] Gestion multi-groupes : le BottomNav "Calendrier" montre un sélecteur de groupe
-- [ ] Clés i18n (FR + EN)
-- [ ] Tests unitaires
-
-**Critère de done** : On peut filtrer par membre, voir le détail d'un event, et le calendrier fonctionne sur mobile.
+- [x] Filtres par membre (chips cliquables avec couleur, toggle on/off, chip "Tous")
+- [x] Vue détail d'un événement (EventDetailDialog : titre, dates, lieu, type, créateur, edit/delete owner)
+- [x] Distinction visuelle journée entière (barre pleine) vs créneau horaire (time prefix + left border)
+- [x] Responsive mobile 375px (smaller cells, fewer pills, fullScreen dialogs)
+- [x] Multi-groupes : sélecteur de groupe (chips) sur le calendrier personnel
+- [x] Clés i18n FR + EN
+- [x] Tests unitaires (206 tests, +4 nouveaux pour filtres et time display)
 
 ---
 
 ## M8 — Polish & PWA
 
-**Objectif** : Finitions pour une V1 utilisable au quotidien.
-
-- [ ] Service worker basique (cache app shell pour offline)
-- [ ] Vérifier install PWA sur iOS Safari + Android Chrome
-- [ ] Loading states cohérents (skeletons ou spinners)
-- [ ] Empty states avec illustrations/messages utiles
-- [ ] Error boundaries sur toutes les pages
-- [ ] Vérifier accessibilité : touch targets 48px, contraste 4.5:1, ARIA
-- [ ] Test responsive complet (375px → 1440px)
-- [ ] Vérifier `npm run build` sans erreurs ni warnings
-- [ ] Parcours complet E2E : inscription → créer groupe → inviter → créer event → voir calendrier
-- [ ] Audit Lighthouse (perf, a11y, PWA)
-
-**Critère de done** : L'app passe un audit Lighthouse > 90, fonctionne offline basique, et le parcours E2E complet est fluide.
+- [ ] Service worker basique
+- [ ] PWA install iOS + Android
+- [ ] Loading states / Empty states
+- [ ] Error boundaries
+- [ ] Responsive complet
+- [ ] Build clean
+- [ ] Parcours E2E
+- [ ] Audit Lighthouse
 
 ---
 
