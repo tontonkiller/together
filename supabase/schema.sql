@@ -313,10 +313,37 @@ as $$
 $$;
 
 -- ============================================
+-- HELPER: Color palette for group members
+-- ============================================
+create or replace function get_member_color(member_index int)
+returns text
+language sql
+immutable
+as $$
+  select (array[
+    '#1976D2', '#D32F2F', '#388E3C', '#7B1FA2', '#F57C00',
+    '#00838F', '#C2185B', '#455A64', '#AFB42B', '#5D4037'
+  ])[1 + (member_index % 10)];
+$$;
+
+-- ============================================
+-- HELPER: Count group members (SECURITY DEFINER, bypasses RLS)
+-- ============================================
+create or replace function count_group_members(group_id_param uuid)
+returns int
+language sql
+security definer
+set search_path = public
+as $$
+  select count(*)::int from group_members where group_id = group_id_param;
+$$;
+
+-- ============================================
 -- HELPER: Join group by invite code (SECURITY DEFINER)
 -- Atomically finds group + inserts member + marks invitations accepted
+-- Auto-assigns color from palette based on current member count
 -- ============================================
-create or replace function join_group_by_invite_code(code_param text, member_color text)
+create or replace function join_group_by_invite_code(code_param text, member_color text default null)
 returns uuid
 language plpgsql
 security definer
@@ -325,6 +352,8 @@ as $$
 declare
   group_record record;
   result_group_id uuid;
+  actual_color text;
+  member_count int;
 begin
   select g.id, g.name into group_record
   from groups g
@@ -343,8 +372,18 @@ begin
     return result_group_id;
   end if;
 
+  -- Auto-assign color from palette based on current member count
+  select count(*)::int into member_count
+  from group_members
+  where group_id = result_group_id;
+
+  actual_color := coalesce(
+    nullif(member_color, ''),
+    get_member_color(member_count)
+  );
+
   insert into group_members (group_id, user_id, role, color)
-  values (result_group_id, auth.uid(), 'member', member_color);
+  values (result_group_id, auth.uid(), 'member', actual_color);
 
   update invitations
   set status = 'accepted'

@@ -137,6 +137,7 @@ describe('NewGroupPage', () => {
         group_id: 'group-1',
         user_id: 'user-1',
         role: 'admin',
+        color: '#1976D2',
       });
     });
   });
