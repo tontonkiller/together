@@ -22,8 +22,8 @@ export default function AuthenticatedLayout({
         component="main"
         sx={{
           flexGrow: 1,
-          mt: `${TOPBAR_HEIGHT}px`,
-          mb: `${BOTTOMNAV_HEIGHT}px`,
+          mt: 0,
+          mb: '56px', // BottomNavigation height
           p: 2,
         }}
       >

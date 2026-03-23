@@ -28,5 +28,11 @@ export const config = {
     '/',
     '/(fr|en)/:path((?!_next/static|_next/image|icons|favicon\\.ico).*)',
     '/invite/:path*',
+    '/dashboard',
+    '/calendar',
+    '/profile',
+    '/login',
+    '/groups/:path*',
+    '/google-sync',
   ],
 };
