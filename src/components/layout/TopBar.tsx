@@ -24,7 +24,7 @@ export default function TopBar() {
   };
 
   return (
-    <AppBar position="fixed" color="primary" elevation={1}>
+    <AppBar position="sticky" color="primary" elevation={1}>
       <Toolbar>
         <Typography
           variant="h6"
