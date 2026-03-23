@@ -155,7 +155,7 @@ export default function EventList({
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         {event.event_types && (
-                          <Chip label={event.event_types.name} size="small" elevation={0} />
+                          <Chip label={event.event_types.name} size="small" variant="outlined" />
                         )}
                         {isOwner && (
                           <IconButton

@@ -6,7 +6,7 @@ import ThemeRegistry from '@/components/layout/ThemeRegistry';
 import ServiceWorkerRegistration from '@/components/pwa/ServiceWorkerRegistration';
 
 const roboto = Roboto({
-  weight: ['400', '500', '700'],
+  weight: ['400', '500', '600', '700'],
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-roboto',
