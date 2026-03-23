@@ -37,21 +37,28 @@ export async function GET(
         .single();
 
       if (!profile) {
+        // Use Google metadata when available (full_name, avatar_url)
+        const meta = user.user_metadata ?? {};
+        const displayName =
+          meta.full_name || meta.name || (user.email?.split('@')[0] ?? 'User');
+        const avatarUrl = meta.avatar_url || meta.picture || null;
+
+        const profileData = {
+          id: user.id,
+          display_name: displayName,
+          avatar_url: avatarUrl,
+          preferred_locale: locale,
+        };
+
         const { error: insertError } = await supabase
           .from('profiles')
-          .insert({
-            id: user.id,
-            display_name: user.email?.split('@')[0] ?? 'User',
-            preferred_locale: locale,
-          });
+          .insert(profileData);
 
         if (insertError) {
           console.error('[auth/callback] Profile insert failed, retrying with upsert:', insertError.message);
-          const { error: upsertError } = await supabase.from('profiles').upsert({
-            id: user.id,
-            display_name: user.email?.split('@')[0] ?? 'User',
-            preferred_locale: locale,
-          });
+          const { error: upsertError } = await supabase
+            .from('profiles')
+            .upsert(profileData);
           if (upsertError) {
             console.error('[auth/callback] Profile upsert retry failed:', upsertError.message);
           }
