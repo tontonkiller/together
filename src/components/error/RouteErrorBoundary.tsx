@@ -4,9 +4,9 @@ import { useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Typography from '@mui/material/Typography';
+import Alert from '@mui/material/Alert';
 
-export default function Error({
+export default function RouteErrorBoundary({
   error,
   reset,
 }: {
@@ -16,25 +16,26 @@ export default function Error({
   const t = useTranslations('common');
 
   useEffect(() => {
-    console.error('[error boundary]', error);
+    console.error('[route error]', error);
   }, [error]);
 
   return (
     <Box
       sx={{
-        minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 2,
         p: 3,
+        mt: '64px',
+        mb: '56px',
+        minHeight: 'calc(100vh - 120px)',
       }}
     >
-      <Typography variant="h2">{t('errorTitle')}</Typography>
-      <Typography variant="body1" color="text.secondary" textAlign="center">
+      <Alert severity="error" sx={{ maxWidth: 400 }}>
         {t('errorMessage')}
-      </Typography>
+      </Alert>
       <Button variant="contained" onClick={reset}>
         {t('tryAgain')}
       </Button>

@@ -10,7 +10,13 @@
     "back": "Retour",
     "confirm": "Confirmer",
     "error": "Une erreur est survenue",
-    "success": "Opération réussie"
+    "success": "Opération réussie",
+    "tryAgain": "Réessayer",
+    "notFoundTitle": "Page introuvable",
+    "notFoundMessage": "La page que vous recherchez n'existe pas ou a été déplacée.",
+    "goHome": "Retour au tableau de bord",
+    "errorTitle": "Oups !",
+    "errorMessage": "Un problème est survenu lors du chargement de cette page."
   },
   "landing": {
     "title": "Together",

@@ -109,14 +109,6 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
     return map;
   }, [members]);
 
-  // Build member name map: user_id → display_name
-  const memberNameMap = useMemo(() => {
-    const map: Record<string, string> = {};
-    for (const m of members) {
-      map[m.user_id] = m.profiles?.display_name ?? '?';
-    }
-    return map;
-  }, [members]);
 
   // Filter events by visible members
   const filteredEvents = useMemo(
@@ -129,14 +121,14 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
       if (m === 0) { setYear((y) => y - 1); return 11; }
       return m - 1;
     });
-  }, []);
+  }, [setMonth, setYear]);
 
   const goToNext = useCallback(() => {
     setMonth((m) => {
       if (m === 11) { setYear((y) => y + 1); return 0; }
       return m + 1;
     });
-  }, []);
+  }, [setMonth, setYear]);
 
   const daysInMonth = getDaysInMonth(year, month);
   const firstDayOffset = getFirstDayOfWeek(year, month);
@@ -179,7 +171,7 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
 
   return (
     <Box>
-      <Typography variant="h3" sx={{ mb: 1 }}>{t('title')}</Typography>
+      <Typography variant="h6" sx={{ mb: 1 }}>{t('title')}</Typography>
 
       {/* Month navigation */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>

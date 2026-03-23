@@ -11,10 +11,8 @@ vi.mock('next/headers', () => ({
 // Mock the Supabase server client
 const mockExchangeCodeForSession = vi.fn();
 const mockGetUser = vi.fn();
-const mockSelect = vi.fn();
 const mockInsert = vi.fn();
 const mockUpsert = vi.fn();
-const mockEq = vi.fn();
 const mockSingle = vi.fn();
 
 vi.mock('@/lib/supabase/server', () => ({

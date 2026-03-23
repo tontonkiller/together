@@ -1,34 +1,45 @@
-# Plan: Google OAuth Login
+# Plan: M8 — Polish & PWA
 
-## Context
-Magic link login is tedious (switch tabs every time). Add Google social login for one-click auth.
+## Current State Assessment
 
-## Good news
-- The `/auth/callback` route already handles `exchangeCodeForSession` — works for OAuth too
-- Profile auto-creation already exists in the callback
-- Middleware is provider-agnostic
-- `avatar_url` field exists in profiles schema
+### Already done:
+- **Manifest**: `src/app/manifest.ts` ✅ (icons 192/512 present)
+- **Loading**: `src/app/[locale]/loading.tsx` ✅ (global spinner)
+- **Error boundary**: `src/app/[locale]/error.tsx` ✅ (global error page)
+- **Empty states**: i18n keys exist for noGroups, noEvents, noMembers ✅
+- **Responsive**: `useMediaQuery` used in calendars ✅
+- **Build**: Clean, 0 errors ✅
 
-## Changes
+### Missing:
+- **No service worker** — needed for PWA installability
+- **No `viewport-fit=cover`** — iOS PWA safe area handling
+- **No `apple-mobile-web-app-*` meta tags** — iOS install experience
+- **Route-level loading/error files** — only at `[locale]` level, not per-route
+- **Error boundary is not i18n** — hardcoded English strings
+- **No `not-found.tsx`** per locale — 404 handling
 
-### 1. Login page (`src/app/[locale]/login/page.tsx`)
-- Add a "Continue with Google" button above the magic link form
-- Use `supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } })`
-- Add a visual divider "or" between Google button and email form
+## Plan (ordered by impact)
 
-### 2. i18n keys (fr.json + en.json)
-- `auth.continueWithGoogle` → "Continuer avec Google" / "Continue with Google"
-- `auth.or` → "ou" / "or"
+### Step 1: Service Worker + PWA installability
+- Create `public/sw.js` — minimal service worker (cache app shell, network-first for API)
+- Register SW from layout via a `<ServiceWorkerRegistrar />` client component
+- Add `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, `apple-touch-icon` meta tags in root layout metadata
+- Add `viewport-fit=cover` to viewport metadata
+- Add `env(safe-area-inset-*)` padding to TopBar and BottomNav
 
-### 3. Auth callback (`src/app/[locale]/auth/callback/route.ts`)
-- Update profile auto-creation to use Google avatar + display name when available from `user.user_metadata`
+### Step 2: Route-level loading states
+- Add `loading.tsx` for: `dashboard`, `groups/[id]`, `calendar`, `profile`
+- Use contextual skeletons (not just a generic spinner)
 
-### 4. Documentation
-- Note in plan that user must configure Google OAuth provider in Supabase Dashboard (Authentication → Providers → Google)
+### Step 3: i18n error boundary + not-found
+- Make `error.tsx` use translations (wrap in `useTranslations`)
+- Add `not-found.tsx` at `[locale]` level with i18n
 
-## What does NOT change
-- Middleware, Supabase client/server setup, schema, RLS policies
+### Step 4: Responsive polish
+- Audit all pages at 375px width
+- Fix any overflow/spacing issues found
 
-## Config required (user action)
-- Supabase Dashboard → Authentication → Providers → Enable Google
-- Set Google OAuth Client ID + Secret (from Google Cloud Console)
+### Step 5: Tests & verification
+- Run full test suite
+- Run build
+- Lighthouse audit check (PWA score)

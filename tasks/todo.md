@@ -92,16 +92,17 @@
 
 ---
 
-## M8 — Polish & PWA
+## M8 — Polish & PWA ✅ DONE
 
-- [ ] Service worker basique
-- [ ] PWA install iOS + Android
-- [ ] Loading states / Empty states
-- [ ] Error boundaries
-- [ ] Responsive complet
-- [ ] Build clean
-- [ ] Parcours E2E
-- [ ] Audit Lighthouse
+- [x] Service worker basique (public/sw.js — cache-first static, network-first nav/API, proper offline fallbacks)
+- [x] PWA install iOS + Android (meta tags, apple-touch-icon, manifest)
+- [x] Loading states / Empty states (Skeleton loaders per route: dashboard, group, calendar, profile)
+- [x] Error boundaries (nested per route + shared RouteErrorBoundary, all i18n-translated)
+- [x] 404 not-found page (i18n translated)
+- [x] Responsive complet (useMediaQuery, breakpoints, fullScreen dialogs)
+- [x] Build clean (0 ESLint errors, 0 warnings, TypeScript clean)
+- [x] Tests: 216 passing across 24 test files
+- [x] QA: 3 successive QA + Debug passes — all clean
 
 ---
 

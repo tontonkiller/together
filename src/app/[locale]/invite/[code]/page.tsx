@@ -17,13 +17,13 @@ import { useRouter } from '@/lib/i18n/navigation';
 
 export default function InvitePage() {
   const t = useTranslations('invite');
+  const tCommon = useTranslations('common');
   const params = useParams<{ code: string }>();
   const router = useRouter();
   const joinAttempted = useRef(false);
 
   const [status, setStatus] = useState<'loading' | 'joining' | 'joined' | 'already-member' | 'need-login' | 'error'>('loading');
   const [error, setError] = useState('');
-  const [groupId, setGroupId] = useState<string | null>(null);
 
   useEffect(() => {
     if (joinAttempted.current) return;
@@ -57,8 +57,6 @@ export default function InvitePage() {
           setStatus('error');
           return;
         }
-
-        setGroupId(result.groupId);
 
         if (result.alreadyMember) {
           setStatus('already-member');
@@ -115,7 +113,7 @@ export default function InvitePage() {
                   fullWidth
                   onClick={() => router.push('/login')}
                 >
-                  {t('joining')}
+                  {t('loginFirst')}
                 </Button>
               </>
             ) : status === 'joined' ? (
@@ -140,7 +138,7 @@ export default function InvitePage() {
                   fullWidth
                   onClick={() => router.push('/')}
                 >
-                  {t('joining')}
+                  {tCommon('goHome')}
                 </Button>
               </>
             ) : null}
