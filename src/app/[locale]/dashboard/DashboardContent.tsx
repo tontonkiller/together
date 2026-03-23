@@ -68,14 +68,14 @@ export default function DashboardContent({ profile, groups, upcomingEvents, even
       </Typography>
 
       {/* Groups first */}
-      <Typography variant="h3" sx={{ mb: 2 }}>
+      <Typography variant="h3" sx={{ mb: 1.5, color: 'text.secondary' }}>
         {t('myGroups')}
       </Typography>
 
       {groups.length === 0 ? (
-        <Card variant="outlined" sx={{ mb: 2 }}>
+        <Card sx={{ mb: 2 }}>
           <CardContent sx={{ textAlign: 'center', py: 4 }}>
-            <GroupsIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1 }} />
+            <GroupsIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 1, opacity: 0.5 }} />
             <Typography variant="body1" color="text.secondary">
               {t('noGroups')}
             </Typography>
@@ -87,7 +87,7 @@ export default function DashboardContent({ profile, groups, upcomingEvents, even
       ) : (
         <Stack spacing={1.5} sx={{ mb: 2 }}>
           {groups.map((gm) => (
-            <Card key={gm.group_id} variant="outlined">
+            <Card key={gm.group_id} sx={{ '&:hover': { transform: 'translateY(-1px)' } }}>
               <CardActionArea
                 onClick={() => router.push(`/groups/${gm.group_id}`)}
               >
@@ -99,19 +99,33 @@ export default function DashboardContent({ profile, groups, upcomingEvents, even
                   }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <GroupsIcon color="primary" />
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: 3,
+                        bgcolor: 'primary.main',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <GroupsIcon sx={{ fontSize: 22 }} />
+                    </Box>
                     <Box>
-                      <Typography variant="subtitle1" fontWeight={600}>
+                      <Typography variant="subtitle1" fontWeight={700}>
                         {gm.groups?.name}
                       </Typography>
                       {gm.groups?.description && (
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25 }}>
                           {gm.groups.description}
                         </Typography>
                       )}
                     </Box>
                   </Box>
-                  <ChevronRightIcon color="action" />
+                  <ChevronRightIcon sx={{ color: 'text.secondary', opacity: 0.5 }} />
                 </CardContent>
               </CardActionArea>
             </Card>
@@ -124,19 +138,19 @@ export default function DashboardContent({ profile, groups, upcomingEvents, even
         startIcon={<AddIcon />}
         fullWidth
         onClick={() => router.push('/groups/new')}
-        sx={{ mb: 3 }}
+        sx={{ mb: 4 }}
       >
         {t('createGroup')}
       </Button>
 
       {/* Upcoming events below */}
-      <Typography variant="h3" sx={{ mb: 1.5 }}>
+      <Typography variant="h3" sx={{ mb: 1.5, color: 'text.secondary' }}>
         {t('upcomingEvents')}
       </Typography>
       {events.length === 0 ? (
-        <Card variant="outlined" sx={{ mb: 2 }}>
+        <Card sx={{ mb: 2 }}>
           <CardContent sx={{ textAlign: 'center', py: 3 }}>
-            <EventIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
+            <EventIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 1, opacity: 0.5 }} />
             <Typography variant="body2" color="text.secondary">
               {t('noEvents')}
             </Typography>
@@ -145,14 +159,23 @@ export default function DashboardContent({ profile, groups, upcomingEvents, even
       ) : (
         <Stack spacing={1}>
           {events.map((event) => (
-            <Card key={event.id} variant="outlined">
+            <Card key={event.id} sx={{ '&:hover': { transform: 'translateY(-1px)' } }}>
               <CardActionArea onClick={() => setEditEvent(event)}>
                 <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
-                      <EventIcon color="primary" sx={{ fontSize: 20 }} />
+                      <Box
+                        sx={{
+                          width: 8,
+                          height: 32,
+                          borderRadius: 4,
+                          bgcolor: 'primary.main',
+                          flexShrink: 0,
+                          opacity: 0.7,
+                        }}
+                      />
                       <Box sx={{ minWidth: 0 }}>
-                        <Typography variant="subtitle2" noWrap>
+                        <Typography variant="subtitle2" noWrap fontWeight={700}>
                           {event.title}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
@@ -164,7 +187,7 @@ export default function DashboardContent({ profile, groups, upcomingEvents, even
                       {event.event_types && (
                         <Chip label={event.event_types.name} size="small" variant="outlined" />
                       )}
-                      <ChevronRightIcon color="action" sx={{ fontSize: 20 }} />
+                      <ChevronRightIcon sx={{ color: 'text.secondary', opacity: 0.4, fontSize: 20 }} />
                     </Box>
                   </Box>
                 </CardContent>

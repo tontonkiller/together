@@ -24,34 +24,54 @@ export default function TopBar() {
   };
 
   return (
-    <AppBar position="sticky" color="primary" elevation={1}>
+    <AppBar
+      position="sticky"
+      sx={{
+        bgcolor: 'background.paper',
+        color: 'text.primary',
+        borderBottom: '1px solid',
+        borderColor: 'divider',
+      }}
+    >
       <Toolbar>
         <Typography
           variant="h6"
           component="div"
-          sx={{ flexGrow: 1, fontWeight: 700, cursor: 'pointer' }}
+          sx={{
+            flexGrow: 1,
+            fontWeight: 800,
+            cursor: 'pointer',
+            color: 'primary.main',
+            letterSpacing: '-0.02em',
+          }}
           onClick={() => router.push('/dashboard')}
         >
           Together
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <IconButton
-            color="inherit"
             onClick={toggleEvaMode}
             aria-label="Mode Eva"
             size="small"
+            sx={{
+              color: evaMode ? 'primary.main' : 'text.secondary',
+              transition: 'color 0.2s ease, transform 0.2s ease',
+              '&:hover': { transform: 'scale(1.1)' },
+            }}
           >
             {evaMode ? <FavoriteIcon /> : <FavoriteBorderIcon />}
           </IconButton>
           <IconButton
-            color="inherit"
             onClick={toggleLocale}
             aria-label={t('toggleLanguage')}
             sx={{
-              fontSize: '0.875rem',
-              fontWeight: 600,
+              fontSize: '0.8rem',
+              fontWeight: 700,
               borderRadius: 2,
               px: 1.5,
+              color: 'text.secondary',
+              '&:hover': { color: 'primary.main' },
+              transition: 'color 0.2s ease',
             }}
           >
             {locale === 'fr' ? 'EN' : 'FR'}

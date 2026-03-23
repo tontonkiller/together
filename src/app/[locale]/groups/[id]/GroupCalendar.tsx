@@ -258,13 +258,13 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
           bgcolor: 'divider',
           border: '1px solid',
           borderColor: 'divider',
-          borderRadius: 1,
+          borderRadius: 3,
           overflow: 'hidden',
         }}
       >
         {calendarDays.map((cell, idx) => {
           if (!cell) {
-            return <Box key={`empty-${idx}`} sx={{ bgcolor: 'background.default', minHeight: isMobile ? 32 : 56 }} />;
+            return <Box key={`empty-${idx}`} sx={{ bgcolor: 'background.default', minHeight: isMobile ? 32 : 60 }} />;
           }
 
           const dayEvents = eventsByDate[cell.dateStr] ?? [];
@@ -278,11 +278,15 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
               aria-label={`${cell.day} ${monthNames[month]}${dayEvents.length > 0 ? ` — ${dayEvents.length} ${tEvents('title').toLowerCase()}` : ''}`}
               onClick={() => onDayClick?.(cell.dateStr)}
               sx={{
-                bgcolor: 'background.paper',
-                minHeight: isMobile ? 40 : 56,
+                bgcolor: isToday ? 'rgba(212,114,106,0.04)' : 'background.paper',
+                minHeight: isMobile ? 44 : 60,
                 p: isMobile ? 0.25 : 0.5,
                 position: 'relative',
                 cursor: onDayClick ? 'pointer' : undefined,
+                transition: 'background-color 0.15s ease',
+                '&:hover': onDayClick ? {
+                  bgcolor: isToday ? 'rgba(212,114,106,0.08)' : 'rgba(44,40,37,0.03)',
+                } : undefined,
               }}
             >
               <Typography
@@ -292,8 +296,8 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  width: isMobile ? 18 : 22,
-                  height: isMobile ? 18 : 22,
+                  width: isMobile ? 20 : 24,
+                  height: isMobile ? 20 : 24,
                   borderRadius: '50%',
                   bgcolor: isToday ? 'primary.main' : 'transparent',
                   color: isToday ? 'primary.contrastText' : 'text.primary',

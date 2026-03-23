@@ -6,7 +6,7 @@ import ThemeRegistry from '@/components/layout/ThemeRegistry';
 import ServiceWorkerRegistration from '@/components/pwa/ServiceWorkerRegistration';
 
 const roboto = Roboto({
-  weight: ['400', '500', '600', '700'],
+  weight: ['400', '500', '700'],
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-roboto',
@@ -40,7 +40,7 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} className={roboto.variable}>
       <head>
-        <meta name="theme-color" content="#1976D2" />
+        <meta name="theme-color" content="#D4726A" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />

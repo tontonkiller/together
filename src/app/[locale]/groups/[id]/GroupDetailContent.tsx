@@ -201,7 +201,7 @@ export default function GroupDetailContent({
   return (
     <AuthenticatedLayout>
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
         <Typography variant="h2">{group.name}</Typography>
         {isAdmin && (
           <IconButton onClick={() => setRenameOpen(true)} size="small" aria-label={t('rename')}>
