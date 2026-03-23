@@ -10,11 +10,13 @@ vi.mock('next-intl', () => ({
 }));
 
 const mockSignInWithOtp = vi.fn();
+const mockSignInWithOAuth = vi.fn();
 
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
     auth: {
       signInWithOtp: mockSignInWithOtp,
+      signInWithOAuth: mockSignInWithOAuth,
     },
   }),
 }));
@@ -26,6 +28,7 @@ describe('LoginPage', () => {
       new URLSearchParams(),
     );
     mockSignInWithOtp.mockResolvedValue({ error: null });
+    mockSignInWithOAuth.mockResolvedValue({ error: null });
     // Mock window.location.origin
     Object.defineProperty(window, 'location', {
       value: { origin: 'http://localhost:3000' },
@@ -125,7 +128,7 @@ describe('LoginPage', () => {
     });
   });
 
-  it('disables button during loading', async () => {
+  it('disables buttons during loading', async () => {
     // Keep the promise pending to test loading state
     let resolveOtp: (value: unknown) => void;
     mockSignInWithOtp.mockReturnValue(
@@ -141,7 +144,8 @@ describe('LoginPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'sendLink' }));
 
     await waitFor(() => {
-      expect(screen.getByRole('button')).toBeDisabled();
+      // Google button should be disabled during magic link loading
+      expect(screen.getByRole('button', { name: 'continueWithGoogle' })).toBeDisabled();
     });
 
     // Resolve to clean up

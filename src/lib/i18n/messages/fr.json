@@ -25,7 +25,9 @@
   },
   "auth": {
     "loginTitle": "Connexion",
-    "loginSubtitle": "Entrez votre email pour recevoir un lien de connexion",
+    "loginSubtitle": "Connectez-vous pour continuer",
+    "continueWithGoogle": "Continuer avec Google",
+    "or": "ou",
     "emailLabel": "Adresse email",
     "emailPlaceholder": "votre@email.com",
     "sendLink": "Envoyer le lien magique",

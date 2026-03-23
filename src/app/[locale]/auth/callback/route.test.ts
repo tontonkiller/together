@@ -120,6 +120,7 @@ describe('Auth callback route', () => {
     expect(mockInsert).toHaveBeenCalledWith({
       id: 'user-123',
       display_name: 'test',
+      avatar_url: null,
       preferred_locale: 'fr',
     });
   });

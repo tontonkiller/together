@@ -25,7 +25,9 @@
   },
   "auth": {
     "loginTitle": "Sign in",
-    "loginSubtitle": "Enter your email to receive a sign-in link",
+    "loginSubtitle": "Sign in to continue",
+    "continueWithGoogle": "Continue with Google",
+    "or": "or",
     "emailLabel": "Email address",
     "emailPlaceholder": "your@email.com",
     "sendLink": "Send magic link",
