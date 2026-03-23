@@ -66,6 +66,12 @@ At the end of every milestone, run **3 successive passes** of both QA and Debug 
 5. **Document Results**: Add review section to `tasks/todo.md`
 6. **Capture Lessons**: Update `tasks/lessons.md` after corrections
 
+## Current Feature: Google Calendar Sync
+
+- Full spec: `tasks/google-sync-spec.md` (18 product decisions, all resolved)
+- Implementation plan: `tasks/todo.md` (M9a → M9d)
+- One-way sync Google → Together, multi-accounts, sync on app open, 3 months rolling
+
 ## Supabase RLS Rules
 
 When writing or modifying RLS policies, always check for:
