@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'Together',
     short_name: 'Together',
     description: 'Family calendar app',
-    start_url: '/dashboard',
+    start_url: '/fr/dashboard',
     display: 'standalone',
     background_color: '#FAFAFA',
     theme_color: '#1976D2',
