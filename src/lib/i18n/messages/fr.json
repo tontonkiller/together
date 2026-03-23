@@ -16,7 +16,8 @@
     "notFoundMessage": "La page que vous recherchez n'existe pas ou a été déplacée.",
     "goHome": "Retour au tableau de bord",
     "errorTitle": "Oups !",
-    "errorMessage": "Un problème est survenu lors du chargement de cette page."
+    "errorMessage": "Un problème est survenu lors du chargement de cette page.",
+    "done": "Terminé"
   },
   "landing": {
     "title": "Together",
@@ -205,7 +206,8 @@
     "accepted": "Acceptés",
     "refused": "Refusés",
     "selectAll": "Tout sélectionner",
-    "deselectAll": "Tout désélectionner"
+    "deselectAll": "Tout désélectionner",
+    "syncResult": "{newPending} nouveau(x), {updated} mis à jour, {deleted} supprimé(s)"
   },
   "nav": {
     "groups": "Groupes",

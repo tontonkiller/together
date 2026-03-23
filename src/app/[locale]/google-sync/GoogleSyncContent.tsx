@@ -7,7 +7,6 @@ import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
-import Container from '@mui/material/Container';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -16,6 +15,8 @@ import ListItemText from '@mui/material/ListItemText';
 import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
 import SyncIcon from '@mui/icons-material/Sync';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import RepeatIcon from '@mui/icons-material/Repeat';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import { useRouter } from '@/lib/i18n/navigation';
 
@@ -90,7 +91,7 @@ export default function GoogleSyncContent({ hasAccounts }: GoogleSyncContentProp
       if (res.ok) {
         const data = await res.json();
         setSuccessMsg(
-          `${data.newPending} nouveau(x), ${data.updated} mis à jour, ${data.deleted} supprimé(s)`,
+          t('syncResult', { newPending: data.newPending, updated: data.updated, deleted: data.deleted }),
         );
         // Refresh events list
         await fetchEvents();
@@ -171,8 +172,8 @@ export default function GoogleSyncContent({ hasAccounts }: GoogleSyncContentProp
   if (!hasAccounts) {
     return (
       <AuthenticatedLayout>
-        <Container maxWidth="sm" sx={{ py: 3 }}>
-          <Typography variant="h5" sx={{ mb: 2 }}>
+        <Box sx={{ py: 3 }}>
+          <Typography variant="h2" sx={{ mb: 2 }}>
             {t('sectionTitle')}
           </Typography>
           <Alert severity="info">
@@ -185,16 +186,16 @@ export default function GoogleSyncContent({ hasAccounts }: GoogleSyncContentProp
           >
             {t('connect')}
           </Button>
-        </Container>
+        </Box>
       </AuthenticatedLayout>
     );
   }
 
   return (
     <AuthenticatedLayout>
-      <Container maxWidth="md" sx={{ py: 2 }}>
+      <Box sx={{ py: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Typography variant="h5">
+          <Typography variant="h2">
             {t('sectionTitle')}
           </Typography>
           <Button
@@ -202,7 +203,6 @@ export default function GoogleSyncContent({ hasAccounts }: GoogleSyncContentProp
             startIcon={syncing ? <CircularProgress size={16} color="inherit" /> : <SyncIcon />}
             onClick={handleSync}
             disabled={syncing}
-            size="small"
           >
             {syncing ? t('syncing') : t('sync')}
           </Button>
@@ -349,12 +349,12 @@ export default function GoogleSyncContent({ hasAccounts }: GoogleSyncContentProp
                         </Typography>
                         {event.location && (
                           <Typography variant="caption" component="span" color="text.secondary">
-                            📍 {event.location}
+                            <LocationOnIcon sx={{ fontSize: 14, verticalAlign: 'middle' }} /> {event.location}
                           </Typography>
                         )}
                         {event.is_recurring && (
                           <Typography variant="caption" component="span" color="text.secondary">
-                            🔁
+                            <RepeatIcon sx={{ fontSize: 14, verticalAlign: 'middle' }} />
                           </Typography>
                         )}
                       </Box>
@@ -365,7 +365,7 @@ export default function GoogleSyncContent({ hasAccounts }: GoogleSyncContentProp
             ))}
           </List>
         )}
-      </Container>
+      </Box>
     </AuthenticatedLayout>
   );
 }

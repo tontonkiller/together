@@ -106,9 +106,10 @@ describe('DashboardContent', () => {
     expect(screen.getByText('Beach Trip')).toBeInTheDocument();
   });
 
-  it('hides upcoming events section when empty', () => {
+  it('shows empty state when no upcoming events', () => {
     renderDashboard({ upcomingEvents: [] });
-    expect(screen.queryByText('upcomingEvents')).not.toBeInTheDocument();
+    expect(screen.getByText('upcomingEvents')).toBeInTheDocument();
+    expect(screen.getByText('noEvents')).toBeInTheDocument();
   });
 
   it('shows event type chip when event_types is present', () => {

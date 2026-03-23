@@ -130,41 +130,48 @@ export default function DashboardContent({ profile, groups, upcomingEvents, even
       </Button>
 
       {/* Upcoming events below */}
-      {events.length > 0 && (
-        <>
-          <Typography variant="h3" sx={{ mb: 1.5 }}>
-            {t('upcomingEvents')}
-          </Typography>
-          <Stack spacing={1}>
-            {events.map((event) => (
-              <Card key={event.id} variant="outlined">
-                <CardActionArea onClick={() => setEditEvent(event)}>
-                  <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
-                        <EventIcon color="primary" sx={{ fontSize: 20 }} />
-                        <Box sx={{ minWidth: 0 }}>
-                          <Typography variant="subtitle2" noWrap>
-                            {event.title}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {formatEventDate(event.start_date, event.end_date, event.is_all_day, event.start_time)}
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        {event.event_types && (
-                          <Chip label={event.event_types.name} size="small" variant="outlined" />
-                        )}
-                        <ChevronRightIcon color="action" sx={{ fontSize: 20 }} />
+      <Typography variant="h3" sx={{ mb: 1.5 }}>
+        {t('upcomingEvents')}
+      </Typography>
+      {events.length === 0 ? (
+        <Card variant="outlined" sx={{ mb: 2 }}>
+          <CardContent sx={{ textAlign: 'center', py: 3 }}>
+            <EventIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
+            <Typography variant="body2" color="text.secondary">
+              {t('noEvents')}
+            </Typography>
+          </CardContent>
+        </Card>
+      ) : (
+        <Stack spacing={1}>
+          {events.map((event) => (
+            <Card key={event.id} variant="outlined">
+              <CardActionArea onClick={() => setEditEvent(event)}>
+                <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
+                      <EventIcon color="primary" sx={{ fontSize: 20 }} />
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="subtitle2" noWrap>
+                          {event.title}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {formatEventDate(event.start_date, event.end_date, event.is_all_day, event.start_time)}
+                        </Typography>
                       </Box>
                     </Box>
-                  </CardContent>
-                </CardActionArea>
-              </Card>
-            ))}
-          </Stack>
-        </>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      {event.event_types && (
+                        <Chip label={event.event_types.name} size="small" variant="outlined" />
+                      )}
+                      <ChevronRightIcon color="action" sx={{ fontSize: 20 }} />
+                    </Box>
+                  </Box>
+                </CardContent>
+              </CardActionArea>
+            </Card>
+          ))}
+        </Stack>
       )}
 
       {/* Edit event dialog */}

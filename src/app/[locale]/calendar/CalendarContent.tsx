@@ -12,6 +12,7 @@ import { useTheme } from '@mui/material/styles';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import LockIcon from '@mui/icons-material/Lock';
+import { getContrastTextColor } from '@/lib/utils/colors';
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import EventDialog from '@/app/[locale]/groups/[id]/EventDialog';
 import EventDetailDialog from '@/app/[locale]/groups/[id]/EventDetailDialog';
@@ -380,7 +381,7 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
           >
             {calendarDays.map((cell, idx) => {
               if (!cell) {
-                return <Box key={`empty-${idx}`} sx={{ bgcolor: 'background.default', minHeight: isMobile ? 32 : 64 }} />;
+                return <Box key={`empty-${idx}`} sx={{ bgcolor: 'background.default', minHeight: isMobile ? 40 : 64 }} />;
               }
 
               const dayEvents = eventsByDate[cell.dateStr] ?? [];
@@ -402,7 +403,7 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
                   }}
                   sx={{
                     bgcolor: 'background.paper',
-                    minHeight: isMobile ? 32 : 64,
+                    minHeight: isMobile ? 40 : 64,
                     minWidth: 0,
                     overflow: 'hidden',
                     p: isMobile ? 0.25 : 0.5,
@@ -454,7 +455,7 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
                           }}
                           sx={{
                             ...(event.is_all_day
-                              ? { bgcolor: pillColor, color: '#fff' }
+                              ? { bgcolor: pillColor, color: getContrastTextColor(pillColor) }
                               : {
                                   bgcolor: `${pillColor}22`,
                                   color: 'text.primary',
@@ -466,7 +467,7 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
                             mb: 0.25,
                             fontSize: isMobile ? '0.55rem' : '0.65rem',
                             lineHeight: 1.3,
-                            minHeight: isMobile ? 14 : 18,
+                            minHeight: isMobile ? 20 : 18,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',

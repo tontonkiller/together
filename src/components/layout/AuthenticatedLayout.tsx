@@ -1,9 +1,13 @@
 'use client';
 
 import Box from '@mui/material/Box';
+import Container from '@mui/material/Container';
 import TopBar from './TopBar';
 import BottomNav from './BottomNav';
 import AutoSync from '@/components/google/AutoSync';
+
+export const TOPBAR_HEIGHT = 64;
+export const BOTTOMNAV_HEIGHT = 56;
 
 export default function AuthenticatedLayout({
   children,
@@ -18,12 +22,14 @@ export default function AuthenticatedLayout({
         component="main"
         sx={{
           flexGrow: 1,
-          mt: '64px', // AppBar height
-          mb: '56px', // BottomNavigation height
+          mt: `${TOPBAR_HEIGHT}px`,
+          mb: `${BOTTOMNAV_HEIGHT}px`,
           p: 2,
         }}
       >
-        {children}
+        <Container maxWidth="md" disableGutters>
+          {children}
+        </Container>
       </Box>
       <BottomNav />
     </Box>

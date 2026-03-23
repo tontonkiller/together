@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getMemberColor, MEMBER_COLORS } from './colors';
+import { getMemberColor, getContrastTextColor, MEMBER_COLORS } from './colors';
 
 describe('getMemberColor', () => {
   it('returns the first color for index 0', () => {
@@ -44,6 +44,36 @@ describe('MEMBER_COLORS', () => {
   it('all colors are valid hex codes', () => {
     MEMBER_COLORS.forEach((color) => {
       expect(color).toMatch(/^#[0-9A-Fa-f]{6}$/);
+    });
+  });
+});
+
+describe('getContrastTextColor', () => {
+  it('returns dark text for light backgrounds', () => {
+    expect(getContrastTextColor('#AFB42B')).toBe('#212121'); // Lime
+    expect(getContrastTextColor('#F57C00')).toBe('#212121'); // Orange
+    expect(getContrastTextColor('#FFFFFF')).toBe('#212121'); // White
+    expect(getContrastTextColor('#FFEB3B')).toBe('#212121'); // Yellow
+  });
+
+  it('returns white text for dark backgrounds', () => {
+    expect(getContrastTextColor('#1976D2')).toBe('#fff'); // Blue
+    expect(getContrastTextColor('#D32F2F')).toBe('#fff'); // Red
+    expect(getContrastTextColor('#7B1FA2')).toBe('#fff'); // Purple
+    expect(getContrastTextColor('#5D4037')).toBe('#fff'); // Brown
+    expect(getContrastTextColor('#000000')).toBe('#fff'); // Black
+    expect(getContrastTextColor('#C2185B')).toBe('#fff'); // Pink
+  });
+
+  it('handles hex with or without #', () => {
+    expect(getContrastTextColor('#FFFFFF')).toBe('#212121');
+    expect(getContrastTextColor('FFFFFF')).toBe('#212121');
+  });
+
+  it('returns valid text color for all MEMBER_COLORS', () => {
+    MEMBER_COLORS.forEach((color) => {
+      const result = getContrastTextColor(color);
+      expect(['#fff', '#212121']).toContain(result);
     });
   });
 });

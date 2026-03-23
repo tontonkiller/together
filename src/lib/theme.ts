@@ -2,7 +2,7 @@ import { createTheme, type ThemeOptions } from '@mui/material/styles';
 
 const baseThemeOptions: ThemeOptions = {
   typography: {
-    fontFamily: 'Roboto, Arial, sans-serif',
+    fontFamily: 'var(--font-roboto), Arial, sans-serif',
     h1: { fontSize: '2rem', fontWeight: 700 },
     h2: { fontSize: '1.5rem', fontWeight: 600 },
     h3: { fontSize: '1.25rem', fontWeight: 600 },
@@ -30,7 +30,6 @@ const defaultTheme = createTheme({
   ...baseThemeOptions,
   palette: {
     primary: { main: '#1976D2' },
-    secondary: { main: '#FF9800' },
     background: { default: '#FAFAFA', paper: '#FFFFFF' },
     text: { primary: '#212121', secondary: '#757575' },
     error: { main: '#D32F2F' },
@@ -42,7 +41,6 @@ const evaTheme = createTheme({
   ...baseThemeOptions,
   palette: {
     primary: { main: '#E91E90' },
-    secondary: { main: '#FF69B4' },
     background: { default: '#FFF0F5', paper: '#FFFFFF' },
     text: { primary: '#212121', secondary: '#757575' },
     error: { main: '#D32F2F' },

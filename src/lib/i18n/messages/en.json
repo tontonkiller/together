@@ -16,7 +16,8 @@
     "notFoundMessage": "The page you're looking for doesn't exist or has been moved.",
     "goHome": "Go to dashboard",
     "errorTitle": "Oops!",
-    "errorMessage": "Something went wrong loading this page."
+    "errorMessage": "Something went wrong loading this page.",
+    "done": "Done"
   },
   "landing": {
     "title": "Together",
@@ -205,7 +206,8 @@
     "accepted": "Accepted",
     "refused": "Refused",
     "selectAll": "Select all",
-    "deselectAll": "Deselect all"
+    "deselectAll": "Deselect all",
+    "syncResult": "{newPending} new, {updated} updated, {deleted} deleted"
   },
   "nav": {
     "groups": "Groups",

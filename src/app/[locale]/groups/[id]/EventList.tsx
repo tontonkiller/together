@@ -18,6 +18,7 @@ import DialogActions from '@mui/material/DialogActions';
 import Alert from '@mui/material/Alert';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
+import EventIcon from '@mui/icons-material/Event';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LockIcon from '@mui/icons-material/Lock';
 import { createClient } from '@/lib/supabase/client';
@@ -104,9 +105,14 @@ export default function EventList({
       </Box>
 
       {events.length === 0 ? (
-        <Typography variant="body2" color="text.secondary">
-          {t('noEvents')}
-        </Typography>
+        <Card variant="outlined">
+          <CardContent sx={{ textAlign: 'center', py: 3 }}>
+            <EventIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
+            <Typography variant="body2" color="text.secondary">
+              {t('noEvents')}
+            </Typography>
+          </CardContent>
+        </Card>
       ) : (
         <Stack spacing={1}>
           {events.map((event) => {

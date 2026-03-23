@@ -157,6 +157,7 @@ export default function EventDetailDialog({
             {/* Creator */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
               <Avatar
+                alt={creatorName}
                 sx={{
                   width: 28,
                   height: 28,

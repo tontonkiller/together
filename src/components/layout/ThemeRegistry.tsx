@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, useMemo, useSyncExternalStore } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { defaultTheme, evaTheme } from '@/lib/theme';
@@ -38,6 +38,14 @@ export default function ThemeRegistry({ children }: { children: React.ReactNode 
       return next;
     });
   }, []);
+
+  // Keep theme-color meta tag in sync with active theme
+  useEffect(() => {
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) {
+      meta.setAttribute('content', evaMode ? '#E91E90' : '#1976D2');
+    }
+  }, [evaMode]);
 
   const value = useMemo(() => ({ evaMode, toggleEvaMode }), [evaMode, toggleEvaMode]);
 
