@@ -7,7 +7,7 @@ import BottomNav from './BottomNav';
 import AutoSync from '@/components/google/AutoSync';
 
 export const TOPBAR_HEIGHT = 64;
-export const BOTTOMNAV_HEIGHT = 56;
+export const BOTTOMNAV_HEIGHT = 64;
 
 export default function AuthenticatedLayout({
   children,
@@ -23,8 +23,9 @@ export default function AuthenticatedLayout({
         sx={{
           flexGrow: 1,
           mt: 0,
-          mb: '56px', // BottomNavigation height
-          p: 2,
+          mb: '64px', // BottomNavigation height
+          p: 2.5,
+          pt: 3,
         }}
       >
         <Container maxWidth="md" disableGutters>

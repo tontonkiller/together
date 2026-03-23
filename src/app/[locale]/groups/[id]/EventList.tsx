@@ -105,7 +105,7 @@ export default function EventList({
       </Box>
 
       {events.length === 0 ? (
-        <Card variant="outlined">
+        <Card elevation={0}>
           <CardContent sx={{ textAlign: 'center', py: 3 }}>
             <EventIcon sx={{ fontSize: 40, color: 'text.secondary', mb: 1 }} />
             <Typography variant="body2" color="text.secondary">
@@ -118,7 +118,7 @@ export default function EventList({
           {events.map((event) => {
             const isOwner = event.user_id === currentUserId;
             return (
-              <Card key={event.id} variant="outlined">
+              <Card key={event.id} elevation={0}>
                 <CardActionArea
                   onClick={() => isOwner && setEditEvent(event)}
                   disabled={!isOwner}

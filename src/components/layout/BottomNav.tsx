@@ -43,10 +43,20 @@ export default function BottomNav() {
 
   return (
     <Paper
-      sx={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 1100 }}
-      elevation={3}
+      sx={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1100,
+        borderTop: '1px solid',
+        borderColor: 'divider',
+        bgcolor: 'rgba(255,255,255,0.92)',
+        backdropFilter: 'blur(12px)',
+      }}
+      elevation={0}
     >
-      <BottomNavigation value={value} onChange={handleChange} showLabels>
+      <BottomNavigation value={value} onChange={handleChange} showLabels sx={{ bgcolor: 'transparent' }}>
         <BottomNavigationAction
           label={t('groups')}
           icon={<GroupsIcon />}
