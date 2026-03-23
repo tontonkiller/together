@@ -69,6 +69,20 @@ export default function EventDialog({
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const handleDelete = async () => {
+    if (!event || !onEventDeleted) return;
+    setDeleteLoading(true);
+    const supabase = createClient();
+    const { error: deleteError } = await supabase.from('events').delete().eq('id', event.id);
+    setDeleteLoading(false);
+    if (deleteError) {
+      setError(t('deleteError'));
+    } else {
+      onEventDeleted(event.id);
+      onClose();
+    }
+  };
+
   const validate = (): boolean => {
     if (!title.trim()) {
       setError(t('titleRequired'));
@@ -266,26 +280,18 @@ export default function EventDialog({
           </Typography>
         )}
       </DialogContent>
-      <DialogActions sx={{ justifyContent: isEdit && onEventDeleted ? 'space-between' : 'flex-end' }}>
-        {isEdit && onEventDeleted && event && (
+      <DialogActions>
+        {isEdit && onEventDeleted && (
           <Button
             color="error"
-            disabled={deleteLoading}
-            onClick={async () => {
-              setDeleteLoading(true);
-              const supabase = createClient();
-              const { error: delError } = await supabase.from('events').delete().eq('id', event.id);
-              setDeleteLoading(false);
-              if (!delError) {
-                onEventDeleted(event.id);
-                onClose();
-              }
-            }}
+            onClick={handleDelete}
+            disabled={deleteLoading || loading}
+            size="small"
+            sx={{ mr: 'auto' }}
           >
-            {deleteLoading ? <CircularProgress size={20} color="inherit" /> : t('deleteEvent')}
+            {t('deleteEvent')}
           </Button>
         )}
-        <div>
         <Button onClick={onClose}>{tCommon('cancel')}</Button>
         <Button
           onClick={handleSubmit}
@@ -300,7 +306,6 @@ export default function EventDialog({
             t('create')
           )}
         </Button>
-        </div>
       </DialogActions>
     </Dialog>
   );
