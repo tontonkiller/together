@@ -23,6 +23,7 @@ interface GroupCalendarProps {
   onEventUpdated: (event: CalendarEvent) => void;
   onEventDeleted: (eventId: string) => void;
   onDateClick?: (dateStr: string) => void;
+  googleEventIds?: string[];
 }
 
 function getDaysInMonth(year: number, month: number): number {
@@ -58,13 +59,15 @@ const MONTH_NAMES_EN = [
 const DAY_NAMES_FR = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 const DAY_NAMES_EN = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-export default function GroupCalendar({ events, members, currentUserId, eventTypes, onEventUpdated, onEventDeleted, onDateClick }: GroupCalendarProps) {
+export default function GroupCalendar({ events, members, currentUserId, eventTypes, onEventUpdated, onEventDeleted, onDateClick, googleEventIds = [] }: GroupCalendarProps) {
   const t = useTranslations('groupCalendar');
   const tEvents = useTranslations('events');
   const locale = useLocale();
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const googleEventIdSet = useMemo(() => new Set(googleEventIds), [googleEventIds]);
 
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -350,6 +353,21 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
                       }}
                     >
                       {isPrivateOther && <LockIcon sx={{ fontSize: 9 }} />}
+                      {googleEventIdSet.has(event.id) && (
+                        <Box
+                          component="span"
+                          sx={{
+                            fontSize: '0.5rem',
+                            fontWeight: 700,
+                            bgcolor: 'rgba(255,255,255,0.3)',
+                            borderRadius: 0.5,
+                            px: 0.3,
+                            lineHeight: 1,
+                          }}
+                        >
+                          G
+                        </Box>
+                      )}
                       {getDisplayTitle(event)}
                     </Box>
                   );
@@ -382,6 +400,7 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
             onEventDeleted(id);
             setSelectedEvent(null);
           }}
+          isGoogleImported={googleEventIdSet.has(selectedEvent.id)}
         />
       )}
     </Box>
