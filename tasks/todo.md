@@ -80,47 +80,15 @@
 
 ---
 
-## M7 — Filtres & interactions calendrier 🚧 IN PROGRESS
+## M7 — Filtres & interactions calendrier ✅ DONE
 
-**Objectif** : Affiner la vue calendrier et naviguer dans les événements.
-
-### 7.1 — Filtres par membre sur GroupCalendar
-- [ ] Chips cliquables au-dessus du calendrier (un par membre, avec couleur)
-- [ ] Toggle on/off pour montrer/cacher les events d'un membre
-- [ ] État "tous sélectionnés" par défaut
-- [ ] Chip "Tous" pour reset rapide
-
-### 7.2 — Vue détail d'un événement (dialog)
-- [ ] Clic sur un event pill (dans GroupCalendar ou CalendarContent) → dialog détail
-- [ ] Affiche : titre, dates, lieu, type, créateur (nom + avatar)
-- [ ] Si owner → boutons "Modifier" et "Supprimer"
-- [ ] Si pas owner → lecture seule
-- [ ] Events privés d'autres membres → pas de dialog (ou juste "Occupé")
-
-### 7.3 — Distinction visuelle journée entière vs créneau horaire
-- [ ] Journée entière → barre pleine dans la cellule (comme maintenant)
-- [ ] Créneau horaire → afficher l'heure (ex: "10:00 Meeting") dans le pill
-- [ ] Légende ou indication visuelle du type (bordure pointillée, icône horloge, etc.)
-
-### 7.4 — Responsive mobile 375px
-- [ ] Calendar grid lisible sur 375px (font-size réduit, overflow géré)
-- [ ] Event pills tronqués proprement sur petit écran
-- [ ] Touch targets 48px minimum sur les contrôles
-- [ ] Dialogs fullScreen sur mobile (< sm breakpoint)
-- [ ] Légende membres : wrap ou scrollable
-
-### 7.5 — Multi-groupes sur le calendrier personnel
-- [ ] Fetch tous les groupes de l'utilisateur dans la page calendrier
-- [ ] Sélecteur de groupe (dropdown ou chips) au-dessus du calendrier personnel
-- [ ] Option "Mes événements" (perso uniquement, défaut)
-- [ ] Option par groupe → charge les events du groupe avec couleurs membre
-- [ ] Conserver la navigation mois quand on switch de groupe
-
-### 7.6 — i18n & Tests
-- [ ] Clés i18n FR + EN pour toutes les nouvelles strings
-- [ ] Tests unitaires (filtres, détail event, responsive)
-
-**Critère de done** : On peut filtrer par membre, voir le détail d'un event, et le calendrier fonctionne sur mobile.
+- [x] Filtres par membre (chips cliquables avec couleur, toggle on/off, chip "Tous")
+- [x] Vue détail d'un événement (EventDetailDialog : titre, dates, lieu, type, créateur, edit/delete owner)
+- [x] Distinction visuelle journée entière (barre pleine) vs créneau horaire (time prefix + left border)
+- [x] Responsive mobile 375px (smaller cells, fewer pills, fullScreen dialogs)
+- [x] Multi-groupes : sélecteur de groupe (chips) sur le calendrier personnel
+- [x] Clés i18n FR + EN
+- [x] Tests unitaires (206 tests, +4 nouveaux pour filtres et time display)
 
 ---
 
