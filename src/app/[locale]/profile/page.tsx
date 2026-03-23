@@ -17,14 +17,20 @@ export default async function ProfilePage({
     return redirect({ href: '/login', locale });
   }
 
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-  if (profileError) {
-    console.error('[profile] Profile fetch failed:', profileError.message);
+  const [profileResult, googleAccountsResult] = await Promise.all([
+    supabase.from('profiles').select('*').eq('id', user.id).single(),
+    supabase.from('google_accounts').select('id, google_email, created_at').eq('user_id', user.id).order('created_at'),
+  ]);
+
+  if (profileResult.error) {
+    console.error('[profile] Profile fetch failed:', profileResult.error.message);
   }
 
-  return <ProfileContent profile={profile} email={user.email ?? ''} />;
+  return (
+    <ProfileContent
+      profile={profileResult.data}
+      email={user.email ?? ''}
+      googleAccounts={googleAccountsResult.data ?? []}
+    />
+  );
 }
