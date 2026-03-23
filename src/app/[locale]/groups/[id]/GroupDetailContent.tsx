@@ -28,6 +28,7 @@ import { useRouter } from '@/lib/i18n/navigation';
 import { createClient } from '@/lib/supabase/client';
 import InviteDialog from './InviteDialog';
 import EventList from './EventList';
+import EventDialog from './EventDialog';
 import GroupCalendar from './GroupCalendar';
 
 export interface GroupMember {
@@ -96,6 +97,9 @@ export default function GroupDetailContent({
 
   // Events
   const [events, setEvents] = useState(initialEvents);
+
+  // Calendar date click → create event
+  const [calendarCreateDate, setCalendarCreateDate] = useState<string | null>(null);
 
   const handleRename = async () => {
     if (!newName.trim()) return;
@@ -288,6 +292,36 @@ export default function GroupDetailContent({
 
       <Divider sx={{ my: 3 }} />
 
+      {/* Group Calendar (M6) */}
+      <GroupCalendar
+        events={events}
+        members={members}
+        currentUserId={currentUserId}
+        eventTypes={eventTypes}
+        onEventUpdated={handleEventUpdated}
+        onEventDeleted={handleEventDeleted}
+        onDateClick={(dateStr) => setCalendarCreateDate(dateStr)}
+      />
+
+      {/* Event creation dialog from calendar date click */}
+      {calendarCreateDate && (
+        <EventDialog
+          open
+          onClose={() => setCalendarCreateDate(null)}
+          event={null}
+          eventTypes={eventTypes}
+          groupId={group.id}
+          onEventCreated={(event) => {
+            handleEventCreated(event);
+            setCalendarCreateDate(null);
+          }}
+          onEventUpdated={handleEventUpdated}
+          defaultDate={calendarCreateDate}
+        />
+      )}
+
+      <Divider sx={{ my: 3 }} />
+
       {/* Events section (M4) */}
       <EventList
         events={events}
@@ -295,18 +329,6 @@ export default function GroupDetailContent({
         groupId={group.id}
         currentUserId={currentUserId}
         onEventCreated={handleEventCreated}
-        onEventUpdated={handleEventUpdated}
-        onEventDeleted={handleEventDeleted}
-      />
-
-      <Divider sx={{ my: 3 }} />
-
-      {/* Group Calendar (M6) */}
-      <GroupCalendar
-        events={events}
-        members={members}
-        currentUserId={currentUserId}
-        eventTypes={eventTypes}
         onEventUpdated={handleEventUpdated}
         onEventDeleted={handleEventDeleted}
       />

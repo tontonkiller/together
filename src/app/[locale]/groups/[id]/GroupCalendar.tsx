@@ -22,6 +22,7 @@ interface GroupCalendarProps {
   eventTypes: EventType[];
   onEventUpdated: (event: CalendarEvent) => void;
   onEventDeleted: (eventId: string) => void;
+  onDateClick?: (dateStr: string) => void;
 }
 
 function getDaysInMonth(year: number, month: number): number {
@@ -57,7 +58,7 @@ const MONTH_NAMES_EN = [
 const DAY_NAMES_FR = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 const DAY_NAMES_EN = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-export default function GroupCalendar({ events, members, currentUserId, eventTypes, onEventUpdated, onEventDeleted }: GroupCalendarProps) {
+export default function GroupCalendar({ events, members, currentUserId, eventTypes, onEventUpdated, onEventDeleted, onDateClick }: GroupCalendarProps) {
   const t = useTranslations('groupCalendar');
   const tEvents = useTranslations('events');
   const locale = useLocale();
@@ -277,11 +278,13 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
             <Box
               key={cell.dateStr}
               role="gridcell"
+              onClick={() => onDateClick?.(cell.dateStr)}
               sx={{
                 bgcolor: 'background.paper',
                 minHeight: isMobile ? 32 : 56,
                 p: isMobile ? 0.25 : 0.5,
                 position: 'relative',
+                cursor: onDateClick ? 'pointer' : undefined,
               }}
             >
               <Typography
@@ -313,7 +316,7 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
                       role="button"
                       tabIndex={0}
                       aria-label={getDisplayTitle(event)}
-                      onClick={() => setSelectedEvent(event)}
+                      onClick={(e) => { e.stopPropagation(); setSelectedEvent(event); }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
