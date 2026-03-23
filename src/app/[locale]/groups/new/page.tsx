@@ -54,13 +54,15 @@ export default function NewGroupPage() {
       return;
     }
 
-    // Add creator as admin member
+    // Add creator as admin member with first palette color
+    const { getMemberColor } = await import('@/lib/utils/colors');
     const { error: memberError } = await supabase
       .from('group_members')
       .insert({
         group_id: group.id,
         user_id: user.id,
         role: 'admin',
+        color: getMemberColor(0),
       });
 
     if (memberError) {

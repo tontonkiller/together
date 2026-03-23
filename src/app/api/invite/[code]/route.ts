@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { getMemberColor } from '@/lib/utils/colors';
 
 export async function POST(
   _request: Request,
@@ -39,20 +38,10 @@ export async function POST(
     return NextResponse.json({ groupId, alreadyMember: true });
   }
 
-  // Count existing members to assign a color
-  const { count } = await supabase
-    .from('group_members')
-    .select('id', { count: 'exact', head: true })
-    .eq('group_id', groupId);
-
-  const color = getMemberColor(count ?? 0);
-
   // Use SECURITY DEFINER RPC to atomically join group + mark invitations accepted
+  // Color is auto-assigned from palette based on member count inside the function
   const { data: joinResult, error: joinError } = await supabase
-    .rpc('join_group_by_invite_code', {
-      code_param: code,
-      member_color: color,
-    });
+    .rpc('join_group_by_invite_code', { code_param: code });
 
   if (joinError) {
     console.error('[api/invite] Join failed:', joinError.message);
