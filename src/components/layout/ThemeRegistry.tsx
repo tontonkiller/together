@@ -43,7 +43,7 @@ export default function ThemeRegistry({ children }: { children: React.ReactNode 
   useEffect(() => {
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
-      meta.setAttribute('content', evaMode ? '#C75B8F' : '#D4726A');
+      meta.setAttribute('content', evaMode ? '#E8578A' : '#0891B2');
     }
   }, [evaMode]);
 

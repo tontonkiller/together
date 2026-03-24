@@ -278,14 +278,14 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
               aria-label={`${cell.day} ${monthNames[month]}${dayEvents.length > 0 ? ` — ${dayEvents.length} ${tEvents('title').toLowerCase()}` : ''}`}
               onClick={() => onDayClick?.(cell.dateStr)}
               sx={{
-                bgcolor: isToday ? 'rgba(212,114,106,0.04)' : 'background.paper',
+                bgcolor: isToday ? 'rgba(8,145,178,0.06)' : 'background.paper',
                 minHeight: isMobile ? 44 : 60,
                 p: isMobile ? 0.25 : 0.5,
                 position: 'relative',
                 cursor: onDayClick ? 'pointer' : undefined,
                 transition: 'background-color 0.15s ease',
                 '&:hover': onDayClick ? {
-                  bgcolor: isToday ? 'rgba(212,114,106,0.08)' : 'rgba(44,40,37,0.03)',
+                  bgcolor: isToday ? 'rgba(8,145,178,0.10)' : 'rgba(8,145,178,0.04)',
                 } : undefined,
               }}
             >

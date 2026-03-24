@@ -1,10 +1,10 @@
 import { createTheme, type ThemeOptions } from '@mui/material/styles';
 
-// Warm shadow palette — slightly tinted, not pure grey
-const warmShadow = {
-  sm: '0 1px 3px rgba(44,40,37,0.08), 0 1px 2px rgba(44,40,37,0.06)',
-  md: '0 2px 8px rgba(44,40,37,0.08), 0 4px 16px rgba(44,40,37,0.04)',
-  lg: '0 4px 12px rgba(44,40,37,0.10), 0 8px 32px rgba(44,40,37,0.06)',
+// Soft coastal shadows — tinted with ocean tones
+const shadow = {
+  sm: '0 1px 3px rgba(15,80,90,0.06), 0 1px 2px rgba(15,80,90,0.04)',
+  md: '0 2px 8px rgba(15,80,90,0.07), 0 4px 16px rgba(15,80,90,0.03)',
+  lg: '0 4px 12px rgba(15,80,90,0.09), 0 8px 32px rgba(15,80,90,0.05)',
 };
 
 const baseThemeOptions: ThemeOptions = {
@@ -32,8 +32,8 @@ const baseThemeOptions: ThemeOptions = {
           transition: 'all 0.2s ease',
         },
         contained: {
-          boxShadow: warmShadow.sm,
-          '&:hover': { boxShadow: warmShadow.md },
+          boxShadow: shadow.sm,
+          '&:hover': { boxShadow: shadow.md },
         },
         outlined: {
           borderWidth: 1.5,
@@ -46,7 +46,7 @@ const baseThemeOptions: ThemeOptions = {
       styleOverrides: {
         root: {
           borderRadius: 16,
-          boxShadow: warmShadow.md,
+          boxShadow: shadow.md,
           transition: 'box-shadow 0.2s ease, transform 0.2s ease',
         },
       },
@@ -60,7 +60,7 @@ const baseThemeOptions: ThemeOptions = {
       styleOverrides: {
         paper: {
           borderRadius: 20,
-          boxShadow: warmShadow.lg,
+          boxShadow: shadow.lg,
         },
       },
     },
@@ -95,31 +95,33 @@ const baseThemeOptions: ThemeOptions = {
   },
 };
 
+// Mediterranean — azure sea, olive groves, golden sun
 const defaultTheme = createTheme({
   ...baseThemeOptions,
   palette: {
-    primary: { main: '#D4726A', contrastText: '#FFFFFF' },
-    secondary: { main: '#8B9E82' },
-    background: { default: '#F9F5F0', paper: '#FFFFFF' },
-    text: { primary: '#2C2825', secondary: '#8A7F78' },
-    error: { main: '#C4564A' },
-    success: { main: '#6B9B7D' },
-    warning: { main: '#D4A054' },
-    divider: 'rgba(44,40,37,0.08)',
+    primary: { main: '#0891B2', contrastText: '#FFFFFF' },
+    secondary: { main: '#F59E0B' },
+    background: { default: '#F0FAFB', paper: '#FFFFFF' },
+    text: { primary: '#1E293B', secondary: '#64748B' },
+    error: { main: '#EF4444' },
+    success: { main: '#10B981' },
+    warning: { main: '#F59E0B' },
+    divider: 'rgba(15,80,90,0.08)',
   },
 });
 
+// Eva — sunset rose, warm and romantic
 const evaTheme = createTheme({
   ...baseThemeOptions,
   palette: {
-    primary: { main: '#C75B8F', contrastText: '#FFFFFF' },
-    secondary: { main: '#9B8EC4' },
-    background: { default: '#FDF5F8', paper: '#FFFFFF' },
-    text: { primary: '#2C2825', secondary: '#8A7F78' },
-    error: { main: '#C4564A' },
-    success: { main: '#6B9B7D' },
-    warning: { main: '#D4A054' },
-    divider: 'rgba(44,40,37,0.08)',
+    primary: { main: '#E8578A', contrastText: '#FFFFFF' },
+    secondary: { main: '#A78BFA' },
+    background: { default: '#FDF2F6', paper: '#FFFFFF' },
+    text: { primary: '#1E293B', secondary: '#64748B' },
+    error: { main: '#EF4444' },
+    success: { main: '#10B981' },
+    warning: { main: '#F59E0B' },
+    divider: 'rgba(150,50,80,0.08)',
   },
 });
 

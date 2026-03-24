@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Family calendar app',
     start_url: '/dashboard',
     display: 'standalone',
-    background_color: '#F9F5F0',
-    theme_color: '#D4726A',
+    background_color: '#F0FAFB',
+    theme_color: '#0891B2',
     icons: [
       {
         src: '/icons/icon-192.png',
