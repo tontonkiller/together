@@ -20,12 +20,14 @@ import TextField from '@mui/material/TextField';
 import Alert from '@mui/material/Alert';
 import Divider from '@mui/material/Divider';
 import CircularProgress from '@mui/material/CircularProgress';
+import Collapse from '@mui/material/Collapse';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import GroupsIcon from '@mui/icons-material/Groups';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useRouter } from '@/lib/i18n/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useImageUpload } from '@/lib/hooks/useImageUpload';
@@ -124,6 +126,7 @@ export default function GroupDetailContent({
   const [events, setEvents] = useState(initialEvents);
   const [createOpen, setCreateOpen] = useState(false);
   const [createDefaultDate, setCreateDefaultDate] = useState<string | undefined>(undefined);
+  const [membersOpen, setMembersOpen] = useState(false);
 
   const handleRename = async () => {
     if (!newName.trim()) return;
@@ -291,72 +294,89 @@ export default function GroupDetailContent({
         </Alert>
       )}
 
-      {/* Members section */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 3, mb: 1 }}>
-        <Typography variant="h3">
-          {t('members')} ({members.length})
-        </Typography>
+      {/* Members section (collapsed by default) */}
+      <Box
+        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 3, mb: 0.5, cursor: 'pointer' }}
+        onClick={() => setMembersOpen((prev) => !prev)}
+        role="button"
+        aria-expanded={membersOpen}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Typography variant="h3">
+            {t('members')} ({members.length})
+          </Typography>
+          <ExpandMoreIcon
+            sx={{
+              fontSize: 20,
+              color: 'text.secondary',
+              transition: 'transform 0.2s',
+              transform: membersOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+            }}
+          />
+        </Box>
         {isAdmin && (
           <Button
             startIcon={<PersonAddIcon />}
             size="small"
-            onClick={() => setInviteOpen(true)}
+            onClick={(e) => { e.stopPropagation(); setInviteOpen(true); }}
           >
             {t('invite')}
           </Button>
         )}
       </Box>
 
-      <List disablePadding>
-        {members.map((member) => (
-          <ListItem key={member.id} disableGutters>
-            <ListItemAvatar>
-              <Avatar
-                src={member.profiles?.avatar_url ?? undefined}
-                sx={{ bgcolor: member.color, width: 36, height: 36, fontSize: '0.9rem' }}
-              >
-                {member.profiles?.display_name?.charAt(0).toUpperCase() ?? '?'}
-              </Avatar>
-            </ListItemAvatar>
-            <ListItemText
-              primary={member.profiles?.display_name ?? '?'}
-            />
-            <Chip
-              label={member.role === 'admin' ? t('admin') : t('member')}
-              size="small"
-              color={member.role === 'admin' ? 'primary' : 'default'}
-              variant={member.role === 'admin' ? 'filled' : 'outlined'}
-            />
-          </ListItem>
-        ))}
-      </List>
+      <Collapse in={membersOpen}>
+        <List disablePadding>
+          {members.map((member) => (
+            <ListItem key={member.id} disableGutters>
+              <ListItemAvatar>
+                <Avatar
+                  src={member.profiles?.avatar_url ?? undefined}
+                  sx={{ bgcolor: member.color, width: 36, height: 36, fontSize: '0.9rem' }}
+                >
+                  {member.profiles?.display_name?.charAt(0).toUpperCase() ?? '?'}
+                </Avatar>
+              </ListItemAvatar>
+              <ListItemText
+                primary={member.profiles?.display_name ?? '?'}
+              />
+              <Chip
+                label={member.role === 'admin' ? t('admin') : t('member')}
+                size="small"
+                color={member.role === 'admin' ? 'primary' : 'default'}
+                variant={member.role === 'admin' ? 'filled' : 'outlined'}
+              />
+            </ListItem>
+          ))}
+        </List>
 
-      {/* Pending invitations */}
-      {isAdmin && invitations.length > 0 && (
-        <>
-          <Typography variant="h3" sx={{ mt: 3, mb: 1 }}>
-            {t('pendingInvitations')}
-          </Typography>
-          <List disablePadding>
-            {invitations.map((inv) => {
-              const isExpired = new Date(inv.expires_at) < new Date();
-              return (
-                <ListItem key={inv.id} disableGutters>
-                  <ListItemText
-                    primary={inv.invited_email}
-                    secondary={isExpired ? t('expired') : t('expires', {
-                      date: new Date(inv.expires_at).toLocaleDateString(),
-                    })}
-                  />
-                  {isExpired && (
-                    <Chip label={t('expired')} size="small" color="warning" variant="outlined" />
-                  )}
-                </ListItem>
-              );
-            })}
-          </List>
-        </>
-      )}
+        {/* Pending invitations */}
+        {isAdmin && invitations.length > 0 && (
+          <>
+            <Typography variant="h3" sx={{ mt: 3, mb: 1 }}>
+              {t('pendingInvitations')}
+            </Typography>
+            <List disablePadding>
+              {invitations.map((inv) => {
+                const isExpired = new Date(inv.expires_at) < new Date();
+                return (
+                  <ListItem key={inv.id} disableGutters>
+                    <ListItemText
+                      primary={inv.invited_email}
+                      secondary={isExpired ? t('expired') : t('expires', {
+                        date: new Date(inv.expires_at).toLocaleDateString(),
+                      })}
+                    />
+                    {isExpired && (
+                      <Chip label={t('expired')} size="small" color="warning" variant="outlined" />
+                    )}
+                  </ListItem>
+                );
+              })}
+            </List>
+          </>
+        )}
+      </Collapse>
 
       <Divider sx={{ my: 3 }} />
 
