@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import GroupDetailContent from './GroupDetailContent';
 import type { GroupMember, PendingInvitation, GroupEvent, EventType } from './GroupDetailContent';
 
+export const dynamic = 'force-dynamic';
+
 export default async function GroupDetailPage({
   params,
 }: {

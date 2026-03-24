@@ -1,6 +1,8 @@
 import { redirect } from '@/lib/i18n/navigation';
 import { createClient } from '@/lib/supabase/server';
 import CalendarContent from './CalendarContent';
+
+export const dynamic = 'force-dynamic';
 import type { CalendarEvent, EventType } from '@/lib/types/events';
 
 interface UserGroup {

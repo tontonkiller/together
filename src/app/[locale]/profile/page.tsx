@@ -2,6 +2,8 @@ import { redirect } from '@/lib/i18n/navigation';
 import { createClient } from '@/lib/supabase/server';
 import ProfileContent from './ProfileContent';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ProfilePage({
   params,
 }: {
