@@ -48,10 +48,10 @@ export async function fetchAndSyncEvents(
 
   if (!accounts || accounts.length === 0) return { newPending, updated, deleted };
 
-  // Time range: now to +3 months
+  // Time range: now to +6 months
   const timeMin = new Date();
   const timeMax = new Date();
-  timeMax.setMonth(timeMax.getMonth() + 3);
+  timeMax.setMonth(timeMax.getMonth() + 6);
 
   for (const account of accounts as GoogleAccount[]) {
     // Get enabled calendars for this account
