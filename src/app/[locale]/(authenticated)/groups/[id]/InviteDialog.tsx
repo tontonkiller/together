@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -39,8 +39,13 @@ export default function InviteDialog({
   const [error, setError] = useState('');
   const [linkCopied, setLinkCopied] = useState(false);
 
+  const [origin, setOrigin] = useState('');
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
   const inviteLink = inviteCode
-    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/invite/${inviteCode}`
+    ? `${origin}/invite/${inviteCode}`
     : '';
 
   const handleSendEmail = async (e: React.FormEvent) => {

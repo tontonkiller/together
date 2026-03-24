@@ -70,9 +70,8 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
 
   const googleEventIdSet = useMemo(() => new Set(googleEventIds), [googleEventIds]);
 
-  const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth());
+  const [year, setYear] = useState(() => new Date().getFullYear());
+  const [month, setMonth] = useState(() => new Date().getMonth());
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
   const monthNames = locale === 'fr' ? MONTH_NAMES_FR : MONTH_NAMES_EN;
