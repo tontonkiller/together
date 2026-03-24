@@ -175,7 +175,7 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
   }
 
   return (
-    <Box>
+    <Box sx={{ overflow: 'hidden', width: '100%' }}>
       <Typography variant="h3" sx={{ mb: 1 }}>{t('title')}</Typography>
 
       {/* Month navigation */}
@@ -262,7 +262,7 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
         aria-label={t('title')}
         sx={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(7, 1fr)',
+          gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
           gap: '1px',
           bgcolor: 'divider',
           border: '1px solid',

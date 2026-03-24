@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -35,7 +35,7 @@ interface EventListProps {
   onEventDeleted: (eventId: string) => void;
 }
 
-function formatDateRange(startDate: string, endDate: string, isAllDay: boolean, startTime: string | null, endTime: string | null, allDayLabel: string): string {
+function formatDateRange(startDate: string, endDate: string, isAllDay: boolean, startTime: string | null, endTime: string | null, allDayLabel: string, locale: string): string {
   const start = new Date(startDate + 'T00:00:00');
   const end = new Date(endDate + 'T00:00:00');
   const sameDay = startDate === endDate;
@@ -43,13 +43,13 @@ function formatDateRange(startDate: string, endDate: string, isAllDay: boolean, 
   const dateOpts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
 
   if (sameDay) {
-    const dateStr = start.toLocaleDateString(undefined, dateOpts);
+    const dateStr = start.toLocaleDateString(locale, dateOpts);
     if (isAllDay) return `${dateStr} — ${allDayLabel}`;
     return `${dateStr} ${startTime?.slice(0, 5) ?? ''} - ${endTime?.slice(0, 5) ?? ''}`;
   }
 
-  const startStr = start.toLocaleDateString(undefined, dateOpts);
-  const endStr = end.toLocaleDateString(undefined, dateOpts);
+  const startStr = start.toLocaleDateString(locale, dateOpts);
+  const endStr = end.toLocaleDateString(locale, dateOpts);
   return `${startStr} → ${endStr}`;
 }
 
@@ -64,6 +64,7 @@ export default function EventList({
 }: EventListProps) {
   const t = useTranslations('events');
   const tCommon = useTranslations('common');
+  const locale = useLocale();
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editEvent, setEditEvent] = useState<CalendarEvent | null>(null);
@@ -142,6 +143,7 @@ export default function EventList({
                             event.start_time,
                             event.end_time,
                             t('allDayLabel'),
+                            locale,
                           )}
                         </Typography>
                         {event.location && (

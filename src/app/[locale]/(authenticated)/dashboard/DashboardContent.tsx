@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -32,14 +32,14 @@ export interface DashboardContentProps {
   eventTypes: EventType[];
 }
 
-function formatEventDate(startDate: string, endDate: string, isAllDay: boolean, startTime: string | null): string {
+function formatEventDate(startDate: string, endDate: string, isAllDay: boolean, startTime: string | null, locale: string): string {
   const start = new Date(startDate + 'T00:00:00');
   const dateOpts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
-  const dateStr = start.toLocaleDateString(undefined, dateOpts);
+  const dateStr = start.toLocaleDateString(locale, dateOpts);
 
   if (startDate !== endDate) {
     const end = new Date(endDate + 'T00:00:00');
-    return `${dateStr} → ${end.toLocaleDateString(undefined, dateOpts)}`;
+    return `${dateStr} → ${end.toLocaleDateString(locale, dateOpts)}`;
   }
   if (!isAllDay && startTime) {
     return `${dateStr} ${startTime.slice(0, 5)}`;
@@ -49,6 +49,7 @@ function formatEventDate(startDate: string, endDate: string, isAllDay: boolean, 
 
 export default function DashboardContent({ profile, groups, upcomingEvents, eventTypes }: DashboardContentProps) {
   const t = useTranslations('dashboard');
+  const locale = useLocale();
   const router = useRouter();
   const [events, setEvents] = useState(upcomingEvents);
   const [editEvent, setEditEvent] = useState<CalendarEvent | null>(null);
@@ -177,7 +178,7 @@ export default function DashboardContent({ profile, groups, upcomingEvents, even
                           {event.title}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          {formatEventDate(event.start_date, event.end_date, event.is_all_day, event.start_time)}
+                          {formatEventDate(event.start_date, event.end_date, event.is_all_day, event.start_time, locale)}
                         </Typography>
                       </Box>
                     </Box>

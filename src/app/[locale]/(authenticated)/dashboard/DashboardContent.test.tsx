@@ -2,6 +2,11 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import DashboardContent, { type DashboardContentProps, type UpcomingEvent } from './DashboardContent';
 
+vi.mock('next-intl', () => ({
+  useTranslations: () => (key: string) => key,
+  useLocale: () => 'fr',
+}));
+
 // Mock AuthenticatedLayout to just render children
 vi.mock('@/components/layout/AuthenticatedLayout', () => ({
   default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,

@@ -271,7 +271,7 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
 
   return (
     <>
-      <Box sx={{ maxWidth: 900, mx: 'auto' }}>
+      <Box sx={{ maxWidth: 900, mx: 'auto', overflow: 'hidden', width: '100%' }}>
         {/* Group selector chips */}
         {userGroups.length > 0 && (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 2 }} role="group" aria-label={t('selectGroup')}>
@@ -343,7 +343,7 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(7, 1fr)',
+            gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
             gap: 0,
             mb: '2px',
           }}
@@ -369,7 +369,7 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
             aria-label={t('title')}
             sx={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(7, 1fr)',
+              gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
               gap: '1px',
               bgcolor: 'divider',
               border: '1px solid',
