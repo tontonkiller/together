@@ -27,7 +27,6 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
 import DeleteIcon from '@mui/icons-material/Delete';
 import GoogleCalendarSelect from './GoogleCalendarSelect';
-import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from '@/lib/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
@@ -177,7 +176,7 @@ export default function ProfileContent({ profile, email, googleAccounts: initial
   };
 
   return (
-    <AuthenticatedLayout>
+    <>
       <Box sx={{ maxWidth: 'sm', mx: 'auto', py: 2 }}>
         <Typography variant="h2" sx={{ mb: 3 }}>
           {t('title')}
@@ -339,6 +338,6 @@ export default function ProfileContent({ profile, email, googleAccounts: initial
           {tAuth('logout')}
         </Button>
       </Box>
-    </AuthenticatedLayout>
+    </>
   );
 }

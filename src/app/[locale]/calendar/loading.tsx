@@ -3,7 +3,7 @@ import Skeleton from '@mui/material/Skeleton';
 
 export default function CalendarLoading() {
   return (
-    <Box sx={{ p: 2, mt: '64px', mb: '56px', maxWidth: 600, mx: 'auto' }}>
+    <Box>
       {/* Month navigation */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
         <Skeleton variant="circular" width={36} height={36} />

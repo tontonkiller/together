@@ -23,7 +23,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import { useRouter } from '@/lib/i18n/navigation';
 import { createClient } from '@/lib/supabase/client';
 import InviteDialog from './InviteDialog';
@@ -199,7 +198,7 @@ export default function GroupDetailContent({
   };
 
   return (
-    <AuthenticatedLayout>
+    <>
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
         <Typography variant="h2">{group.name}</Typography>
@@ -422,6 +421,6 @@ export default function GroupDetailContent({
           router.refresh();
         }}
       />
-    </AuthenticatedLayout>
+    </>
   );
 }

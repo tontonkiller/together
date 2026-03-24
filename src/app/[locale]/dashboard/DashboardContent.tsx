@@ -14,7 +14,6 @@ import AddIcon from '@mui/icons-material/Add';
 import GroupsIcon from '@mui/icons-material/Groups';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import EventIcon from '@mui/icons-material/Event';
-import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import EventDialog from '@/app/[locale]/groups/[id]/EventDialog';
 import { useRouter } from '@/lib/i18n/navigation';
 import type { CalendarEvent, EventType } from '@/lib/types/events';
@@ -62,7 +61,7 @@ export default function DashboardContent({ profile, groups, upcomingEvents, even
   };
 
   return (
-    <AuthenticatedLayout>
+    <>
       <Typography variant="h2" sx={{ mb: 3 }}>
         {t('greeting', { name: profile?.display_name ?? 'User' })}
       </Typography>
@@ -213,6 +212,6 @@ export default function DashboardContent({ profile, groups, upcomingEvents, even
           onEventDeleted={handleEventDeleted}
         />
       )}
-    </AuthenticatedLayout>
+    </>
   );
 }

@@ -2,11 +2,10 @@ import Box from '@mui/material/Box';
 import Skeleton from '@mui/material/Skeleton';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
-import { TOPBAR_HEIGHT, BOTTOMNAV_HEIGHT } from '@/components/layout/AuthenticatedLayout';
 
 export default function DashboardLoading() {
   return (
-    <Box sx={{ p: 2, mt: `${TOPBAR_HEIGHT}px`, mb: `${BOTTOMNAV_HEIGHT}px`, maxWidth: 600, mx: 'auto' }}>
+    <Box>
       {/* Welcome heading */}
       <Skeleton variant="text" width={200} height={40} sx={{ mb: 1 }} />
       <Skeleton variant="text" width={160} height={24} sx={{ mb: 3 }} />
