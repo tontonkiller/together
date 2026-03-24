@@ -267,13 +267,13 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
           bgcolor: 'divider',
           border: '1px solid',
           borderColor: 'divider',
-          borderRadius: 3,
+          borderRadius: '4px',
           overflow: 'hidden',
         }}
       >
         {calendarDays.map((cell, idx) => {
           if (!cell) {
-            return <Box key={`empty-${idx}`} sx={{ bgcolor: 'background.default', minHeight: isMobile ? 56 : 90 }} />;
+            return <Box key={`empty-${idx}`} sx={{ bgcolor: 'background.default', minHeight: isMobile ? 72 : 90 }} />;
           }
 
           const dayEvents = eventsByDate[cell.dateStr] ?? [];
@@ -288,7 +288,7 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
               onClick={() => onDayClick?.(cell.dateStr)}
               sx={{
                 bgcolor: isToday ? 'rgba(8,145,178,0.06)' : 'background.paper',
-                minHeight: isMobile ? 56 : 90,
+                minHeight: isMobile ? 72 : 90,
                 p: isMobile ? 0.25 : 0.5,
                 position: 'relative',
                 cursor: onDayClick ? 'pointer' : undefined,
@@ -302,17 +302,21 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
                 variant="caption"
                 sx={{
                   fontWeight: isToday ? 700 : 400,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: isMobile ? 16 : 20,
-                  height: isMobile ? 16 : 20,
-                  borderRadius: '50%',
-                  bgcolor: isToday ? 'primary.main' : 'transparent',
-                  color: isToday ? 'primary.contrastText' : 'text.primary',
                   fontSize: isMobile ? '0.55rem' : '0.65rem',
                   lineHeight: 1,
-                  flexShrink: 0,
+                  ...(isToday && {
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: isMobile ? 16 : 20,
+                    height: isMobile ? 16 : 20,
+                    borderRadius: '50%',
+                    bgcolor: 'primary.main',
+                    color: 'primary.contrastText',
+                  }),
+                  ...(!isToday && {
+                    color: 'text.primary',
+                  }),
                 }}
               >
                 {cell.day}
