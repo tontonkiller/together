@@ -264,12 +264,12 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
       >
         {calendarDays.map((cell, idx) => {
           if (!cell) {
-            return <Box key={`empty-${idx}`} sx={{ bgcolor: 'background.default', minHeight: isMobile ? 32 : 60 }} />;
+            return <Box key={`empty-${idx}`} sx={{ bgcolor: 'background.default', minHeight: isMobile ? 56 : 90 }} />;
           }
 
           const dayEvents = eventsByDate[cell.dateStr] ?? [];
           const isToday = cell.dateStr === todayStr;
-          const maxVisible = isMobile ? 2 : 3;
+          const maxVisible = isMobile ? 3 : 4;
 
           return (
             <Box
@@ -279,7 +279,7 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
               onClick={() => onDayClick?.(cell.dateStr)}
               sx={{
                 bgcolor: isToday ? 'rgba(8,145,178,0.06)' : 'background.paper',
-                minHeight: isMobile ? 44 : 60,
+                minHeight: isMobile ? 56 : 90,
                 p: isMobile ? 0.25 : 0.5,
                 position: 'relative',
                 cursor: onDayClick ? 'pointer' : undefined,
@@ -337,9 +337,9 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
                         px: 0.5,
                         py: 0.25,
                         mb: 0.25,
-                        fontSize: isMobile ? '0.5rem' : '0.6rem',
-                        lineHeight: 1.2,
-                        minHeight: isMobile ? 20 : 16,
+                        fontSize: isMobile ? '0.6rem' : '0.7rem',
+                        lineHeight: 1.3,
+                        minHeight: isMobile ? 20 : 20,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',

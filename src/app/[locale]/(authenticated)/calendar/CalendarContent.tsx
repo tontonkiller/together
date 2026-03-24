@@ -271,7 +271,7 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
 
   return (
     <>
-      <Box sx={{ maxWidth: 600, mx: 'auto' }}>
+      <Box sx={{ maxWidth: 900, mx: 'auto' }}>
         {/* Group selector chips */}
         {userGroups.length > 0 && (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 2 }} role="group" aria-label={t('selectGroup')}>
@@ -380,12 +380,12 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
           >
             {calendarDays.map((cell, idx) => {
               if (!cell) {
-                return <Box key={`empty-${idx}`} sx={{ bgcolor: 'background.default', minHeight: isMobile ? 40 : 64 }} />;
+                return <Box key={`empty-${idx}`} sx={{ bgcolor: 'background.default', minHeight: isMobile ? 56 : 90 }} />;
               }
 
               const dayEvents = eventsByDate[cell.dateStr] ?? [];
               const isToday = cell.dateStr === todayStr;
-              const maxVisible = isMobile ? 2 : 3;
+              const maxVisible = isMobile ? 3 : 4;
 
               return (
                 <Box
@@ -402,7 +402,7 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
                   }}
                   sx={{
                     bgcolor: 'background.paper',
-                    minHeight: isMobile ? 40 : 64,
+                    minHeight: isMobile ? 56 : 90,
                     minWidth: 0,
                     overflow: 'hidden',
                     p: isMobile ? 0.25 : 0.5,
@@ -464,9 +464,9 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
                             px: 0.5,
                             py: 0.25,
                             mb: 0.25,
-                            fontSize: isMobile ? '0.55rem' : '0.65rem',
+                            fontSize: isMobile ? '0.6rem' : '0.7rem',
                             lineHeight: 1.3,
-                            minHeight: isMobile ? 20 : 18,
+                            minHeight: isMobile ? 20 : 20,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
