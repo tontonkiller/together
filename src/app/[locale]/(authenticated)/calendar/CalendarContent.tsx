@@ -271,7 +271,7 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
 
   return (
     <>
-      <Box sx={{ maxWidth: 600, mx: 'auto' }}>
+      <Box sx={{ maxWidth: 900, mx: 'auto' }}>
         {/* Group selector chips */}
         {userGroups.length > 0 && (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 2 }} role="group" aria-label={t('selectGroup')}>
@@ -305,15 +305,15 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
         )}
 
         {/* Header: month navigation */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <IconButton onClick={goToPrev} aria-label={t('previousMonth')}>
-            <ChevronLeftIcon />
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: isMobile ? 0.5 : 2 }}>
+          <IconButton onClick={goToPrev} aria-label={t('previousMonth')} size={isMobile ? 'small' : 'medium'}>
+            <ChevronLeftIcon sx={{ fontSize: isMobile ? 18 : 24 }} />
           </IconButton>
-          <Typography variant="h3" component="h1">
+          <Typography variant={isMobile ? 'subtitle1' : 'h3'} component="h1" sx={{ fontWeight: 600 }}>
             {monthNames[month]} {year}
           </Typography>
-          <IconButton onClick={goToNext} aria-label={t('nextMonth')}>
-            <ChevronRightIcon />
+          <IconButton onClick={goToNext} aria-label={t('nextMonth')} size={isMobile ? 'small' : 'medium'}>
+            <ChevronRightIcon sx={{ fontSize: isMobile ? 18 : 24 }} />
           </IconButton>
         </Box>
 
@@ -345,7 +345,7 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
             display: 'grid',
             gridTemplateColumns: 'repeat(7, 1fr)',
             gap: 0,
-            mb: 0.5,
+            mb: '2px',
           }}
           role="row"
         >
@@ -355,7 +355,7 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
               variant="caption"
               align="center"
               role="columnheader"
-              sx={{ fontWeight: 600, color: 'text.secondary', py: 0.5, fontSize: isMobile ? '0.6rem' : undefined }}
+              sx={{ fontWeight: 600, color: 'text.secondary', py: '2px', fontSize: isMobile ? '0.55rem' : undefined }}
             >
               {name}
             </Typography>
@@ -380,12 +380,12 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
           >
             {calendarDays.map((cell, idx) => {
               if (!cell) {
-                return <Box key={`empty-${idx}`} sx={{ bgcolor: 'background.default', minHeight: isMobile ? 40 : 64 }} />;
+                return <Box key={`empty-${idx}`} sx={{ bgcolor: 'background.default', minHeight: isMobile ? 56 : 90 }} />;
               }
 
               const dayEvents = eventsByDate[cell.dateStr] ?? [];
               const isToday = cell.dateStr === todayStr;
-              const maxVisible = isMobile ? 2 : 3;
+              const maxVisible = isMobile ? 3 : 5;
 
               return (
                 <Box
@@ -402,7 +402,7 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
                   }}
                   sx={{
                     bgcolor: 'background.paper',
-                    minHeight: isMobile ? 40 : 64,
+                    minHeight: isMobile ? 56 : 90,
                     minWidth: 0,
                     overflow: 'hidden',
                     p: isMobile ? 0.25 : 0.5,
@@ -419,18 +419,21 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
                       display: 'inline-flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      width: isMobile ? 18 : 24,
-                      height: isMobile ? 18 : 24,
+                      width: isMobile ? 16 : 20,
+                      height: isMobile ? 16 : 20,
                       borderRadius: '50%',
                       bgcolor: isToday ? 'primary.main' : 'transparent',
                       color: isToday ? 'primary.contrastText' : 'text.primary',
+                      fontSize: isMobile ? '0.55rem' : '0.65rem',
+                      lineHeight: 1,
+                      flexShrink: 0,
                     }}
                   >
                     {cell.day}
                   </Typography>
 
                   {/* Event indicators */}
-                  <Box sx={{ mt: 0.25 }}>
+                  <Box sx={{ mt: '1px', flexGrow: 1, overflow: 'hidden' }}>
                     {dayEvents.slice(0, maxVisible).map((event) => {
                       const pillColor = getEventPillColor(event);
                       const isPrivateOther = isGroupMode && event.is_private && event.user_id !== currentUserId;
@@ -458,15 +461,15 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
                               : {
                                   bgcolor: `${pillColor}22`,
                                   color: 'text.primary',
-                                  borderLeft: `3px solid ${pillColor}`,
+                                  borderLeft: `2px solid ${pillColor}`,
                                 }),
-                            borderRadius: 0.5,
-                            px: 0.5,
-                            py: 0.25,
-                            mb: 0.25,
+                            borderRadius: '3px',
+                            px: '3px',
+                            py: '1px',
+                            mb: '1px',
                             fontSize: isMobile ? '0.55rem' : '0.65rem',
-                            lineHeight: 1.3,
-                            minHeight: isMobile ? 20 : 18,
+                            lineHeight: 1.2,
+                            minHeight: isMobile ? 15 : 17,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
@@ -500,9 +503,38 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
                       );
                     })}
                     {dayEvents.length > maxVisible && (
-                      <Typography variant="caption" sx={{ fontSize: '0.6rem', color: 'text.secondary' }}>
+                      <Box
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDayClick(cell.dateStr);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleDayClick(cell.dateStr);
+                          }
+                        }}
+                        sx={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          mt: '1px',
+                          px: '4px',
+                          py: '1px',
+                          borderRadius: '4px',
+                          bgcolor: 'action.hover',
+                          color: 'text.secondary',
+                          fontSize: isMobile ? '0.5rem' : '0.6rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          '&:hover': { bgcolor: 'action.selected' },
+                          '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main' },
+                        }}
+                      >
                         +{dayEvents.length - maxVisible}
-                      </Typography>
+                      </Box>
                     )}
                   </Box>
                 </Box>
@@ -511,8 +543,8 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
           </Box>
         )}
 
-        {/* Hint (only in personal mode) */}
-        {!isGroupMode && (
+        {/* Hint (only in personal mode, hidden on mobile to save space) */}
+        {!isGroupMode && !isMobile && (
           <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block', textAlign: 'center' }}>
             {t('clickToCreate')}
           </Typography>
