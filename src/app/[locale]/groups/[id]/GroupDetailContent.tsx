@@ -19,12 +19,16 @@ import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
 import Alert from '@mui/material/Alert';
 import Divider from '@mui/material/Divider';
+import CircularProgress from '@mui/material/CircularProgress';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import CameraAltIcon from '@mui/icons-material/CameraAlt';
+import GroupsIcon from '@mui/icons-material/Groups';
 import { useRouter } from '@/lib/i18n/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { useImageUpload } from '@/lib/hooks/useImageUpload';
 import InviteDialog from './InviteDialog';
 import EventList from './EventList';
 import EventDialog from './EventDialog';
@@ -52,7 +56,7 @@ import type { CalendarEvent as GroupEvent, EventType } from '@/lib/types/events'
 export type { CalendarEvent as GroupEvent, EventType } from '@/lib/types/events';
 
 interface GroupDetailContentProps {
-  group: { id: string; name: string; description: string | null; invite_code: string | null };
+  group: { id: string; name: string; description: string | null; invite_code: string | null; avatar_url: string | null };
   members: GroupMember[];
   currentUserId: string;
   currentUserRole: string;
@@ -79,6 +83,26 @@ export default function GroupDetailContent({
   const isAdmin = currentUserRole === 'admin';
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [groupAvatarUrl, setGroupAvatarUrl] = useState(group.avatar_url);
+
+  // Group avatar upload
+  const { uploading: avatarUploading, upload: uploadGroupAvatar } = useImageUpload({
+    bucket: 'group-avatars',
+    path: `${group.id}/avatar.jpg`,
+  });
+
+  const handleGroupAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const url = await uploadGroupAvatar(file);
+    if (url) {
+      const supabase = createClient();
+      await supabase.from('groups').update({ avatar_url: url }).eq('id', group.id);
+      setGroupAvatarUrl(url);
+    }
+    e.target.value = '';
+  };
 
   // Rename dialog
   const [renameOpen, setRenameOpen] = useState(false);
@@ -199,14 +223,55 @@ export default function GroupDetailContent({
 
   return (
     <Box>
-      {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-        <Typography variant="h2">{group.name}</Typography>
-        {isAdmin && (
-          <IconButton onClick={() => setRenameOpen(true)} size="small" aria-label={t('rename')}>
-            <EditIcon />
-          </IconButton>
-        )}
+      {/* Header with group avatar */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
+        <Box sx={{ position: 'relative', flexShrink: 0 }}>
+          <Avatar
+            src={groupAvatarUrl ?? undefined}
+            sx={{ width: 56, height: 56, bgcolor: 'primary.main', borderRadius: 3 }}
+          >
+            <GroupsIcon sx={{ fontSize: 28 }} />
+          </Avatar>
+          {isAdmin && (
+            <IconButton
+              component="label"
+              size="small"
+              disabled={avatarUploading}
+              sx={{
+                position: 'absolute',
+                bottom: -4,
+                right: -4,
+                bgcolor: 'background.paper',
+                boxShadow: 1,
+                width: 26,
+                height: 26,
+                '&:hover': { bgcolor: 'background.paper' },
+              }}
+            >
+              {avatarUploading ? (
+                <CircularProgress size={12} />
+              ) : (
+                <CameraAltIcon sx={{ fontSize: 13 }} />
+              )}
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={handleGroupAvatarChange}
+              />
+            </IconButton>
+          )}
+        </Box>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Typography variant="h2" noWrap>{group.name}</Typography>
+            {isAdmin && (
+              <IconButton onClick={() => setRenameOpen(true)} size="small" aria-label={t('rename')}>
+                <EditIcon />
+              </IconButton>
+            )}
+          </Box>
+        </Box>
       </Box>
 
       {group.description && (
@@ -246,7 +311,10 @@ export default function GroupDetailContent({
         {members.map((member) => (
           <ListItem key={member.id} disableGutters>
             <ListItemAvatar>
-              <Avatar sx={{ bgcolor: member.color, width: 36, height: 36, fontSize: '0.9rem' }}>
+              <Avatar
+                src={member.profiles?.avatar_url ?? undefined}
+                sx={{ bgcolor: member.color, width: 36, height: 36, fontSize: '0.9rem' }}
+              >
                 {member.profiles?.display_name?.charAt(0).toUpperCase() ?? '?'}
               </Avatar>
             </ListItemAvatar>

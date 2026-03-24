@@ -10,6 +10,7 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Chip from '@mui/material/Chip';
+import Avatar from '@mui/material/Avatar';
 import AddIcon from '@mui/icons-material/Add';
 import GroupsIcon from '@mui/icons-material/Groups';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -25,7 +26,7 @@ export interface DashboardContentProps {
   groups: Array<{
     group_id: string;
     role: string;
-    groups: { id: string; name: string; description: string | null } | null;
+    groups: { id: string; name: string; description: string | null; avatar_url: string | null } | null;
   }>;
   upcomingEvents: UpcomingEvent[];
   eventTypes: EventType[];
@@ -98,21 +99,19 @@ export default function DashboardContent({ profile, groups, upcomingEvents, even
                   }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Box
+                    <Avatar
+                      src={gm.groups?.avatar_url ?? undefined}
                       sx={{
                         width: 40,
                         height: 40,
                         borderRadius: 3,
                         bgcolor: 'primary.main',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: 'white',
                         flexShrink: 0,
                       }}
+                      variant="rounded"
                     >
                       <GroupsIcon sx={{ fontSize: 22 }} />
-                    </Box>
+                    </Avatar>
                     <Box>
                       <Typography variant="subtitle1" fontWeight={700}>
                         {gm.groups?.name}
