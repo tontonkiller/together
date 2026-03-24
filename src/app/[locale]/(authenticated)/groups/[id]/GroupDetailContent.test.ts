@@ -98,7 +98,8 @@ describe('Admin role checks', () => {
   });
 
   it('correctly identifies non-admin', () => {
-    expect('member' === 'admin').toBe(false);
+    const role: string = 'member';
+    expect(role === 'admin').toBe(false);
   });
 
   it('rename requires non-empty name', () => {

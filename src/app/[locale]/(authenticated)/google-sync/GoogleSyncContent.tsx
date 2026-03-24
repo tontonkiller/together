@@ -52,7 +52,7 @@ export default function GoogleSyncContent({ hasAccounts }: GoogleSyncContentProp
   const router = useRouter();
 
   const [events, setEvents] = useState<SyncedEvent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => hasAccounts);
   const [syncing, setSyncing] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [filter, setFilter] = useState<FilterStatus>('pending');
@@ -73,12 +73,20 @@ export default function GoogleSyncContent({ hasAccounts }: GoogleSyncContentProp
   }, []);
 
   useEffect(() => {
-    if (hasAccounts) {
-      fetchEvents();
-    } else {
-      setLoading(false);
-    }
-  }, [hasAccounts, fetchEvents]);
+    if (!hasAccounts) return;
+    let cancelled = false;
+    fetch('/api/google/sync/events')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data) setEvents(data.events);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [hasAccounts]);
 
   const handleSync = async () => {
     setSyncing(true);

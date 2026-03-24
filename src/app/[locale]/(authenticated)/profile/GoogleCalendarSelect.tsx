@@ -30,7 +30,7 @@ export default function GoogleCalendarSelect({ accountId, accountEmail }: Google
   const t = useTranslations('googleSync');
   const tCommon = useTranslations('common');
   const [calendars, setCalendars] = useState<CalendarItem[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -59,10 +59,27 @@ export default function GoogleCalendarSelect({ accountId, accountEmail }: Google
 
   // Fetch calendars on mount to check if we need to auto-expand
   useEffect(() => {
-    if (!loaded) {
-      fetchCalendars();
-    }
-  }, [loaded, fetchCalendars]);
+    if (loaded) return;
+    let cancelled = false;
+    fetch(`/api/google/calendars?accountId=${accountId}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        setCalendars(data.calendars);
+        setLoaded(true);
+        const hasAnyEnabled = data.calendars.some((c: CalendarItem) => c.is_enabled);
+        if (!hasAnyEnabled) {
+          setExpanded(true);
+          setAutoExpanded(true);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [loaded, accountId]);
 
   const handleToggle = (calendarId: string) => {
     setCalendars((prev) =>
