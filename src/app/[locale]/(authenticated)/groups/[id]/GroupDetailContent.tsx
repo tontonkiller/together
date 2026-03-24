@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -80,6 +80,7 @@ export default function GroupDetailContent({
 }: GroupDetailContentProps) {
   const t = useTranslations('groups');
   const tCommon = useTranslations('common');
+  const locale = useLocale();
   const router = useRouter();
 
   const isAdmin = currentUserRole === 'admin';
@@ -364,7 +365,7 @@ export default function GroupDetailContent({
                     <ListItemText
                       primary={inv.invited_email}
                       secondary={isExpired ? t('expired') : t('expires', {
-                        date: new Date(inv.expires_at).toLocaleDateString(),
+                        date: new Date(inv.expires_at).toLocaleDateString(locale),
                       })}
                     />
                     {isExpired && (
