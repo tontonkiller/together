@@ -343,7 +343,7 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(7, 1fr)',
+            gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
             gap: 0,
             mb: '2px',
           }}
@@ -369,7 +369,7 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
             aria-label={t('title')}
             sx={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(7, 1fr)',
+              gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
               gap: '1px',
               bgcolor: 'divider',
               border: '1px solid',

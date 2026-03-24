@@ -262,7 +262,7 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
         aria-label={t('title')}
         sx={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(7, 1fr)',
+          gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
           gap: '1px',
           bgcolor: 'divider',
           border: '1px solid',
