@@ -175,7 +175,7 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
   }
 
   return (
-    <Box>
+    <Box sx={{ overflow: 'hidden', width: '100%' }}>
       <Typography variant="h3" sx={{ mb: 1 }}>{t('title')}</Typography>
 
       {/* Month navigation */}
