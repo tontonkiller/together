@@ -92,7 +92,7 @@ export default function EventList({
   };
 
   return (
-    <>
+    <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
         <Typography variant="h3">{t('title')}</Typography>
         <Button
@@ -225,6 +225,6 @@ export default function EventList({
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </Box>
   );
 }

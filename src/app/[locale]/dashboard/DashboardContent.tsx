@@ -61,7 +61,7 @@ export default function DashboardContent({ profile, groups, upcomingEvents, even
   };
 
   return (
-    <>
+    <Box>
       <Typography variant="h2" sx={{ mb: 3 }}>
         {t('greeting', { name: profile?.display_name ?? 'User' })}
       </Typography>
@@ -212,6 +212,6 @@ export default function DashboardContent({ profile, groups, upcomingEvents, even
           onEventDeleted={handleEventDeleted}
         />
       )}
-    </>
+    </Box>
   );
 }
