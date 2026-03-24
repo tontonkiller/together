@@ -198,7 +198,7 @@ export default function GroupDetailContent({
   };
 
   return (
-    <>
+    <Box>
       {/* Header */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
         <Typography variant="h2">{group.name}</Typography>
@@ -421,6 +421,6 @@ export default function GroupDetailContent({
           router.refresh();
         }}
       />
-    </>
+    </Box>
   );
 }
