@@ -2,6 +2,7 @@ import { Roboto } from 'next/font/google';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { notFound } from 'next/navigation';
 import { routing } from '@/lib/i18n/routing';
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v16-appRouter';
 import ThemeRegistry from '@/components/layout/ThemeRegistry';
 import ServiceWorkerRegistration from '@/components/pwa/ServiceWorkerRegistration';
 
@@ -46,9 +47,11 @@ export default async function LocaleLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
       <body>
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          <ThemeRegistry>{children}</ThemeRegistry>
-        </NextIntlClientProvider>
+        <AppRouterCacheProvider>
+          <NextIntlClientProvider locale={locale} messages={messages}>
+            <ThemeRegistry>{children}</ThemeRegistry>
+          </NextIntlClientProvider>
+        </AppRouterCacheProvider>
         <ServiceWorkerRegistration />
       </body>
     </html>
