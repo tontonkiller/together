@@ -3,7 +3,7 @@ import Skeleton from '@mui/material/Skeleton';
 
 export default function ProfileLoading() {
   return (
-    <Box sx={{ p: 2, mt: '64px', mb: '56px', maxWidth: 600, mx: 'auto' }}>
+    <Box>
       {/* Avatar */}
       <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
         <Skeleton variant="circular" width={80} height={80} />

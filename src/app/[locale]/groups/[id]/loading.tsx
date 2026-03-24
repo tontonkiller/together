@@ -5,7 +5,7 @@ import CardContent from '@mui/material/CardContent';
 
 export default function GroupDetailLoading() {
   return (
-    <Box sx={{ p: 2, mt: '64px', mb: '56px', maxWidth: 600, mx: 'auto' }}>
+    <Box>
       {/* Group name */}
       <Skeleton variant="text" width={220} height={40} sx={{ mb: 2 }} />
 

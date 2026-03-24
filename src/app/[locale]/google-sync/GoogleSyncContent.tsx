@@ -17,7 +17,6 @@ import Alert from '@mui/material/Alert';
 import SyncIcon from '@mui/icons-material/Sync';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import RepeatIcon from '@mui/icons-material/Repeat';
-import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import { useRouter } from '@/lib/i18n/navigation';
 
 interface SyncedEvent {
@@ -171,7 +170,7 @@ export default function GoogleSyncContent({ hasAccounts }: GoogleSyncContentProp
 
   if (!hasAccounts) {
     return (
-      <AuthenticatedLayout>
+      <>
         <Box sx={{ py: 3 }}>
           <Typography variant="h2" sx={{ mb: 2 }}>
             {t('sectionTitle')}
@@ -187,12 +186,12 @@ export default function GoogleSyncContent({ hasAccounts }: GoogleSyncContentProp
             {t('connect')}
           </Button>
         </Box>
-      </AuthenticatedLayout>
+      </>
     );
   }
 
   return (
-    <AuthenticatedLayout>
+    <>
       <Box sx={{ py: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Typography variant="h2">
@@ -366,6 +365,6 @@ export default function GoogleSyncContent({ hasAccounts }: GoogleSyncContentProp
           </List>
         )}
       </Box>
-    </AuthenticatedLayout>
+    </>
   );
 }

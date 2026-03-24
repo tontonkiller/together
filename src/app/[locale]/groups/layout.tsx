@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 
-export default function DashboardLayout({
+export default function GroupsLayout({
   children,
 }: {
   children: React.ReactNode;

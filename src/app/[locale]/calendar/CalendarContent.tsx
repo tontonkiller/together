@@ -13,7 +13,6 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import LockIcon from '@mui/icons-material/Lock';
 import { getContrastTextColor } from '@/lib/utils/colors';
-import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import EventDialog from '@/app/[locale]/groups/[id]/EventDialog';
 import EventDetailDialog from '@/app/[locale]/groups/[id]/EventDetailDialog';
 import type { CalendarEvent, EventType } from '@/lib/types/events';
@@ -271,7 +270,7 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
   }
 
   return (
-    <AuthenticatedLayout>
+    <>
       <Box sx={{ maxWidth: 600, mx: 'auto' }}>
         {/* Group selector chips */}
         {userGroups.length > 0 && (
@@ -567,6 +566,6 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
           isGoogleImported={googleEventIdSet.has(detailEvent.id)}
         />
       )}
-    </AuthenticatedLayout>
+    </>
   );
 }

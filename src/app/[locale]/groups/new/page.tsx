@@ -8,7 +8,6 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
-import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 import { useRouter } from '@/lib/i18n/navigation';
 import { createClient } from '@/lib/supabase/client';
 
@@ -81,7 +80,7 @@ export default function NewGroupPage() {
   };
 
   return (
-    <AuthenticatedLayout>
+    <>
       <Typography variant="h2" sx={{ mb: 3 }}>
         {t('createGroup')}
       </Typography>
@@ -129,6 +128,6 @@ export default function NewGroupPage() {
           </Button>
         </Box>
       </form>
-    </AuthenticatedLayout>
+    </>
   );
 }
