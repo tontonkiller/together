@@ -21,6 +21,7 @@ import Alert from '@mui/material/Alert';
 import Divider from '@mui/material/Divider';
 import CircularProgress from '@mui/material/CircularProgress';
 import Collapse from '@mui/material/Collapse';
+import Popover from '@mui/material/Popover';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -31,6 +32,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useRouter } from '@/lib/i18n/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useImageUpload } from '@/lib/hooks/useImageUpload';
+import { MEMBER_COLORS } from '@/lib/utils/colors';
 import InviteDialog from './InviteDialog';
 import EventList from './EventList';
 import EventDialog from './EventDialog';
@@ -122,6 +124,20 @@ export default function GroupDetailContent({
 
   // Invite dialog
   const [inviteOpen, setInviteOpen] = useState(false);
+
+  // Color picker
+  const [colorAnchor, setColorAnchor] = useState<HTMLElement | null>(null);
+  const [memberColors, setMemberColors] = useState<Record<string, string>>(
+    () => Object.fromEntries(members.map((m) => [m.id, m.color]))
+  );
+
+  const handleColorChange = async (memberId: string, color: string) => {
+    setColorAnchor(null);
+    setMemberColors((prev) => ({ ...prev, [memberId]: color }));
+    const supabase = createClient();
+    await supabase.from('group_members').update({ color }).eq('id', memberId);
+    router.refresh();
+  };
 
   // Events
   const [events, setEvents] = useState(initialEvents);
@@ -328,27 +344,67 @@ export default function GroupDetailContent({
 
       <Collapse in={membersOpen}>
         <List disablePadding>
-          {members.map((member) => (
-            <ListItem key={member.id} disableGutters>
-              <ListItemAvatar>
-                <Avatar
-                  src={member.profiles?.avatar_url ?? undefined}
-                  sx={{ bgcolor: member.color, width: 36, height: 36, fontSize: '0.9rem' }}
-                >
-                  {member.profiles?.display_name?.charAt(0).toUpperCase() ?? '?'}
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText
-                primary={member.profiles?.display_name ?? '?'}
-              />
-              <Chip
-                label={member.role === 'admin' ? t('admin') : t('member')}
-                size="small"
-                color={member.role === 'admin' ? 'primary' : 'default'}
-                variant={member.role === 'admin' ? 'filled' : 'outlined'}
-              />
-            </ListItem>
-          ))}
+          {members.map((member) => {
+            const isMe = member.user_id === currentUserId;
+            const color = memberColors[member.id] ?? member.color;
+            return (
+              <ListItem key={member.id} disableGutters>
+                <ListItemAvatar>
+                  <Avatar
+                    src={member.profiles?.avatar_url ?? undefined}
+                    sx={{
+                      bgcolor: color,
+                      width: 36,
+                      height: 36,
+                      fontSize: '0.9rem',
+                      cursor: isMe ? 'pointer' : 'default',
+                      '&:hover': isMe ? { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 } : {},
+                    }}
+                    onClick={isMe ? (e) => setColorAnchor(e.currentTarget) : undefined}
+                  >
+                    {member.profiles?.display_name?.charAt(0).toUpperCase() ?? '?'}
+                  </Avatar>
+                  {isMe && (
+                    <Popover
+                      open={Boolean(colorAnchor)}
+                      anchorEl={colorAnchor}
+                      onClose={() => setColorAnchor(null)}
+                      anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+                    >
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, p: 1.5, maxWidth: 180 }}>
+                        {MEMBER_COLORS.map((c) => (
+                          <Box
+                            key={c}
+                            onClick={() => handleColorChange(member.id, c)}
+                            sx={{
+                              width: 28,
+                              height: 28,
+                              borderRadius: '50%',
+                              bgcolor: c,
+                              cursor: 'pointer',
+                              border: c === color ? '3px solid' : '2px solid transparent',
+                              borderColor: c === color ? 'text.primary' : 'transparent',
+                              '&:hover': { transform: 'scale(1.2)' },
+                              transition: 'transform 0.15s',
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    </Popover>
+                  )}
+                </ListItemAvatar>
+                <ListItemText
+                  primary={member.profiles?.display_name ?? '?'}
+                />
+                <Chip
+                  label={member.role === 'admin' ? t('admin') : t('member')}
+                  size="small"
+                  color={member.role === 'admin' ? 'primary' : 'default'}
+                  variant={member.role === 'admin' ? 'filled' : 'outlined'}
+                />
+              </ListItem>
+            );
+          })}
         </List>
 
         {/* Pending invitations */}
