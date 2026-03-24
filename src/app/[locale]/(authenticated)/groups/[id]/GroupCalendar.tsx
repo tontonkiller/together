@@ -179,21 +179,30 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
       <Typography variant="h3" sx={{ mb: 1 }}>{t('title')}</Typography>
 
       {/* Month navigation */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: isMobile ? 0.5 : 1 }}>
         <IconButton onClick={goToPrev} aria-label={t('previousMonth')} size="small">
-          <ChevronLeftIcon />
+          <ChevronLeftIcon sx={{ fontSize: isMobile ? 18 : 24 }} />
         </IconButton>
         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
           {monthNames[month]} {year}
         </Typography>
         <IconButton onClick={goToNext} aria-label={t('nextMonth')} size="small">
-          <ChevronRightIcon />
+          <ChevronRightIcon sx={{ fontSize: isMobile ? 18 : 24 }} />
         </IconButton>
       </Box>
 
       {/* Member filter chips */}
       <Box
-        sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 1.5 }}
+        sx={{
+          display: 'flex',
+          flexWrap: isMobile ? 'nowrap' : 'wrap',
+          overflowX: isMobile ? 'auto' : 'visible',
+          gap: isMobile ? 0.5 : 0.75,
+          mb: isMobile ? 0.5 : 1.5,
+          pb: isMobile ? 0.5 : 0,
+          scrollbarWidth: 'none',
+          '&::-webkit-scrollbar': { display: 'none' },
+        }}
         role="group"
         aria-label={t('filterByMember')}
       >
@@ -233,14 +242,14 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
       </Box>
 
       {/* Day names */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', mb: 0.5 }} role="row">
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', mb: '2px' }} role="row">
         {dayNames.map((name) => (
           <Typography
             key={name}
             variant="caption"
             align="center"
             role="columnheader"
-            sx={{ fontWeight: 600, color: 'text.secondary', py: 0.25, fontSize: isMobile ? '0.6rem' : undefined }}
+            sx={{ fontWeight: 600, color: 'text.secondary', py: '2px', fontSize: isMobile ? '0.55rem' : undefined }}
           >
             {name}
           </Typography>
@@ -269,7 +278,7 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
 
           const dayEvents = eventsByDate[cell.dateStr] ?? [];
           const isToday = cell.dateStr === todayStr;
-          const maxVisible = isMobile ? 3 : 4;
+          const maxVisible = isMobile ? 3 : 5;
 
           return (
             <Box
@@ -296,18 +305,20 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  width: isMobile ? 20 : 24,
-                  height: isMobile ? 20 : 24,
+                  width: isMobile ? 16 : 20,
+                  height: isMobile ? 16 : 20,
                   borderRadius: '50%',
                   bgcolor: isToday ? 'primary.main' : 'transparent',
                   color: isToday ? 'primary.contrastText' : 'text.primary',
-                  fontSize: isMobile ? '0.6rem' : '0.7rem',
+                  fontSize: isMobile ? '0.55rem' : '0.65rem',
+                  lineHeight: 1,
+                  flexShrink: 0,
                 }}
               >
                 {cell.day}
               </Typography>
 
-              <Box sx={{ mt: 0.25 }}>
+              <Box sx={{ mt: '1px', flexGrow: 1, overflow: 'hidden' }}>
                 {dayEvents.slice(0, maxVisible).map((event) => {
                   const memberColor = memberColorMap[event.user_id] ?? '#999';
                   const isPrivateOther = event.is_private && event.user_id !== currentUserId;
@@ -331,15 +342,15 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
                           : {
                               bgcolor: `${memberColor}22`,
                               color: 'text.primary',
-                              borderLeft: `3px solid ${memberColor}`,
+                              borderLeft: `2px solid ${memberColor}`,
                             }),
-                        borderRadius: 0.5,
-                        px: 0.5,
-                        py: 0.25,
-                        mb: 0.25,
-                        fontSize: isMobile ? '0.6rem' : '0.7rem',
-                        lineHeight: 1.3,
-                        minHeight: isMobile ? 20 : 20,
+                        borderRadius: '3px',
+                        px: '3px',
+                        py: '1px',
+                        mb: '1px',
+                        fontSize: isMobile ? '0.55rem' : '0.65rem',
+                        lineHeight: 1.2,
+                        minHeight: isMobile ? 15 : 17,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
@@ -373,9 +384,38 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
                   );
                 })}
                 {dayEvents.length > maxVisible && (
-                  <Typography variant="caption" sx={{ fontSize: '0.55rem', color: 'text.secondary' }}>
+                  <Box
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDayClick?.(cell.dateStr);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onDayClick?.(cell.dateStr);
+                      }
+                    }}
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      mt: '1px',
+                      px: '4px',
+                      py: '1px',
+                      borderRadius: '4px',
+                      bgcolor: 'action.hover',
+                      color: 'text.secondary',
+                      fontSize: isMobile ? '0.5rem' : '0.6rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      '&:hover': { bgcolor: 'action.selected' },
+                      '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main' },
+                    }}
+                  >
                     +{dayEvents.length - maxVisible}
-                  </Typography>
+                  </Box>
                 )}
               </Box>
             </Box>
