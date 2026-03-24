@@ -1,4 +1,4 @@
-# Together — Calendrier familial partagé
+# Together — Calendrier partagé
 
 Application web permettant aux familles et groupes de partager et visualiser leurs événements sur un calendrier commun.
 
