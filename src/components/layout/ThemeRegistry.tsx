@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, useMemo, useSyncExternalStore } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v16-appRouter';
 import { defaultTheme, evaTheme } from '@/lib/theme';
 
 interface EvaContextValue {
@@ -50,11 +51,13 @@ export default function ThemeRegistry({ children }: { children: React.ReactNode 
   const value = useMemo(() => ({ evaMode, toggleEvaMode }), [evaMode, toggleEvaMode]);
 
   return (
-    <EvaContext.Provider value={value}>
-      <ThemeProvider theme={evaMode ? evaTheme : defaultTheme}>
-        <CssBaseline />
-        {children}
-      </ThemeProvider>
-    </EvaContext.Provider>
+    <AppRouterCacheProvider>
+      <EvaContext.Provider value={value}>
+        <ThemeProvider theme={evaMode ? evaTheme : defaultTheme}>
+          <CssBaseline />
+          {children}
+        </ThemeProvider>
+      </EvaContext.Provider>
+    </AppRouterCacheProvider>
   );
 }
