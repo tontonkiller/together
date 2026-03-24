@@ -21,7 +21,7 @@ export default async function GroupDetailPage({
   // Fetch group with invite_code
   const { data: group, error: groupError } = await supabase
     .from('groups')
-    .select('id, name, description, invite_code')
+    .select('id, name, description, invite_code, avatar_url')
     .eq('id', id)
     .single();
 

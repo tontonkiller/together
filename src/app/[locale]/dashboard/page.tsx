@@ -28,7 +28,7 @@ export default async function DashboardPage({
 
   const { data: groups, error: groupsError } = await supabase
     .from('group_members')
-    .select('group_id, role, groups(id, name, description)')
+    .select('group_id, role, groups(id, name, description, avatar_url)')
     .eq('user_id', user.id);
   if (groupsError) {
     console.error('[dashboard] Groups fetch failed:', groupsError.message);

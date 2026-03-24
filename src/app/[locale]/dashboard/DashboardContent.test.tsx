@@ -70,12 +70,12 @@ describe('DashboardContent', () => {
         {
           group_id: 'g1',
           role: 'admin',
-          groups: { id: 'g1', name: 'Family', description: 'My family group' },
+          groups: { id: 'g1', name: 'Family', description: 'My family group', avatar_url: null },
         },
         {
           group_id: 'g2',
           role: 'member',
-          groups: { id: 'g2', name: 'Friends', description: null },
+          groups: { id: 'g2', name: 'Friends', description: null, avatar_url: null },
         },
       ],
     });
@@ -92,7 +92,7 @@ describe('DashboardContent', () => {
         {
           group_id: 'g1',
           role: 'admin',
-          groups: { id: 'g1', name: 'Family', description: null },
+          groups: { id: 'g1', name: 'Family', description: null, avatar_url: null },
         },
       ],
     });
@@ -138,7 +138,7 @@ describe('DashboardContent', () => {
         {
           group_id: 'g1',
           role: 'admin',
-          groups: { id: 'g1', name: 'Family', description: null },
+          groups: { id: 'g1', name: 'Family', description: null, avatar_url: null },
         },
       ],
       upcomingEvents: [makeEvent({ title: 'Beach Trip' })],

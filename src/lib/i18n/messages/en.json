@@ -52,6 +52,7 @@
     "language": "Language",
     "saved": "Profile saved",
     "avatarAlt": "Profile picture",
+    "changePhoto": "Change photo",
     "email": "Email",
     "displayNameRequired": "Display name is required"
   },
@@ -103,7 +104,9 @@
     "expires": "Expires on {date}",
     "expired": "Expired",
     "cancelInvite": "Cancel",
-    "noMembers": "No members"
+    "noMembers": "No members",
+    "groupPhoto": "Group photo",
+    "changeGroupPhoto": "Change group photo"
   },
   "invite": {
     "title": "Invitation",

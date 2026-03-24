@@ -26,10 +26,12 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
 import DeleteIcon from '@mui/icons-material/Delete';
+import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import GoogleCalendarSelect from './GoogleCalendarSelect';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from '@/lib/i18n/navigation';
 import { useSearchParams } from 'next/navigation';
+import { useImageUpload } from '@/lib/hooks/useImageUpload';
 
 interface GoogleAccount {
   id: string;
@@ -58,12 +60,32 @@ export default function ProfileContent({ profile, email, googleAccounts: initial
   const searchParams = useSearchParams();
 
   const [displayName, setDisplayName] = useState(profile?.display_name ?? '');
+  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url ?? null);
   const [preferredLocale, setPreferredLocale] = useState(
     profile?.preferred_locale ?? locale
   );
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+
+  // Avatar upload
+  const { uploading: avatarUploading, upload: uploadAvatar } = useImageUpload({
+    bucket: 'avatars',
+    path: `${profile?.id}/avatar.jpg`,
+  });
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile) return;
+
+    const url = await uploadAvatar(file);
+    if (url) {
+      const supabase = createClient();
+      await supabase.from('profiles').update({ avatar_url: url }).eq('id', profile.id);
+      setAvatarUrl(url);
+    }
+    e.target.value = '';
+  };
 
   // Google Calendar state
   const [googleAccounts, setGoogleAccounts] = useState<GoogleAccount[]>(initialGoogleAccounts);
@@ -183,12 +205,42 @@ export default function ProfileContent({ profile, email, googleAccounts: initial
         </Typography>
 
         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-          <Avatar
-            sx={{ width: 80, height: 80, fontSize: '2rem', bgcolor: 'primary.main' }}
-            alt={t('avatarAlt')}
-          >
-            {displayName.charAt(0).toUpperCase() || '?'}
-          </Avatar>
+          <Box sx={{ position: 'relative', display: 'inline-block' }}>
+            <Avatar
+              src={avatarUrl ?? undefined}
+              sx={{ width: 88, height: 88, fontSize: '2rem', bgcolor: 'primary.main' }}
+              alt={t('avatarAlt')}
+            >
+              {displayName.charAt(0).toUpperCase() || '?'}
+            </Avatar>
+            <IconButton
+              component="label"
+              size="small"
+              disabled={avatarUploading}
+              sx={{
+                position: 'absolute',
+                bottom: 0,
+                right: 0,
+                bgcolor: 'background.paper',
+                boxShadow: 1,
+                width: 32,
+                height: 32,
+                '&:hover': { bgcolor: 'background.paper' },
+              }}
+            >
+              {avatarUploading ? (
+                <CircularProgress size={16} />
+              ) : (
+                <CameraAltIcon sx={{ fontSize: 16 }} />
+              )}
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={handleAvatarChange}
+              />
+            </IconButton>
+          </Box>
         </Box>
 
         {saved && (

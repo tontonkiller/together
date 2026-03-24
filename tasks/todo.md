@@ -148,6 +148,18 @@
 
 ---
 
+## M10 — Photo Upload (avatar user + photo groupe)
+
+- [x] Migration SQL: `avatar_url` sur groups + storage buckets + RLS
+- [x] Hook `useImageUpload`: resize client + upload Supabase Storage
+- [x] Profil: afficher vraie photo + bouton upload
+- [x] Groupe: photo de groupe + upload admin only
+- [x] Mettre à jour tous les Avatar (dashboard, member list, etc.)
+- [x] i18n FR/EN
+- [x] Vérification TypeScript
+
+---
+
 ## POST-V1 (ne PAS implémenter)
 
 - Sync bidirectionnelle (Together → Google)
