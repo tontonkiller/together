@@ -9,7 +9,7 @@
 
 body {
   font-family: var(--font-roboto), "Roboto", -apple-system, BlinkMacSystemFont, sans-serif;
-  background-color: #F9F5F0;
+  background-color: #F0FAFB;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -21,5 +21,5 @@ html {
 
 /* Better tap highlighting on mobile */
 * {
-  -webkit-tap-highlight-color: rgba(212,114,106,0.1);
+  -webkit-tap-highlight-color: rgba(8,145,178,0.12);
 }

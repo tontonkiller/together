@@ -10,6 +10,13 @@ import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import { useRouter, usePathname } from '@/lib/i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 import { useEvaMode } from './ThemeRegistry';
+import { keyframes } from '@mui/material/styles';
+
+const gradientShift = keyframes`
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+`;
 
 export default function TopBar() {
   const t = useTranslations('nav');
@@ -37,14 +44,22 @@ export default function TopBar() {
         <Typography
           variant="h6"
           component="div"
+          onClick={() => router.push('/dashboard')}
           sx={{
             flexGrow: 1,
             fontWeight: 800,
             cursor: 'pointer',
-            color: 'primary.main',
+            fontSize: '1.35rem',
             letterSpacing: '-0.02em',
+            background: evaMode
+              ? 'linear-gradient(135deg, #E8578A, #A78BFA, #F472B6, #C084FC, #E8578A)'
+              : 'linear-gradient(135deg, #0891B2, #10B981, #F59E0B, #0EA5E9, #0891B2)',
+            backgroundSize: '300% 300%',
+            backgroundClip: 'text',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            animation: `${gradientShift} 4s ease infinite`,
           }}
-          onClick={() => router.push('/dashboard')}
         >
           Together
         </Typography>
@@ -56,7 +71,7 @@ export default function TopBar() {
             sx={{
               color: evaMode ? 'primary.main' : 'text.secondary',
               transition: 'color 0.2s ease, transform 0.2s ease',
-              '&:hover': { transform: 'scale(1.1)' },
+              '&:hover': { transform: 'scale(1.15)' },
             }}
           >
             {evaMode ? <FavoriteIcon /> : <FavoriteBorderIcon />}

@@ -40,7 +40,7 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} className={roboto.variable}>
       <head>
-        <meta name="theme-color" content="#D4726A" />
+        <meta name="theme-color" content="#0891B2" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
