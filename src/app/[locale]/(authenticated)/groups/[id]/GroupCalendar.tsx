@@ -5,6 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
+import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
@@ -134,6 +135,12 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
     });
   }, [setMonth, setYear]);
 
+  const goToToday = useCallback(() => {
+    const now = new Date();
+    setYear(now.getFullYear());
+    setMonth(now.getMonth());
+  }, []);
+
   const daysInMonth = getDaysInMonth(year, month);
   const firstDayOffset = getFirstDayOfWeek(year, month);
 
@@ -179,9 +186,14 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
 
       {/* Month navigation */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: isMobile ? 0.5 : 1 }}>
-        <IconButton onClick={goToPrev} aria-label={t('previousMonth')} size="small">
-          <ChevronLeftIcon sx={{ fontSize: isMobile ? 18 : 24 }} />
-        </IconButton>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <IconButton onClick={goToPrev} aria-label={t('previousMonth')} size="small">
+            <ChevronLeftIcon sx={{ fontSize: isMobile ? 18 : 24 }} />
+          </IconButton>
+          <Button onClick={goToToday} size="small" variant="outlined" sx={{ minWidth: 0, px: 1, py: 0.25, fontSize: isMobile ? '0.7rem' : '0.75rem', lineHeight: 1.4 }}>
+            {t('today')}
+          </Button>
+        </Box>
         <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
           {monthNames[month]} {year}
         </Typography>

@@ -162,6 +162,7 @@
     "title": "Calendrier du groupe",
     "previousMonth": "Mois précédent",
     "nextMonth": "Mois suivant",
+    "today": "Aujourd'hui",
     "allMembers": "Tous",
     "filterByMember": "Filtrer par membre"
   },
@@ -169,6 +170,7 @@
     "title": "Mon calendrier",
     "previousMonth": "Mois précédent",
     "nextMonth": "Mois suivant",
+    "today": "Aujourd'hui",
     "clickToCreate": "Cliquez sur un jour pour créer un événement",
     "myEvents": "Mes événements",
     "selectGroup": "Voir un groupe"
