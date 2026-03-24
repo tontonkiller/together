@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/components/layout/AuthenticatedLayout';
 
-export default function GroupsLayout({
+export default function AuthenticatedRouteLayout({
   children,
 }: {
   children: React.ReactNode;

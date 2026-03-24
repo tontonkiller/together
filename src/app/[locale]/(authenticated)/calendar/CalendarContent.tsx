@@ -13,10 +13,10 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import LockIcon from '@mui/icons-material/Lock';
 import { getContrastTextColor } from '@/lib/utils/colors';
-import EventDialog from '@/app/[locale]/groups/[id]/EventDialog';
-import EventDetailDialog from '@/app/[locale]/groups/[id]/EventDetailDialog';
+import EventDialog from '@/app/[locale]/(authenticated)/groups/[id]/EventDialog';
+import EventDetailDialog from '@/app/[locale]/(authenticated)/groups/[id]/EventDetailDialog';
 import type { CalendarEvent, EventType } from '@/lib/types/events';
-import type { GroupMember } from '@/app/[locale]/groups/[id]/GroupDetailContent';
+import type { GroupMember } from '@/app/[locale]/(authenticated)/groups/[id]/GroupDetailContent';
 import { createClient } from '@/lib/supabase/client';
 
 // Color map for system event types (keyed by DB name)
