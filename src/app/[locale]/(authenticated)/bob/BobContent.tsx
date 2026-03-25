@@ -11,6 +11,7 @@ import CardContent from '@mui/material/CardContent';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import MicIcon from '@mui/icons-material/Mic';
+import StopIcon from '@mui/icons-material/Stop';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -32,9 +33,9 @@ interface ParsedEvent {
 type BobState = 'idle' | 'listening' | 'processing' | 'confirm' | 'success' | 'error';
 
 const pulse = keyframes`
-  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(8,145,178,0.4); }
-  50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(8,145,178,0); }
-  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(8,145,178,0); }
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+  50% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(239,68,68,0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0); }
 `;
 
 interface BobContentProps {
@@ -43,88 +44,103 @@ interface BobContentProps {
 
 export default function BobContent({ locale }: BobContentProps) {
   const t = useTranslations('bob');
-  const tCommon = useTranslations('common');
   const [state, setState] = useState<BobState>('idle');
   const [parsedEvent, setParsedEvent] = useState<ParsedEvent | null>(null);
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState('');
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const recognitionRef = useRef<any>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
-  const startListening = useCallback(() => {
+  const startListening = useCallback(async () => {
     setError('');
     setParsedEvent(null);
     setTranscript('');
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setError(t('micPermission'));
-      setState('error');
-      return;
-    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, {
+        mimeType: MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+          ? 'audio/webm;codecs=opus'
+          : 'audio/webm',
+      });
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
 
-    const recognition = new SpeechRecognition();
-    recognition.lang = locale === 'fr' ? 'fr-FR' : 'en-US';
-    recognition.continuous = false;
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-    recognitionRef.current = recognition;
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
 
-    recognition.onresult = async (event: { results: { transcript: string }[][] }) => {
-      const result = event.results[0][0].transcript;
-      setTranscript(result);
-      setState('processing');
+      mediaRecorder.onstop = async () => {
+        // Stop all tracks to release mic
+        stream.getTracks().forEach((track) => track.stop());
 
-      try {
-        const res = await fetch('/api/bob/parse', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ transcript: result, locale }),
-        });
-
-        if (!res.ok) {
-          setError(t('error'));
+        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        if (audioBlob.size < 1000) {
+          setError(t('noSpeech'));
           setState('error');
           return;
         }
 
-        const data = await res.json();
-        setParsedEvent(data.event);
-        setState('confirm');
-      } catch {
-        setError(t('apiError'));
-        setState('error');
-      }
-    };
+        setState('processing');
 
-    recognition.onerror = (event: { error: string }) => {
-      if (event.error === 'not-allowed') {
-        setError(t('micPermission'));
-      } else if (event.error === 'no-speech') {
-        setError(t('noSpeech'));
-      } else {
-        setError(t('error'));
-      }
-      setState('error');
-    };
+        try {
+          // Step 1: Transcribe audio via Whisper
+          const formData = new FormData();
+          formData.append('audio', audioBlob);
+          formData.append('locale', locale);
 
-    recognition.onend = () => {
-      // If still in listening state (no result), show no-speech error
-      setState((prev) => {
-        if (prev === 'listening') {
-          setError(t('noSpeech'));
-          return 'error';
+          const transcribeRes = await fetch('/api/bob/transcribe', {
+            method: 'POST',
+            body: formData,
+          });
+
+          if (!transcribeRes.ok) {
+            setError(t('apiError'));
+            setState('error');
+            return;
+          }
+
+          const { transcript: text } = await transcribeRes.json();
+          if (!text || text.trim().length === 0) {
+            setError(t('noSpeech'));
+            setState('error');
+            return;
+          }
+
+          setTranscript(text);
+
+          // Step 2: Parse transcript via Claude
+          const parseRes = await fetch('/api/bob/parse', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ transcript: text, locale }),
+          });
+
+          if (!parseRes.ok) {
+            setError(t('error'));
+            setState('error');
+            return;
+          }
+
+          const data = await parseRes.json();
+          setParsedEvent(data.event);
+          setState('confirm');
+        } catch {
+          setError(t('apiError'));
+          setState('error');
         }
-        return prev;
-      });
-    };
+      };
 
-    recognition.start();
-    setState('listening');
+      mediaRecorder.start();
+      setState('listening');
+    } catch {
+      setError(t('micPermission'));
+      setState('error');
+    }
   }, [locale, t]);
 
   const stopListening = useCallback(() => {
-    recognitionRef.current?.stop();
+    mediaRecorderRef.current?.stop();
   }, []);
 
   const handleConfirm = async () => {
@@ -145,7 +161,6 @@ export default function BobContent({ locale }: BobContentProps) {
       }
 
       setState('success');
-      // Reset after 2 seconds
       setTimeout(() => {
         setState('idle');
         setParsedEvent(null);
@@ -198,7 +213,7 @@ export default function BobContent({ locale }: BobContentProps) {
         </Typography>
       )}
 
-      {/* Mic button */}
+      {/* Mic button — idle */}
       {(state === 'idle' || state === 'error') && (
         <>
           <IconButton
@@ -226,7 +241,7 @@ export default function BobContent({ locale }: BobContentProps) {
         </>
       )}
 
-      {/* Listening state */}
+      {/* Listening state — tap to stop */}
       {state === 'listening' && (
         <>
           <IconButton
@@ -241,7 +256,7 @@ export default function BobContent({ locale }: BobContentProps) {
               '&:hover': { bgcolor: 'error.dark' },
             }}
           >
-            <MicIcon sx={{ fontSize: 48 }} />
+            <StopIcon sx={{ fontSize: 48 }} />
           </IconButton>
           <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 500 }}>
             {t('listening')}
@@ -339,14 +354,4 @@ export default function BobContent({ locale }: BobContentProps) {
       )}
     </Box>
   );
-}
-
-// TypeScript declarations for Web Speech API
-declare global {
-  interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    SpeechRecognition: any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    webkitSpeechRecognition: any;
-  }
 }
