@@ -105,6 +105,9 @@
     "expired": "Expired",
     "cancelInvite": "Cancel",
     "noMembers": "No members",
+    "editGroup": "Edit group",
+    "kickMember": "Remove member",
+    "kickConfirm": "Are you sure you want to remove this member from the group?",
     "groupPhoto": "Group photo",
     "changeGroupPhoto": "Change group photo"
   },
