@@ -48,7 +48,8 @@ export default function BobContent({ locale }: BobContentProps) {
   const [parsedEvent, setParsedEvent] = useState<ParsedEvent | null>(null);
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState('');
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null);
 
   const startListening = useCallback(() => {
     setError('');
@@ -69,7 +70,7 @@ export default function BobContent({ locale }: BobContentProps) {
     recognition.maxAlternatives = 1;
     recognitionRef.current = recognition;
 
-    recognition.onresult = async (event) => {
+    recognition.onresult = async (event: { results: { transcript: string }[][] }) => {
       const result = event.results[0][0].transcript;
       setTranscript(result);
       setState('processing');
@@ -96,7 +97,7 @@ export default function BobContent({ locale }: BobContentProps) {
       }
     };
 
-    recognition.onerror = (event) => {
+    recognition.onerror = (event: { error: string }) => {
       if (event.error === 'not-allowed') {
         setError(t('micPermission'));
       } else if (event.error === 'no-speech') {
@@ -338,7 +339,9 @@ export default function BobContent({ locale }: BobContentProps) {
 // TypeScript declarations for Web Speech API
 declare global {
   interface Window {
-    SpeechRecognition: typeof SpeechRecognition;
-    webkitSpeechRecognition: typeof SpeechRecognition;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    SpeechRecognition: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    webkitSpeechRecognition: any;
   }
 }
