@@ -215,10 +215,28 @@
     "syncResult": "{newPending} new, {updated} updated, {deleted} deleted",
     "actionSuccess": "Events updated successfully"
   },
+  "bob": {
+    "title": "Bob",
+    "tapToSpeak": "Tap to speak",
+    "listening": "Listening...",
+    "processing": "Understanding...",
+    "confirm": "Is this correct?",
+    "confirmed": "Got it!",
+    "cancel": "Cancel",
+    "create": "Create event",
+    "error": "Could not understand. Try again.",
+    "micPermission": "Microphone access is required to use Bob.",
+    "noSpeech": "No speech detected. Try again.",
+    "apiError": "Failed to process. Try again.",
+    "eventCreated": "Event created!",
+    "allDay": "All day",
+    "private": "Private"
+  },
   "nav": {
     "groups": "Groups",
     "calendar": "Calendar",
     "googleSync": "Google Sync",
+    "bob": "Bob",
     "profile": "Profile",
     "toggleLanguage": "Toggle language"
   }

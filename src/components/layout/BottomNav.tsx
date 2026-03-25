@@ -9,6 +9,7 @@ import Paper from '@mui/material/Paper';
 import GroupsIcon from '@mui/icons-material/Groups';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import SyncIcon from '@mui/icons-material/Sync';
+import MicIcon from '@mui/icons-material/Mic';
 import PersonIcon from '@mui/icons-material/Person';
 
 export default function BottomNav() {
@@ -20,7 +21,8 @@ export default function BottomNav() {
     if (pathname.startsWith('/dashboard') || pathname.startsWith('/groups')) return 0;
     if (pathname.startsWith('/calendar')) return 1;
     if (pathname.startsWith('/google-sync')) return 2;
-    if (pathname.startsWith('/profile')) return 3;
+    if (pathname.startsWith('/bob')) return 3;
+    if (pathname.startsWith('/profile')) return 4;
     return 0;
   }, [pathname]);
 
@@ -36,6 +38,9 @@ export default function BottomNav() {
         router.push('/google-sync');
         break;
       case 3:
+        router.push('/bob');
+        break;
+      case 4:
         router.push('/profile');
         break;
     }
@@ -68,6 +73,10 @@ export default function BottomNav() {
         <BottomNavigationAction
           label={t('googleSync')}
           icon={<SyncIcon />}
+        />
+        <BottomNavigationAction
+          label={t('bob')}
+          icon={<MicIcon />}
         />
         <BottomNavigationAction
           label={t('profile')}
