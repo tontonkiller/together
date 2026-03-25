@@ -215,10 +215,28 @@
     "syncResult": "{newPending} nouveau(x), {updated} mis à jour, {deleted} supprimé(s)",
     "actionSuccess": "Événements mis à jour avec succès"
   },
+  "bob": {
+    "title": "Bob",
+    "tapToSpeak": "Appuie pour parler",
+    "listening": "J'écoute...",
+    "processing": "Je comprends...",
+    "confirm": "C'est correct ?",
+    "confirmed": "C'est noté !",
+    "cancel": "Annuler",
+    "create": "Créer l'événement",
+    "error": "Je n'ai pas compris. Réessaie.",
+    "micPermission": "L'accès au micro est nécessaire pour utiliser Bob.",
+    "noSpeech": "Aucune voix détectée. Réessaie.",
+    "apiError": "Erreur de traitement. Réessaie.",
+    "eventCreated": "Événement créé !",
+    "allDay": "Journée entière",
+    "private": "Privé"
+  },
   "nav": {
     "groups": "Groupes",
     "calendar": "Calendrier",
     "googleSync": "Google Sync",
+    "bob": "Bob",
     "profile": "Profil",
     "toggleLanguage": "Changer de langue"
   }

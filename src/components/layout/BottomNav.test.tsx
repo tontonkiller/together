@@ -20,11 +20,12 @@ describe('BottomNav', () => {
     mockPathname = '/dashboard';
   });
 
-  it('renders groups, calendar, google sync, and profile tabs', () => {
+  it('renders groups, calendar, google sync, bob, and profile tabs', () => {
     render(<BottomNav />);
     expect(screen.getByText('groups')).toBeInTheDocument();
     expect(screen.getByText('calendar')).toBeInTheDocument();
     expect(screen.getByText('googleSync')).toBeInTheDocument();
+    expect(screen.getByText('bob')).toBeInTheDocument();
     expect(screen.getByText('profile')).toBeInTheDocument();
   });
 
@@ -56,6 +57,13 @@ describe('BottomNav', () => {
     expect(syncBtn).toHaveClass('Mui-selected');
   });
 
+  it('highlights bob tab on /bob', () => {
+    mockPathname = '/bob';
+    render(<BottomNav />);
+    const bobBtn = screen.getByText('bob').closest('button');
+    expect(bobBtn).toHaveClass('Mui-selected');
+  });
+
   it('highlights profile tab on /profile', () => {
     mockPathname = '/profile';
     render(<BottomNav />);
@@ -76,7 +84,8 @@ describe('BottomNav path logic (unit)', () => {
     if (pathname.startsWith('/dashboard') || pathname.startsWith('/groups')) return 0;
     if (pathname.startsWith('/calendar')) return 1;
     if (pathname.startsWith('/google-sync')) return 2;
-    if (pathname.startsWith('/profile')) return 3;
+    if (pathname.startsWith('/bob')) return 3;
+    if (pathname.startsWith('/profile')) return 4;
     return 0;
   }
 
@@ -87,8 +96,9 @@ describe('BottomNav path logic (unit)', () => {
   it('/groups/new → 0', () => expect(getValue('/groups/new')).toBe(0));
   it('/calendar → 1', () => expect(getValue('/calendar')).toBe(1));
   it('/google-sync → 2', () => expect(getValue('/google-sync')).toBe(2));
-  it('/profile → 3', () => expect(getValue('/profile')).toBe(3));
-  it('/profile/settings → 3', () => expect(getValue('/profile/settings')).toBe(3));
+  it('/bob → 3', () => expect(getValue('/bob')).toBe(3));
+  it('/profile → 4', () => expect(getValue('/profile')).toBe(4));
+  it('/profile/settings → 4', () => expect(getValue('/profile/settings')).toBe(4));
   it('/ → 0 (default)', () => expect(getValue('/')).toBe(0));
   it('/unknown → 0 (default)', () => expect(getValue('/unknown')).toBe(0));
 });
