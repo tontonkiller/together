@@ -217,6 +217,7 @@
   },
   "bob": {
     "title": "Bob",
+    "subtitle": "Parle pour ajouter un événement à ton calendrier",
     "tapToSpeak": "Appuie pour parler",
     "listening": "J'écoute...",
     "processing": "Je comprends...",

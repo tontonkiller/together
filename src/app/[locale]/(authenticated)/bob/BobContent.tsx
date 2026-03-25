@@ -192,6 +192,11 @@ export default function BobContent({ locale }: BobContentProps) {
       <Typography variant="h2" sx={{ fontWeight: 700 }}>
         Bob
       </Typography>
+      {(state === 'idle' || state === 'error') && (
+        <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', maxWidth: 300 }}>
+          {t('subtitle')}
+        </Typography>
+      )}
 
       {/* Mic button */}
       {(state === 'idle' || state === 'error') && (
