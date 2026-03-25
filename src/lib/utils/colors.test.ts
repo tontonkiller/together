@@ -3,7 +3,7 @@ import { getMemberColor, getContrastTextColor, MEMBER_COLORS } from './colors';
 
 describe('getMemberColor', () => {
   it('returns the first color for index 0', () => {
-    expect(getMemberColor(0)).toBe('#1976D2');
+    expect(getMemberColor(0)).toBe(MEMBER_COLORS[0]);
   });
 
   it('returns correct color for each index within range', () => {

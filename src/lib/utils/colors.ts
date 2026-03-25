@@ -1,20 +1,20 @@
-// 15 member colors for group calendar (auto-assigned)
+// 15 member colors for group calendar (vibrant summer palette)
 export const MEMBER_COLORS = [
-  '#1976D2', // Blue
-  '#D32F2F', // Red
-  '#388E3C', // Green
-  '#7B1FA2', // Purple
-  '#F57C00', // Orange
-  '#00838F', // Teal
-  '#C2185B', // Pink
-  '#455A64', // Blue Grey
-  '#AFB42B', // Lime
-  '#5D4037', // Brown
-  '#0288D1', // Light Blue
-  '#E64A19', // Deep Orange
-  '#303F9F', // Indigo
-  '#689F38', // Light Green
-  '#8E24AA', // Deep Purple
+  '#2196F3', // Sky Blue
+  '#FF5252', // Coral Red
+  '#4CAF50', // Fresh Green
+  '#AB47BC', // Orchid Purple
+  '#FF9800', // Sunny Orange
+  '#26C6DA', // Turquoise
+  '#EC407A', // Hot Pink
+  '#42A5F5', // Ocean Blue
+  '#FFCA28', // Sunshine Yellow
+  '#66BB6A', // Mint Green
+  '#FF7043', // Peach
+  '#7E57C2', // Lavender
+  '#26A69A', // Sea Green
+  '#FFA726', // Mango
+  '#EF5350', // Watermelon
 ] as const;
 
 export function getMemberColor(index: number): string {
