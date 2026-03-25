@@ -24,6 +24,7 @@ import Collapse from '@mui/material/Collapse';
 import Popover from '@mui/material/Popover';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
@@ -109,10 +110,15 @@ export default function GroupDetailContent({
     e.target.value = '';
   };
 
-  // Rename dialog
+  // Edit group dialog (rename + description)
   const [renameOpen, setRenameOpen] = useState(false);
   const [newName, setNewName] = useState(group.name);
+  const [newDescription, setNewDescription] = useState(group.description ?? '');
   const [renameLoading, setRenameLoading] = useState(false);
+
+  // Kick member
+  const [kickMemberId, setKickMemberId] = useState<string | null>(null);
+  const [kickLoading, setKickLoading] = useState(false);
 
   // Delete dialog
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -153,7 +159,7 @@ export default function GroupDetailContent({
     const supabase = createClient();
     const { error: updateError } = await supabase
       .from('groups')
-      .update({ name: newName.trim() })
+      .update({ name: newName.trim(), description: newDescription.trim() || null })
       .eq('id', group.id);
 
     setRenameLoading(false);
@@ -161,6 +167,27 @@ export default function GroupDetailContent({
       setError(updateError.message);
     } else {
       setRenameOpen(false);
+      router.refresh();
+    }
+  };
+
+  const handleKick = async () => {
+    if (!kickMemberId) return;
+    setKickLoading(true);
+    setError('');
+
+    const supabase = createClient();
+    const { error: kickError } = await supabase
+      .from('group_members')
+      .delete()
+      .eq('id', kickMemberId)
+      .eq('group_id', group.id);
+
+    setKickLoading(false);
+    if (kickError) {
+      setError(kickError.message);
+    } else {
+      setKickMemberId(null);
       router.refresh();
     }
   };
@@ -402,6 +429,17 @@ export default function GroupDetailContent({
                   color={member.role === 'admin' ? 'primary' : 'default'}
                   variant={member.role === 'admin' ? 'filled' : 'outlined'}
                 />
+                {isAdmin && !isMe && member.role !== 'admin' && (
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => setKickMemberId(member.id)}
+                    aria-label={t('kickMember')}
+                    sx={{ ml: 0.5 }}
+                  >
+                    <RemoveCircleOutlineIcon fontSize="small" />
+                  </IconButton>
+                )}
               </ListItem>
             );
           })}
@@ -501,23 +539,45 @@ export default function GroupDetailContent({
         )}
       </Box>
 
-      {/* Rename Dialog */}
+      {/* Edit Group Dialog (rename + description) */}
       <Dialog open={renameOpen} onClose={() => setRenameOpen(false)} fullWidth maxWidth="xs">
-        <DialogTitle>{t('renameGroup')}</DialogTitle>
+        <DialogTitle>{t('editGroup')}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
-            label={t('newName')}
+            label={t('groupName')}
             fullWidth
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
-            sx={{ mt: 1 }}
+            sx={{ mt: 1, mb: 2 }}
+          />
+          <TextField
+            label={t('groupDescription')}
+            fullWidth
+            multiline
+            rows={2}
+            value={newDescription}
+            onChange={(e) => setNewDescription(e.target.value)}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setRenameOpen(false)}>{tCommon('cancel')}</Button>
           <Button onClick={handleRename} disabled={renameLoading || !newName.trim()} variant="contained">
             {tCommon('save')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Kick Member Dialog */}
+      <Dialog open={!!kickMemberId} onClose={() => setKickMemberId(null)}>
+        <DialogTitle>{t('kickMember')}</DialogTitle>
+        <DialogContent>
+          <Typography>{t('kickConfirm')}</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setKickMemberId(null)}>{tCommon('cancel')}</Button>
+          <Button onClick={handleKick} disabled={kickLoading} color="error" variant="contained">
+            {tCommon('confirm')}
           </Button>
         </DialogActions>
       </Dialog>
