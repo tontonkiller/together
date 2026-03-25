@@ -13,14 +13,14 @@ describe('getMemberColor', () => {
   });
 
   it('wraps around when index exceeds array length', () => {
-    expect(getMemberColor(10)).toBe(MEMBER_COLORS[0]);
-    expect(getMemberColor(11)).toBe(MEMBER_COLORS[1]);
-    expect(getMemberColor(20)).toBe(MEMBER_COLORS[0]);
+    expect(getMemberColor(15)).toBe(MEMBER_COLORS[0]);
+    expect(getMemberColor(16)).toBe(MEMBER_COLORS[1]);
+    expect(getMemberColor(30)).toBe(MEMBER_COLORS[0]);
   });
 
   it('handles large indices', () => {
-    expect(getMemberColor(100)).toBe(MEMBER_COLORS[0]);
-    expect(getMemberColor(103)).toBe(MEMBER_COLORS[3]);
+    expect(getMemberColor(150)).toBe(MEMBER_COLORS[0]);
+    expect(getMemberColor(103)).toBe(MEMBER_COLORS[103 % 15]);
   });
 
   it('always returns a string', () => {
@@ -32,8 +32,8 @@ describe('getMemberColor', () => {
 });
 
 describe('MEMBER_COLORS', () => {
-  it('contains exactly 10 colors', () => {
-    expect(MEMBER_COLORS).toHaveLength(10);
+  it('contains exactly 15 colors', () => {
+    expect(MEMBER_COLORS).toHaveLength(15);
   });
 
   it('all colors are unique', () => {

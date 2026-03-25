@@ -1,4 +1,4 @@
-// 10 member colors for group calendar (auto-assigned)
+// 15 member colors for group calendar (auto-assigned)
 export const MEMBER_COLORS = [
   '#1976D2', // Blue
   '#D32F2F', // Red
@@ -10,6 +10,11 @@ export const MEMBER_COLORS = [
   '#455A64', // Blue Grey
   '#AFB42B', // Lime
   '#5D4037', // Brown
+  '#0288D1', // Light Blue
+  '#E64A19', // Deep Orange
+  '#303F9F', // Indigo
+  '#689F38', // Light Green
+  '#8E24AA', // Deep Purple
 ] as const;
 
 export function getMemberColor(index: number): string {

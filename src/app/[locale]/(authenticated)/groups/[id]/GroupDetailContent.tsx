@@ -371,7 +371,7 @@ export default function GroupDetailContent({
                       onClose={() => setColorAnchor(null)}
                       anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
                     >
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, p: 1.5, maxWidth: 180 }}>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, p: 1.5, maxWidth: 210 }}>
                         {MEMBER_COLORS.map((c) => (
                           <Box
                             key={c}
