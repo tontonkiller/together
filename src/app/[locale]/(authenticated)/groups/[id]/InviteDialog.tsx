@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useTheme } from '@mui/material/styles';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -33,6 +35,8 @@ export default function InviteDialog({
 }: InviteDialogProps) {
   const t = useTranslations('groups');
   const tCommon = useTranslations('common');
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -103,7 +107,7 @@ export default function InviteDialog({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs" fullScreen={isMobile}>
       <DialogTitle>{t('inviteMembers')}</DialogTitle>
       <DialogContent>
         {error && (

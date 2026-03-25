@@ -212,7 +212,8 @@
     "refused": "Refusés",
     "selectAll": "Tout sélectionner",
     "deselectAll": "Tout désélectionner",
-    "syncResult": "{newPending} nouveau(x), {updated} mis à jour, {deleted} supprimé(s)"
+    "syncResult": "{newPending} nouveau(x), {updated} mis à jour, {deleted} supprimé(s)",
+    "actionSuccess": "Événements mis à jour avec succès"
   },
   "nav": {
     "groups": "Groupes",

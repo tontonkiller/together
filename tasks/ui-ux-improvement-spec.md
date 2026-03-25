@@ -2,313 +2,271 @@
 
 > **Goal**: Improve visual quality, consistency, accessibility, and UX polish **without changing any features**.
 > **Agents**: UI Designer + UX Architect joint audit
-> **Date**: 2026-03-23
+> **Date**: 2026-03-25 (fresh audit, replaces 2026-03-23 version)
 
 ---
 
 ## Executive Summary
 
-Both agents explored the full codebase independently. The app has solid functionality but accumulated visual/UX debt across 18 areas. This spec organizes fixes into 4 tiers by impact and groups related changes into implementable milestones.
+Fresh audit of the full codebase by both agents. Previous audit (March 23) found 21 issues — 8 have been fixed since then. This updated audit found 51 total issues across both agents, organized by severity.
+
+**Score**: 8 DONE / 7 DONE TODAY / 10 TODO / remainder deferred (large refactors or product decisions)
 
 ---
 
-## Tier 1 — Critical (Accessibility & Correctness)
+## DONE (Previously Fixed)
 
-### 1.1 — Fix WCAG contrast failures on member color event pills
+These items from the March 23 audit are confirmed fixed in the codebase:
 
-**Problem**: White text on `#AFB42B` (lime) = 2.1:1 contrast ratio. `#F57C00` (orange) = 3.1:1. Both fail WCAG AA (4.5:1 minimum).
-**Files**: `src/lib/utils/colors.ts`, `CalendarContent.tsx`, `GroupCalendar.tsx`
-**Fix**: Add a `getContrastTextColor(bgHex): '#fff' | '#000'` utility that returns black or white based on relative luminance. Apply it everywhere member colors are used with text overlay.
-
-**Tests**:
-- `colors.test.ts`: Add test cases for `getContrastTextColor` — verify lime/orange return `#000`, dark colors return `#fff`
-- `CalendarContent.test.tsx`: Verify event pills render with correct text color for light backgrounds
-- `GroupCalendar.test.tsx`: Same verification
-
----
-
-### 1.2 — Add missing accessibility to GroupCalendar
-
-**Problem**: GroupCalendar day cells have no `aria-label` (CalendarContent has them). Event pills have no `focus-visible` outline (CalendarContent has them).
-**Files**: `src/app/[locale]/groups/[id]/GroupCalendar.tsx`
-**Fix**:
-- Add `aria-label` to day cells (e.g. "March 23, 3 events")
-- Add `'&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: -2 }` to event pills
-- Add `alt` attribute to member `Avatar` components
-
-**Tests**:
-- `GroupCalendar.test.tsx`: Assert day cells have `aria-label` matching date + event count
-- `GroupCalendar.test.tsx`: Assert event pills have `role="button"` and `tabIndex={0}` (already exist, add assertion for focus-visible style)
+| # | Item | Fix Verified |
+|---|------|-------------|
+| D1 | WCAG contrast (getContrastTextColor) | `colors.ts` + 13 tests |
+| D2 | Hardcoded French string in GoogleSync | Uses `t('syncResult', {...})` |
+| D3 | Roboto font not loading | `next/font/google` in layout.tsx |
+| D4 | Shared Container layout | AuthenticatedLayout `<Container maxWidth="md">` |
+| D5 | Typography hierarchy | GoogleSync=h2, GroupCalendar=h3 |
+| D6 | Emoji icons → MUI Icons | LocationOnIcon + RepeatIcon |
+| D7 | Theme-color meta reactive | ThemeRegistry useEffect |
+| D8 | Layout margin constants | TOPBAR_HEIGHT=64, BOTTOMNAV_HEIGHT=64 |
 
 ---
 
-### 1.3 — Fix hardcoded French string in GoogleSyncContent
+## DONE TODAY (March 25 Fixes)
 
-**Problem**: Line ~93: `` `${data.newPending} nouveau(x), ${data.updated} mis à jour, ${data.deleted} supprimé(s)` `` — not i18n'd.
-**Files**: `src/app/[locale]/google-sync/GoogleSyncContent.tsx`, `messages/en.json`, `messages/fr.json`
-**Fix**: Add translation key `googleSync.syncResult` with ICU placeholders: `"{newPending} new, {updated} updated, {deleted} deleted"` (EN) / `"{newPending} nouveau(x), {updated} mis à jour, {deleted} supprimé(s)"` (FR).
-
-**Tests**:
-- Add `GoogleSyncContent.test.tsx` (new file): Verify sync success message renders via translation key, not hardcoded text
-
----
-
-### 1.4 — Fix Roboto font not loading
-
-**Problem**: `theme.ts` and `globals.css` reference Roboto, but no `next/font` import exists. Browser falls back to Arial.
-**Files**: `src/app/[locale]/layout.tsx` (or a new `src/lib/fonts.ts`)
-**Fix**: Use `next/font/google` to load Roboto with weights 400, 500, 600, 700. Apply `className` to `<html>`. Update theme to use the CSS variable.
-
-**Tests**:
-- No unit test needed (visual/integration concern). Verify manually that `document.fonts` includes Roboto.
+| # | Item | File | Fix |
+|---|------|------|-----|
+| T1 | Delete event confirmation dialog | EventDialog.tsx | Added confirmDelete state + inline confirm/cancel |
+| T2 | Google Sync accept/refuse feedback | GoogleSyncContent.tsx | Added `setSuccessMsg(t('actionSuccess'))` after action |
+| T3 | GroupCalendar day cell keyboard a11y | GroupCalendar.tsx | Added `tabIndex={0}` to day cells |
+| T4 | TopBar Eva toggle aria-pressed | TopBar.tsx | Added `aria-pressed={evaMode}` |
+| T5 | InviteDialog fullScreen mobile | InviteDialog.tsx | Added `useMediaQuery` + `fullScreen={isMobile}` |
+| T6 | Dashboard skeleton order | loading.tsx | Swapped to groups-first matching DashboardContent |
+| T7 | EventDetailDialog chip fontSize | EventDetailDialog.tsx | Removed hardcoded `fontSize: '0.7rem'`, uses `size="small"` |
 
 ---
 
-## Tier 2 — Significant (Consistency & UX)
+## Tier 1 — Critical (Accessibility)
+
+### 1.1 — Focus-visible outline contrast on event pills
+
+**Status: TODO**
+
+**Problem**: Event pills use `outlineColor: 'primary.main'` for focus-visible. On light-colored pills (yellow), this outline may not contrast enough.
+**Files**: `CalendarContent.tsx`, `GroupCalendar.tsx`
+**Fix**: Use `getContrastTextColor()` to pick outline color dynamically, or use a universal high-contrast outline (e.g., dark + white double ring).
+
+---
+
+### 1.2 — Semantic HTML for member toggle section
+
+**Status: TODO**
+
+**Problem**: GroupDetailContent members section uses `role="button"` + `aria-expanded` toggle without wrapping `<fieldset>`/`<legend>`. Screen readers don't associate the list with its toggle.
+**Files**: `GroupDetailContent.tsx` lines 315-343
+**Fix**: Wrap toggle + list in `<fieldset><legend>` or use proper disclosure pattern.
+
+---
+
+### 1.3 — BottomNav aria-current
+
+**Status: TODO**
+
+**Problem**: No explicit `aria-current="page"` on the active BottomNav item. MUI may handle this internally but needs verification.
+**Files**: `BottomNav.tsx`
+**Fix**: Verify MUI behavior. If not set automatically, add `aria-current="page"` to selected item.
+
+---
+
+## Tier 2 — Significant (UX Consistency)
 
 ### 2.1 — Extract shared CalendarGrid component
 
-**Problem**: `CalendarContent.tsx` and `GroupCalendar.tsx` duplicate ~200 lines of calendar rendering (month navigation, day grid, event pills, today highlight, overflow indicator).
-**Files**: New `src/components/calendar/CalendarGrid.tsx`, then refactor both consumers.
-**Fix**: Extract shared `CalendarGrid` component with props for:
-- `events`, `currentMonth`, `onMonthChange`
-- `onDayClick`, `onEventClick`
-- `renderEventPill` (render prop for custom pill styling)
-- `isMobile` breakpoint flag
+**Status: TODO (large refactor — own milestone)**
 
-**Tests**:
-- New `CalendarGrid.test.tsx`: Test month navigation, day rendering, today highlight, event pill rendering, overflow indicator, keyboard navigation, aria-labels
-- Update `CalendarContent.test.tsx`: Verify it delegates to CalendarGrid
-- Update `GroupCalendar.test.tsx`: Verify it delegates to CalendarGrid
+**Problem**: `CalendarContent.tsx` and `GroupCalendar.tsx` duplicate ~200 lines (month nav, day grid, event pills, today highlight).
+**Files**: New `src/components/calendar/CalendarGrid.tsx`
+**Fix**: Extract shared component. Also extracts month navigation (audit issue #25).
+**Effort**: Medium — needs careful prop design and test migration.
 
 ---
 
-### 2.2 — Standardize page layout with shared Container
+### 2.2 — Extract shared date formatting utility
 
-**Problem**: Inconsistent `maxWidth` across pages — Dashboard/GroupDetail have no constraint (stretches on wide screens), Profile uses `Container sm`, Calendar uses `maxWidth: 600`, GoogleSync uses `Container md`.
-**Files**: `src/components/layout/AuthenticatedLayout.tsx`
-**Fix**: Add a default `Container maxWidth="md"` wrapper inside `AuthenticatedLayout`'s main content area. Remove per-page Container wrappers. This gives all pages consistent width and removes the double-padding issue on Profile/GoogleSync.
+**Status: TODO (large refactor — own milestone)**
 
-**Tests**:
-- Update layout tests to verify Container is rendered
-- Verify existing page tests still pass (no visual regression in test assertions)
+**Problem**: `formatEventDate`/`formatDateRange` reimplemented in DashboardContent, EventList, and GoogleSyncContent with different formats.
+**Files**: New `src/lib/utils/dates.ts`, then refactor 3 consumers.
+**Fix**: One shared function, one consistent format.
 
 ---
 
-### 2.3 — Standardize Typography hierarchy
+### 2.3 — Non-owner event cards in EventList
 
-**Problem**:
-- GoogleSyncContent uses `variant="h5"` for page title (all others use `h2`)
-- GroupCalendar uses `variant="h6"` for section title (all others use `h3`)
+**Status: TODO**
 
-**Files**: `GoogleSyncContent.tsx`, `GroupCalendar.tsx`
-**Fix**: Change GoogleSyncContent title to `variant="h2"`, GroupCalendar section title to `variant="h3"`.
-
-**Tests**:
-- `GoogleSyncContent.test.tsx` (from 1.3): Assert page title is an `h2` element
-- `GroupCalendar.test.tsx`: Assert section title is an `h3` element
+**Problem**: Non-owner events have `CardActionArea disabled` — no tooltip, no read-only view. Users think the UI is broken.
+**Files**: `EventList.tsx`
+**Fix**: Open EventDetailDialog in read-only mode on click. Add tooltip "Only the creator can edit".
 
 ---
 
-### 2.4 — Fix loading skeleton visual mismatch
+### 2.4 — Dashboard empty states lack CTA
 
-**Problem**: Loading skeleton cards use default elevated variant, but content cards use `variant="outlined"`. This causes a flash when content loads.
-**Files**: `src/app/[locale]/dashboard/loading.tsx`, `src/app/[locale]/groups/[id]/loading.tsx`
-**Fix**: Add `variant="outlined"` to skeleton `Card` components to match content cards.
+**Status: TODO**
 
-**Tests**:
-- `loading.test.tsx` (dashboard): Assert skeleton cards have `variant="outlined"`
-- Add `groups/[id]/loading.test.tsx`: Assert skeleton cards have `variant="outlined"`
+**Problem**: "No groups" and "No events" cards are informational but don't guide users to next steps.
+**Files**: `DashboardContent.tsx`
+**Fix**: Add CTA button inside empty cards (e.g., "Create your first group").
 
 ---
 
-### 2.5 — Improve non-owner event cards in EventList
+### 2.5 — Google Sync page lacks context before connecting
 
-**Problem**: Non-owner events have `CardActionArea disabled` — they look identical to interactive cards but are inert. No read-only detail view is available from EventList.
-**Files**: `src/app/[locale]/groups/[id]/EventList.tsx`
-**Fix**: When clicking a non-owner event, open `EventDetailDialog` in read-only mode (same component used in GroupCalendar). Add subtle visual differentiation (slightly reduced opacity or different border style for non-owner cards).
+**Status: TODO**
 
-**Tests**:
-- `EventList.test.ts`: Assert clicking a non-owner event opens EventDetailDialog
-- `EventList.test.ts`: Assert non-owner cards have distinguishing visual cue (e.g. opacity or border style via `data-testid`)
-
----
-
-### 2.6 — Add consistent empty states
-
-**Problem**:
-- Dashboard "Upcoming events" section is hidden when empty (no empty state)
-- EventList empty state is plain text only (no icon/illustration)
-
-**Files**: `DashboardContent.tsx`, `EventList.tsx`
-**Fix**:
-- Dashboard: Always show "Upcoming events" section with empty state card (CalendarIcon + message + hint)
-- EventList: Add icon + styled empty state matching groups empty state pattern
-
-**Tests**:
-- `DashboardContent.test.tsx`: Assert "Upcoming events" section renders even when events array is empty
-- `EventList.test.ts`: Assert empty state renders with icon and message
-
----
-
-## Tier 3 — Polish (Visual Quality)
-
-### 3.1 — Standardize filter chip selection pattern
-
-**Problem**: Three different patterns for selected chip styling:
-- GroupCalendar: custom `sx` with `bgcolor: 'primary.main'`
-- CalendarContent: `color={... ? 'primary' : 'default'}`
-- GoogleSyncContent: `color={... ? 'primary' : 'default'}`
-
-**Files**: All three components (or extract a `FilterChipGroup` component)
-**Fix**: Unify on MUI's `color="primary"` prop for selected state across all filter chips. Remove custom `bgcolor` override.
-
-**Tests**:
-- Verify via existing tests that selected chips render with `color="primary"`
-
----
-
-### 3.2 — Fix button size inconsistencies
-
-**Problem**: Google Sync page uses `size="small"` for the Sync button; EventList uses `size="small"` for Create Event; other similar action buttons use default size.
-**Files**: `GoogleSyncContent.tsx`, `EventList.tsx`
-**Fix**: Standardize — primary page-level action buttons should be default size. Inline/secondary actions within cards/lists can be `size="small"`.
-
-**Tests**:
-- No specific unit tests needed (visual concern)
-
----
-
-### 3.3 — Fix CircularProgress patterns
-
-**Problem**: Google login button shows spinner as `startIcon` alongside text. Magic link button replaces text with spinner. Inconsistent.
-**Files**: `src/app/[locale]/login/LoginContent.tsx` (or equivalent)
-**Fix**: Standardize on replacing button text with `CircularProgress size={24}` for all loading buttons.
-
-**Tests**:
-- `page.test.tsx` (login): Assert both buttons show `CircularProgress` when loading, without visible label text
-
----
-
-### 3.4 — Replace emoji icons with MUI Icons in GoogleSyncContent
-
-**Problem**: `📍` emoji used for location and `🔁` for recurrence, while the rest of the app uses MUI Icon components.
+**Problem**: Users with no Google accounts see only a button to go to Profile. No explanation of what sync does.
 **Files**: `GoogleSyncContent.tsx`
-**Fix**: Replace `📍` with `<LocationOnIcon fontSize="small" />` and `🔁` with `<RepeatIcon fontSize="small" />`.
-
-**Tests**:
-- `GoogleSyncContent.test.tsx`: Assert location renders with an icon element, not emoji text
+**Fix**: Add 2-3 sentence description above CTA.
 
 ---
 
-### 3.5 — Fix Eva mode theme-color meta
+### 2.6 — "Accept details" vs "Accept busy" semantics unclear
 
-**Problem**: `<meta name="theme-color">` is hardcoded to `#1976D2`. Doesn't update when Eva mode is toggled.
-**Files**: `src/app/[locale]/layout.tsx`, or move to a client-side `useEffect` in `ThemeRegistry`
-**Fix**: Make `theme-color` meta tag reactive to the current theme's primary color.
+**Status: TODO**
 
-**Tests**:
-- `ThemeRegistry` or layout test: Assert meta tag value changes when Eva theme is active
-
----
-
-### 3.6 — Improve mobile calendar tap targets
-
-**Problem**: Calendar day cells are 32px tall on mobile. Event pills are ~14px. Both below 44px recommended minimum.
-**Files**: `CalendarGrid.tsx` (after extraction in 2.1)
-**Fix**: Increase mobile cell `minHeight` to 40px. Make event pills at least 24px tall. Consider making the `+N` overflow indicator tappable to show all events for that day.
-
-**Tests**:
-- `CalendarGrid.test.tsx`: Assert minimum cell height via style prop
-- `CalendarGrid.test.tsx`: Assert `+N` indicator is interactive (has `role="button"`, onClick)
+**Problem**: Users don't understand the difference. No tooltips or explanation.
+**Files**: `GoogleSyncContent.tsx`
+**Fix**: Add Tooltip to each button explaining what details vs busy means.
 
 ---
 
-### 3.7 — Remove unused secondary color from theme
+### 2.7 — Recurring events icon without explanation
 
-**Problem**: `secondary: '#FF9800'` / `'#FF69B4'` defined in theme but never used by any component.
-**Files**: `src/lib/theme.ts`
-**Fix**: Either remove secondary color override (let MUI default apply) or intentionally use it somewhere (e.g. secondary action buttons). Removing is simpler.
+**Status: TODO**
 
-**Tests**:
-- No test needed
-
----
-
-## Tier 4 — Nice-to-Have (DX & Minor UX)
-
-### 4.1 — Replace hardcoded layout margins with theme constants
-
-**Problem**: `mt: '64px'` and `mb: '56px'` are magic numbers repeated in AuthenticatedLayout and loading skeletons.
-**Files**: `AuthenticatedLayout.tsx`, all `loading.tsx` files
-**Fix**: Define constants `TOPBAR_HEIGHT = 64` and `BOTTOMNAV_HEIGHT = 56` in a shared layout config. Use them everywhere.
-
-**Tests**:
-- Verify constants are used (grep-level check)
+**Problem**: RepeatIcon shown but users don't know if accepting imports all instances or one.
+**Files**: `GoogleSyncContent.tsx`
+**Fix**: Add Tooltip: "Recurring — all instances will be imported".
 
 ---
 
-### 4.2 — Add InviteDialog close button
+### 2.8 — Calendar "click to create" hint hidden on mobile
 
-**Problem**: InviteDialog has no close button in DialogActions. Users must tap backdrop or press Escape.
-**Files**: `src/app/[locale]/groups/[id]/InviteDialog.tsx` (or inline in GroupDetailContent)
-**Fix**: Add a "Close" / "Done" button in DialogActions.
+**Status: TODO**
 
-**Tests**:
-- Assert DialogActions contains a close/done button
-
----
-
-### 4.3 — Improve EventDetailDialog → EventDialog transition
-
-**Problem**: When clicking "Edit" in EventDetailDialog, the dialog is replaced via conditional render (`if (editOpen) return <EventDialog ...>`). This causes a jarring layout swap.
-**Files**: `EventDetailDialog.tsx`
-**Fix**: Close EventDetailDialog first, then open EventDialog after a brief delay (or use a shared dialog state manager).
-
-**Tests**:
-- `EventDetailDialog.test.ts` (or new): Assert that clicking Edit closes the detail dialog before opening the edit dialog
+**Problem**: Hint `!isMobile` condition hides it on mobile. No affordance cue for mobile users.
+**Files**: `CalendarContent.tsx`
+**Fix**: Show on mobile too, or use a different pattern (e.g., FAB button).
 
 ---
 
-### 4.4 — Standardize event type colors across all views
+### 2.9 — Leave group warning when last admin
 
-**Problem**: Event type colors (Vacances=red, Disponible=green, Voyage=orange) only applied in CalendarContent. EventList and GroupCalendar don't color-code event types.
-**Files**: Extract to shared constant in `src/lib/utils/eventTypes.ts`, apply in EventList + GroupCalendar
-**Fix**: Create shared `EVENT_TYPE_COLORS` map. Use it in Chip components and calendar pills across all views.
+**Status: TODO**
 
-**Tests**:
-- New `eventTypes.test.ts`: Assert color map contains all system event types
-- `EventList.test.ts`: Assert event type chips render with correct color
+**Problem**: Warning text doesn't clearly explain what happens (oldest member becomes admin).
+**Files**: `GroupDetailContent.tsx`
+**Fix**: Update warning text to explain the admin transfer.
 
 ---
 
-## Implementation Order
+## Tier 3 — Polish
+
+### 3.1 — Eva mode tap highlight color
+
+**Status: TODO**
+
+**Problem**: `globals.css` hardcodes cyan tap highlight. Eva mode users see wrong color.
+**Files**: `globals.css`
+**Fix**: Move to CSS variable or MUI theme. Non-trivial due to CSS timing.
+
+---
+
+### 3.2 — Alert spacing inconsistency
+
+**Status: TODO**
+
+**Problem**: EventDialog alerts use `mb: 2, mt: 1` while others use `mb: 2`.
+**Files**: `EventDialog.tsx` and others
+**Fix**: Standardize to `mb: 2` everywhere.
+
+---
+
+### 3.3 — Empty state cards visual hierarchy
+
+**Status: TODO**
+
+**Problem**: Empty state cards look identical to content cards. No visual distinction.
+**Files**: `DashboardContent.tsx`, `EventList.tsx`
+**Fix**: Add `variant="outlined"` or subtle background to empty cards.
+
+---
+
+### 3.4 — Profile "saved" alert auto-dismiss
+
+**Status: TODO**
+
+**Problem**: "Changes saved" alert stays until user closes it.
+**Files**: `ProfileContent.tsx`
+**Fix**: Auto-dismiss after 3 seconds via useEffect.
+
+---
+
+### 3.5 — Image upload progress during resize
+
+**Status: TODO**
+
+**Problem**: Image resize (before upload) shows no feedback — button appears frozen 1-2s.
+**Files**: `useImageUpload.ts`
+**Fix**: Show "Processing..." state during resize phase.
+
+---
+
+### 3.6 — Invite email validation
+
+**Status: TODO**
+
+**Problem**: Email validation only on submit. No inline feedback.
+**Files**: `InviteDialog.tsx`
+**Fix**: Add onBlur validator with inline error message.
+
+---
+
+### 3.7 — Group delete confirmation context
+
+**Status: TODO**
+
+**Problem**: Delete confirmation says "Are you sure?" with no impact context.
+**Files**: `GroupDetailContent.tsx`
+**Fix**: Show member count and event count in confirmation.
+
+---
+
+### 3.8 — "Busy" label inconsistency
+
+**Status: TODO**
+
+**Problem**: Private events from others show "Busy" in some views, lock icon in others.
+**Files**: `CalendarContent.tsx`, `GroupCalendar.tsx`, `EventDetailDialog.tsx`
+**Fix**: Standardize to "Busy" + lock icon everywhere.
+
+---
+
+### 3.9 — AutoSync runs silently
+
+**Status: TODO (product decision needed)**
+
+**Problem**: AutoSync triggers every 5 min with zero feedback. Users don't know if sync is working.
+**Files**: `AutoSync.tsx`
+**Fix**: Add "Last synced at" indicator or subtle toast. Requires product decision on UX.
+
+---
+
+## Implementation Priority
 
 | Phase | Items | Effort |
 |-------|-------|--------|
-| **Phase 1** | 1.1, 1.2, 1.3, 1.4 | Small — focused fixes |
-| **Phase 2** | 2.1 (CalendarGrid extraction) | Medium — refactor |
-| **Phase 3** | 2.2, 2.3, 2.4, 2.5, 2.6 | Small-Medium — consistency |
-| **Phase 4** | 3.1–3.7, 4.1–4.4 | Small — polish |
-
-Each phase should pass all existing tests + new tests before moving to the next.
-
----
-
-## Test Summary
-
-| Area | New Tests | Updated Tests |
-|------|-----------|---------------|
-| Color contrast utility | `colors.test.ts` | — |
-| CalendarGrid (new) | `CalendarGrid.test.tsx` | — |
-| GroupCalendar a11y | — | `GroupCalendar.test.tsx` |
-| GoogleSync i18n | `GoogleSyncContent.test.tsx` | — |
-| Loading skeletons | `groups/[id]/loading.test.tsx` | `dashboard/loading.test.tsx` |
-| EventList non-owner | — | `EventList.test.ts` |
-| Dashboard empty states | — | `DashboardContent.test.tsx` |
-| CalendarContent refactor | — | `CalendarContent.test.tsx` |
-| Typography hierarchy | — | `GroupCalendar.test.tsx` |
-| Event type colors | `eventTypes.test.ts` | `EventList.test.ts` |
-| Login button loading | — | `login/page.test.tsx` |
-
-**Total**: ~5 new test files, ~8 updated test files
+| **Done** | D1-D8, T1-T7 | Complete |
+| **Next** | 1.1-1.3, 2.3-2.9 | Small — individual fixes |
+| **Later** | 2.1-2.2 (CalendarGrid + dates) | Medium — refactor milestone |
+| **Polish** | 3.1-3.9 | Small — incremental |

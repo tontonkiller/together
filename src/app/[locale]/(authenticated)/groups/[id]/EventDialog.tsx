@@ -67,6 +67,7 @@ export default function EventDialog({
   const [isPrivate, setIsPrivate] = useState(event?.is_private ?? false);
   const [loading, setLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState('');
 
   const handleDelete = async () => {
@@ -281,16 +282,29 @@ export default function EventDialog({
         )}
       </DialogContent>
       <DialogActions>
-        {isEdit && onEventDeleted && (
+        {isEdit && onEventDeleted && !confirmDelete && (
           <Button
             color="error"
-            onClick={handleDelete}
+            onClick={() => setConfirmDelete(true)}
             disabled={deleteLoading || loading}
             size="small"
             sx={{ mr: 'auto' }}
           >
             {t('deleteEvent')}
           </Button>
+        )}
+        {isEdit && onEventDeleted && confirmDelete && (
+          <>
+            <Typography variant="caption" color="error" sx={{ mr: 'auto', display: 'flex', alignItems: 'center', gap: 1 }}>
+              {t('deleteConfirm')}
+              <Button color="error" size="small" variant="contained" onClick={handleDelete} disabled={deleteLoading}>
+                {t('deleteEvent')}
+              </Button>
+              <Button size="small" onClick={() => setConfirmDelete(false)}>
+                {tCommon('cancel')}
+              </Button>
+            </Typography>
+          </>
         )}
         <Button onClick={onClose}>{tCommon('cancel')}</Button>
         <Button

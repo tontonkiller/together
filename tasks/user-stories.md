@@ -141,7 +141,7 @@ vers un test. Un ✅ signifie "test existant", un fichier entre parenthèses ind
 | 9.9 | Formatage multi-day ("15 mars → 20 mars") | ✅ `EventList.test.ts` |
 | 9.10 | Les heures sont tronquées à HH:MM | ✅ `EventList.test.ts` |
 
-## US-10 · Navigation (M1)
+## US-10 · Navigation (M1, mis à jour M9c)
 
 > En tant qu'utilisateur, je veux naviguer facilement entre les pages.
 
@@ -150,9 +150,13 @@ vers un test. Un ✅ signifie "test existant", un fichier entre parenthèses ind
 | 10.1 | TopBar affiche "Together" | ✅ `TopBar.test.tsx` |
 | 10.2 | Click logo → dashboard | ✅ `TopBar.test.tsx` |
 | 10.3 | Toggle langue FR ↔ EN | ✅ `TopBar.test.tsx` |
-| 10.4 | BottomNav: Dashboard tab | ✅ `BottomNav.test.tsx` |
-| 10.5 | BottomNav: Profile tab | ✅ `BottomNav.test.tsx` |
-| 10.6 | BottomNav: Tab actif basé sur l'URL | ✅ `BottomNav.test.tsx` |
+| 10.4 | Toggle Eva mode (icône coeur) | ❌ Non testé |
+| 10.5 | BottomNav: Groups tab (dashboard + /groups) | ✅ `BottomNav.test.tsx` |
+| 10.6 | BottomNav: Calendar tab | ✅ `BottomNav.test.tsx` |
+| 10.7 | BottomNav: Google Sync tab | ✅ `BottomNav.test.tsx` |
+| 10.8 | BottomNav: Profile tab | ✅ `BottomNav.test.tsx` |
+| 10.9 | BottomNav: Tab actif basé sur l'URL | ✅ `BottomNav.test.tsx` |
+| 10.10 | BottomNav: Défaut → Groups pour paths inconnus | ✅ `BottomNav.test.tsx` |
 
 ## US-11 · Configuration i18n (M1)
 
@@ -170,10 +174,11 @@ vers un test. Un ✅ signifie "test existant", un fichier entre parenthèses ind
 
 | # | Critère d'acceptation | Fichier de test |
 |---|----------------------|-----------------|
-| 12.1 | 10 couleurs disponibles | ✅ `colors.test.ts` |
+| 12.1 | 15 couleurs disponibles | ✅ `colors.test.ts` |
 | 12.2 | Couleurs toutes uniques | ✅ `colors.test.ts` |
-| 12.3 | Wrap autour pour index > 10 | ✅ `colors.test.ts` |
+| 12.3 | Wrap autour pour index > 15 | ✅ `colors.test.ts` |
 | 12.4 | Toutes les couleurs sont des hex valides | ✅ `colors.test.ts` |
+| 12.5 | Contraste texte WCAG AA (getContrastTextColor) | ✅ `colors.test.ts` |
 
 ## US-13 · Middleware & Routing (M1)
 
@@ -186,3 +191,97 @@ vers un test. Un ✅ signifie "test existant", un fichier entre parenthèses ind
 | 13.3 | Les paths `/invite/*` sont matchés | ✅ `proxy.test.ts` |
 | 13.4 | Les routes `/api/*` ne sont PAS matchées | ✅ `proxy.test.ts` |
 | 13.5 | Les assets statiques sont exclus | ✅ `proxy.test.ts` |
+
+## US-14 · Calendrier personnel (M5)
+
+> En tant qu'utilisateur, je veux voir tous mes événements de tous mes groupes sur un calendrier mensuel.
+
+| # | Critère d'acceptation | Fichier de test |
+|---|----------------------|-----------------|
+| 14.1 | Affiche le mois et l'année courants | ✅ `CalendarContent.test.tsx` |
+| 14.2 | Noms des jours en français par défaut | ✅ `CalendarContent.test.tsx` |
+| 14.3 | Noms des jours en anglais selon locale | ✅ `CalendarContent.test.tsx` |
+| 14.4 | Navigation mois suivant | ✅ `CalendarContent.test.tsx` |
+| 14.5 | Navigation mois précédent | ✅ `CalendarContent.test.tsx` |
+| 14.6 | Événements affichés sur le bon jour | ✅ `CalendarContent.test.tsx` |
+| 14.7 | Événements multi-jours s'étendent sur plusieurs cases | ✅ `CalendarContent.test.tsx` |
+| 14.8 | Texte d'aide "clickToCreate" affiché | ✅ `CalendarContent.test.tsx` |
+| 14.9 | Redirect login si non authentifié | ✅ `calendar/page.test.ts` |
+| 14.10 | Normalisation event_types (array → objet) | ✅ `calendar/page.test.ts` |
+| 14.11 | Fallback tableau vide si erreur event types | ✅ `calendar/page.test.ts` |
+
+## US-15 · Calendrier de groupe (M6)
+
+> En tant que membre d'un groupe, je veux voir les événements du groupe sur un calendrier dédié.
+
+| # | Critère d'acceptation | Fichier de test |
+|---|----------------------|-----------------|
+| 15.1 | Navigation mois (boutons précédent/suivant) | ✅ `GroupCalendar.test.tsx` |
+| 15.2 | Affiche le mois et l'année courants | ✅ `GroupCalendar.test.tsx` |
+| 15.3 | Noms des jours en FR et EN | ✅ `GroupCalendar.test.tsx` |
+| 15.4 | Événements affichés sur le bon jour | ✅ `GroupCalendar.test.tsx` |
+| 15.5 | Événements multi-jours s'étendent sur plusieurs cases | ✅ `GroupCalendar.test.tsx` |
+| 15.6 | Événements privés d'autrui affichés "Occupé" | ✅ `GroupCalendar.test.tsx` |
+| 15.7 | Événements privés personnels affichés avec titre réel | ✅ `GroupCalendar.test.tsx` |
+| 15.8 | Mapping couleur membre → événement | ✅ `GroupCalendar.test.tsx` |
+| 15.9 | Fallback couleur pour utilisateur inconnu | ✅ `GroupCalendar.test.tsx` |
+
+## US-16 · Filtres & interactions calendrier (M7)
+
+> En tant qu'utilisateur, je veux filtrer les événements par membre et voir les détails au clic.
+
+| # | Critère d'acceptation | Fichier de test |
+|---|----------------------|-----------------|
+| 16.1 | Chips filtres par membre affichés | ✅ `GroupCalendar.test.tsx` |
+| 16.2 | Toggle off masque les événements du membre | ✅ `GroupCalendar.test.tsx` |
+| 16.3 | Chip "Tous" toggle all on/off | ✅ `GroupCalendar.test.tsx` |
+| 16.4 | Préfixe horaire pour événements avec créneau | ✅ `GroupCalendar.test.tsx` |
+| 16.5 | Pas de préfixe pour événements journée entière | ✅ `GroupCalendar.test.tsx` |
+| 16.6 | Mapping couleurs types d'événements | ✅ `CalendarContent.test.tsx` |
+| 16.7 | getDaysInMonth retourne le bon nombre de jours | ✅ `CalendarContent.test.tsx` |
+| 16.8 | isEventOnDay fonctionne pour événements single et multi-day | ✅ `CalendarContent.test.tsx` |
+
+## US-17 · PWA & Polish (M8)
+
+> En tant qu'utilisateur, je veux une app installable avec des états de chargement et gestion d'erreurs.
+
+| # | Critère d'acceptation | Fichier de test |
+|---|----------------------|-----------------|
+| 17.1 | Service worker enregistré au montage | ✅ `ServiceWorkerRegistration.test.tsx` |
+| 17.2 | Composant SW ne rend rien visuellement | ✅ `ServiceWorkerRegistration.test.tsx` |
+| 17.3 | Error boundary affiche message et bouton retry | ✅ `RouteErrorBoundary.test.tsx` |
+| 17.4 | Error boundary reset fonctionne au clic | ✅ `RouteErrorBoundary.test.tsx` |
+| 17.5 | Error boundary log erreur en console | ✅ `RouteErrorBoundary.test.tsx` |
+| 17.6 | Page 404 affiche heading et message traduit | ✅ `not-found.test.tsx` |
+| 17.7 | Page 404 lien retour dashboard | ✅ `not-found.test.tsx` |
+| 17.8 | Skeleton dashboard (placeholders) | ✅ `dashboard/loading.test.tsx` |
+| 17.9 | Skeleton calendrier (placeholders) | ✅ `calendar/loading.test.tsx` |
+
+## US-18 · Synchronisation Google Calendar (M9a–M9d)
+
+> En tant qu'utilisateur, je veux connecter mon Google Calendar et voir mes événements Google dans Together.
+
+| # | Critère d'acceptation | Fichier de test |
+|---|----------------------|-----------------|
+| 18.1 | OAuth flow : connexion compte Google | ❌ Aucun test |
+| 18.2 | Gestion tokens : refresh + access token | ❌ Aucun test |
+| 18.3 | Sélection calendriers à synchroniser | ❌ Aucun test |
+| 18.4 | Moteur de sync : fetch et import événements | ❌ Aucun test |
+| 18.5 | Page Google Sync : filtres, checkboxes, actions bulk | ❌ Aucun test |
+| 18.6 | AutoSync au lancement app (debounce 5min) | ❌ Aucun test |
+| 18.7 | Badge "G" sur événements importés | ❌ Aucun test |
+| 18.8 | Déconnexion compte Google (cascade) | ❌ Aucun test |
+| 18.9 | Tab Google Sync dans BottomNav | ✅ `BottomNav.test.tsx` |
+| 18.10 | Sync result i18n (syncResult key) | ❌ Aucun test |
+
+## US-19 · Upload Photo (M10)
+
+> En tant qu'utilisateur, je veux uploader une photo de profil ou de groupe.
+
+| # | Critère d'acceptation | Fichier de test |
+|---|----------------------|-----------------|
+| 19.1 | Hook useImageUpload : resize + upload | ❌ Aucun test |
+| 19.2 | Profil : afficher photo + bouton upload | ❌ Aucun test |
+| 19.3 | Groupe : photo de groupe (admin only) | ❌ Aucun test |
+| 19.4 | Avatar mis à jour partout (dashboard, member list) | ❌ Aucun test |
+| 19.5 | Migration SQL : avatar_url + storage buckets | ❌ Aucun test |

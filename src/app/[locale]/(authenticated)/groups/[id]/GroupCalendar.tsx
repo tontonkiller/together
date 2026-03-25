@@ -295,6 +295,7 @@ export default function GroupCalendar({ events, members, currentUserId, eventTyp
             <Box
               key={cell.dateStr}
               role="gridcell"
+              tabIndex={0}
               aria-label={`${cell.day} ${monthNames[month]}${dayEvents.length > 0 ? ` — ${dayEvents.length} ${tEvents('title').toLowerCase()}` : ''}`}
               onClick={() => onDayClick?.(cell.dateStr)}
               sx={{

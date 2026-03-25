@@ -10,6 +10,9 @@ Application web permettant aux familles et groupes de partager et visualiser leu
 - **Calendrier personnel** avec vue multi-groupes
 - **Calendrier de groupe** avec filtres par membre et code couleur
 - **Événements privés** visibles uniquement par le créateur (affichés "Occupé" aux autres)
+- **Synchronisation Google Calendar** : import one-way, multi-comptes, sync automatique, badge "G"
+- **Upload photo** : avatar utilisateur et photo de groupe via Supabase Storage
+- **Mode Eva** : thème alternatif rose/pink avec toggle dans la TopBar
 - **PWA** installable sur iOS et Android
 - **Bilingue** FR / EN
 
@@ -61,29 +64,40 @@ L'app est accessible sur [http://localhost:3000](http://localhost:3000).
 ```
 src/
 ├── app/
-│   ├── [locale]/           # Routes localisées (FR/EN)
-│   │   ├── dashboard/      # Tableau de bord (groupes + événements)
-│   │   ├── groups/         # Création et détail de groupe
-│   │   ├── calendar/       # Calendrier personnel + multi-groupes
-│   │   ├── profile/        # Profil utilisateur
-│   │   ├── invite/         # Page d'acceptation d'invitation
-│   │   └── login/          # Connexion magic link
-│   └── api/invite/         # API d'invitation par code
-├── components/             # Composants réutilisables (layout, error, PWA)
+│   ├── [locale]/
+│   │   ├── (authenticated)/
+│   │   │   ├── dashboard/      # Tableau de bord (groupes + événements)
+│   │   │   ├── groups/         # Création et détail de groupe
+│   │   │   ├── calendar/       # Calendrier personnel + multi-groupes
+│   │   │   ├── google-sync/    # Page synchronisation Google Calendar
+│   │   │   └── profile/        # Profil utilisateur + sélection calendriers Google
+│   │   ├── auth/               # Callback auth (magic link + Google OAuth)
+│   │   ├── invite/             # Page d'acceptation d'invitation
+│   │   └── login/              # Connexion magic link + Google OAuth
+│   └── api/
+│       ├── google/             # API Google (connect, callback, calendars, sync, disconnect)
+│       └── invite/             # API d'invitation par code
+├── components/
+│   ├── error/                  # RouteErrorBoundary
+│   ├── google/                 # AutoSync
+│   ├── layout/                 # AuthenticatedLayout, TopBar, BottomNav, ThemeRegistry
+│   └── pwa/                    # ServiceWorkerRegistration
 └── lib/
-    ├── supabase/           # Clients Supabase (browser + server)
-    ├── i18n/               # Configuration i18n + messages FR/EN
-    ├── types/              # Interfaces TypeScript
-    └── utils/              # Utilitaires (couleurs membres)
+    ├── google/                 # OAuth tokens, calendar API, sync engine
+    ├── hooks/                  # useImageUpload
+    ├── i18n/                   # Configuration i18n + messages FR/EN
+    ├── supabase/               # Clients Supabase (browser + server + middleware)
+    ├── types/                  # Interfaces TypeScript
+    └── utils/                  # Utilitaires (couleurs membres, contraste texte)
 
 supabase/
-├── schema.sql              # Schéma complet (tables, RLS, fonctions)
-└── migrations/             # Migrations incrémentales
+├── schema.sql                  # Schéma complet (tables, RLS, fonctions)
+└── migrations/                 # Migrations incrémentales
 ```
 
 ## Base de données
 
-6 tables avec Row Level Security :
+9 tables avec Row Level Security :
 
 - **profiles** — Profils utilisateurs (extends auth.users)
 - **groups** — Groupes avec code d'invitation unique
@@ -91,10 +105,13 @@ supabase/
 - **event_types** — Types d'événements (Vacances, Voyage, Disponible)
 - **events** — Événements calendrier
 - **invitations** — Invitations par email avec expiration 7 jours
+- **google_accounts** — Comptes Google connectés (OAuth tokens)
+- **google_calendars** — Calendriers Google sélectionnés pour la sync
+- **google_synced_events** — Événements importés depuis Google Calendar
 
 ## Tests
 
-217 tests unitaires couvrant 24 fichiers de test :
+223 tests unitaires couvrant 24 fichiers de test :
 
 ```bash
 npm test
