@@ -321,9 +321,9 @@ language sql
 immutable
 as $$
   select (array[
-    '#2196F3', '#FF5252', '#4CAF50', '#AB47BC', '#FF9800',
-    '#26C6DA', '#EC407A', '#42A5F5', '#FFCA28', '#66BB6A',
-    '#FF7043', '#7E57C2', '#26A69A', '#FFA726', '#EF5350'
+    '#2196F3', '#FF5252', '#4CAF50', '#FF9800', '#AB47BC',
+    '#EC407A', '#26C6DA', '#FFCA28', '#5D4037', '#3F51B5',
+    '#26A69A', '#FF7043', '#78909C', '#8BC34A', '#F06292'
   ])[1 + (member_index % 15)];
 $$;
 
