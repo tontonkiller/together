@@ -152,6 +152,7 @@ export default function GoogleSyncContent({ hasAccounts }: GoogleSyncContentProp
 
       if (res.ok) {
         setSelected(new Set());
+        setSuccessMsg(t('actionSuccess'));
         await fetchEvents();
       } else {
         setError(tCommon('error'));

@@ -1,6 +1,6 @@
 # Together — Roadmap par micro-milestones
 
-> Dernière mise à jour : 23 mars 2026
+> Dernière mise à jour : 25 mars 2026
 > Chaque milestone = 1-2 jours, testable, livrable indépendamment.
 
 ---
@@ -34,7 +34,7 @@
 - [x] Bouton supprimer le groupe (admin only)
 - [x] Renommer le groupe (admin only, inline edit ou dialog)
 - [x] Clés i18n pour les nouvelles strings (FR + EN)
-- [ ] Tests unitaires
+- [x] Tests unitaires (GroupDetailContent.test.ts : admin transfer, event sorting, rôles, invitation expirée, renommage vide)
 
 ---
 
@@ -47,7 +47,7 @@
 - [x] Afficher les invitations en attente sur la page groupe (admin)
 - [x] Expiration auto après 7 jours
 - [x] Clés i18n (FR + EN)
-- [ ] Tests unitaires
+- [x] Tests unitaires (api/invite/route.test.ts + invite/[code]/page.test.tsx)
 - [x] SQL functions (SECURITY DEFINER) pour join-by-invite-code
 
 ---
@@ -64,7 +64,7 @@
 - [x] Supprimer un événement (owner only)
 - [x] Section "Prochains événements" sur le dashboard
 - [x] Clés i18n (FR + EN)
-- [ ] Tests unitaires
+- [x] Tests unitaires (EventDialog.test.ts + EventList.test.ts)
 
 ---
 
@@ -148,7 +148,7 @@
 
 ---
 
-## M10 — Photo Upload (avatar user + photo groupe)
+## M10 — Photo Upload (avatar user + photo groupe) ✅ DONE
 
 - [x] Migration SQL: `avatar_url` sur groups + storage buckets + RLS
 - [x] Hook `useImageUpload`: resize client + upload Supabase Storage
@@ -157,6 +157,7 @@
 - [x] Mettre à jour tous les Avatar (dashboard, member list, etc.)
 - [x] i18n FR/EN
 - [x] Vérification TypeScript
+- [ ] Tests unitaires (useImageUpload, avatar upload flow)
 
 ---
 

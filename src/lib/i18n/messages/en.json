@@ -212,7 +212,8 @@
     "refused": "Refused",
     "selectAll": "Select all",
     "deselectAll": "Deselect all",
-    "syncResult": "{newPending} new, {updated} updated, {deleted} deleted"
+    "syncResult": "{newPending} new, {updated} updated, {deleted} deleted",
+    "actionSuccess": "Events updated successfully"
   },
   "nav": {
     "groups": "Groups",

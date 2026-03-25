@@ -67,6 +67,7 @@ export default function TopBar() {
           <IconButton
             onClick={toggleEvaMode}
             aria-label="Mode Eva"
+            aria-pressed={evaMode}
             size="small"
             sx={{
               color: evaMode ? 'primary.main' : 'text.secondary',

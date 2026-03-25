@@ -178,7 +178,7 @@ export default function EventDetailDialog({
             label="Google Calendar"
             size="small"
             variant="outlined"
-            sx={{ mt: 1, fontSize: '0.7rem' }}
+            sx={{ mt: 1 }}
           />
         )}
       </DialogContent>

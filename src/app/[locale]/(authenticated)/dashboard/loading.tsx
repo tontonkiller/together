@@ -10,22 +10,8 @@ export default function DashboardLoading() {
       <Skeleton variant="text" width={200} height={40} sx={{ mb: 1 }} />
       <Skeleton variant="text" width={160} height={24} sx={{ mb: 3 }} />
 
-      {/* Upcoming events section */}
-      <Skeleton variant="text" width={180} height={32} sx={{ mb: 1 }} />
-      {[0, 1].map((i) => (
-        <Card key={i} variant="outlined" sx={{ mb: 1.5 }}>
-          <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5 }}>
-            <Skeleton variant="circular" width={32} height={32} />
-            <Box sx={{ flex: 1 }}>
-              <Skeleton variant="text" width="60%" height={24} />
-              <Skeleton variant="text" width="40%" height={20} />
-            </Box>
-          </CardContent>
-        </Card>
-      ))}
-
-      {/* Groups section */}
-      <Skeleton variant="text" width={120} height={32} sx={{ mt: 3, mb: 1 }} />
+      {/* Groups section (matches DashboardContent order) */}
+      <Skeleton variant="text" width={120} height={32} sx={{ mb: 1 }} />
       {[0, 1, 2].map((i) => (
         <Card key={i} variant="outlined" sx={{ mb: 1.5 }}>
           <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -33,6 +19,20 @@ export default function DashboardLoading() {
             <Box sx={{ flex: 1 }}>
               <Skeleton variant="text" width="50%" height={24} />
               <Skeleton variant="text" width="30%" height={20} />
+            </Box>
+          </CardContent>
+        </Card>
+      ))}
+
+      {/* Upcoming events section */}
+      <Skeleton variant="text" width={180} height={32} sx={{ mt: 3, mb: 1 }} />
+      {[0, 1].map((i) => (
+        <Card key={i} variant="outlined" sx={{ mb: 1.5 }}>
+          <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1.5 }}>
+            <Skeleton variant="circular" width={32} height={32} />
+            <Box sx={{ flex: 1 }}>
+              <Skeleton variant="text" width="60%" height={24} />
+              <Skeleton variant="text" width="40%" height={20} />
             </Box>
           </CardContent>
         </Card>
