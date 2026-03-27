@@ -109,7 +109,8 @@
     "kickMember": "Retirer le membre",
     "kickConfirm": "Voulez-vous vraiment retirer ce membre du groupe ?",
     "groupPhoto": "Photo du groupe",
-    "changeGroupPhoto": "Changer la photo du groupe"
+    "changeGroupPhoto": "Changer la photo du groupe",
+    "calendarTab": "Calendrier"
   },
   "invite": {
     "title": "Invitation",
@@ -235,6 +236,16 @@
     "eventCreated": "Événement créé !",
     "allDay": "Journée entière",
     "private": "Privé"
+  },
+  "chat": {
+    "title": "Chat",
+    "placeholder": "Votre message...",
+    "send": "Envoyer",
+    "empty": "Pas encore de message. Lancez la conversation !",
+    "deleted": "Message supprimé",
+    "deleteConfirm": "Supprimer ce message ?",
+    "today": "Aujourd'hui",
+    "yesterday": "Hier"
   },
   "nav": {
     "groups": "Groupes",

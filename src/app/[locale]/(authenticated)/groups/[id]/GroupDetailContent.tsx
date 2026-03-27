@@ -22,6 +22,8 @@ import Divider from '@mui/material/Divider';
 import CircularProgress from '@mui/material/CircularProgress';
 import Collapse from '@mui/material/Collapse';
 import Popover from '@mui/material/Popover';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
@@ -30,6 +32,8 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import GroupsIcon from '@mui/icons-material/Groups';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { useRouter } from '@/lib/i18n/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useImageUpload } from '@/lib/hooks/useImageUpload';
@@ -38,6 +42,7 @@ import InviteDialog from './InviteDialog';
 import EventList from './EventList';
 import EventDialog from './EventDialog';
 import GroupCalendar from './GroupCalendar';
+import GroupChat from './GroupChat';
 
 export interface GroupMember {
   id: string;
@@ -83,10 +88,12 @@ export default function GroupDetailContent({
 }: GroupDetailContentProps) {
   const t = useTranslations('groups');
   const tCommon = useTranslations('common');
+  const tChat = useTranslations('chat');
   const locale = useLocale();
   const router = useRouter();
 
   const isAdmin = currentUserRole === 'admin';
+  const [activeTab, setActiveTab] = useState(0);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [groupAvatarUrl, setGroupAvatarUrl] = useState(group.avatar_url);
@@ -473,7 +480,20 @@ export default function GroupDetailContent({
         )}
       </Collapse>
 
-      <Divider sx={{ my: 3 }} />
+      {/* Tabs: Calendar / Chat */}
+      <Tabs
+        value={activeTab}
+        onChange={(_, v) => setActiveTab(v)}
+        sx={{ mt: 2, mb: 2 }}
+        variant="fullWidth"
+      >
+        <Tab icon={<CalendarMonthIcon />} label={t('calendarTab')} iconPosition="start" sx={{ minHeight: 48 }} />
+        <Tab icon={<ChatBubbleOutlineIcon />} label={tChat('title')} iconPosition="start" sx={{ minHeight: 48 }} />
+      </Tabs>
+
+      {/* Tab: Calendar & Events */}
+      {activeTab === 0 && (
+        <>
 
       {/* Group Calendar (M6) */}
       <GroupCalendar
@@ -538,6 +558,18 @@ export default function GroupDetailContent({
           </Button>
         )}
       </Box>
+
+        </>
+      )}
+
+      {/* Tab: Chat */}
+      {activeTab === 1 && (
+        <GroupChat
+          groupId={group.id}
+          currentUserId={currentUserId}
+          members={members}
+        />
+      )}
 
       {/* Edit Group Dialog (rename + description) */}
       <Dialog open={renameOpen} onClose={() => setRenameOpen(false)} fullWidth maxWidth="xs">
