@@ -276,12 +276,77 @@ Dossier : `src/app/[locale]/(authenticated)/groups/[id]/`
 - [ ] Clé i18n `plans.badge` (déjà dans §10)
 - [ ] Tests : `queries.test.ts` (calcul du badge)
 
+### Plan de test M11
+
+**Couche 1 — SQL / RLS (M11a)**
+- [ ] `supabase/tests/010_plans_rls.sql` : script de tests manuels à exécuter dans Supabase SQL Editor
+  - Setup : créer 2 users, 1 groupe, 1 non-membre
+  - Test SELECT : membre voit les plans du groupe, non-membre non
+  - Test INSERT plan : membre OK, non-membre bloqué, `created_by != auth.uid()` bloqué
+  - Test INSERT slot : créateur du plan OK, autre membre bloqué
+  - Test INSERT vote : membre vote pour soi OK, vote pour autre user bloqué, `available` NULL bloqué
+  - Test DELETE plan : créateur + `status='open'` OK, `status='resolved'` bloqué, autre user bloqué
+  - Test RPC `resolve_plan_with_slot` : quorum non atteint + pas créateur → bloqué ; créateur → OK ; quorum atteint → OK
+  - Test RPC `expire_plan` : 0 votes → expired ; 1 winner → resolved + event créé ; tie → pending_tiebreak
+  - Test `event_participants` auto-créé pour tous les `available=true` du slot gagnant
+
+**Couche 2 — Unit tests purs (M11b, M11c)**
+- [ ] `src/lib/plans/validation.test.ts` :
+  - `validatePlanInput` : titre vide, quorum ≤ 0, quorum > members, < 2 slots, duration invalide, OK
+  - `validateSlotInput` : date passée, date + time incohérent, OK
+  - `validateVoteInput` : slot_id manquant, available non-bool, OK
+- [ ] `src/lib/plans/resolveHelpers.test.ts` :
+  - `findWinningSlot` : 0 votes → null, 1 winner → id, tie → { tied: [id1, id2] }
+  - `computeEventTimes` : half_day/full_day → all_day ; 30min/1h/2h/3h + time → calcul end_time
+- [ ] `src/lib/plans/queries.test.ts` (M11d) :
+  - `countPendingVotesForUser` : user sans vote → count++ ; user ayant voté → ignore ; plan expired → ignore
+
+**Couche 3 — API route tests (M11b)**
+- [ ] `src/app/api/groups/[id]/plans/route.test.ts` :
+  - 401 non-authentifié, 403 non-membre, 400 invalid body, 201 création OK
+  - GET : filtrage par group_id, lazy expiration déclenchée pour plans expirés
+- [ ] `src/app/api/plans/[id]/route.test.ts` : GET/DELETE, permissions
+- [ ] `src/app/api/plans/[id]/vote/route.test.ts` :
+  - 401, 403 non-membre, vote OK, update vote existant
+  - Auto-resolve déclenché si quorum atteint (mock RPC)
+- [ ] `src/app/api/plans/[id]/resolve/route.test.ts` : créateur OK, non-créateur bloqué, plan déjà resolved bloqué
+
+**Couche 4 — Component tests (M11c)**
+- [ ] `PlanDialog.test.ts` : logique pure extraite (validation du form), comme `EventDialog.test.ts`
+- [ ] `PlanList.test.ts` : rendu des status chips, affichage deadline, visibilité des boutons selon user/status
+
+**Couche 5 — Manuel (QA milestone)**
+- [ ] Créer plan → vote d'un autre membre → vérifier barres de progression temps réel
+- [ ] Atteindre quorum via votes → vérifier event auto-créé + participants corrects
+- [ ] Valider manuellement un créneau (créateur) avant deadline → event créé
+- [ ] Attendre (ou forcer via update SQL) deadline sur plan avec 0 votes → status expired
+- [ ] Forcer deadline avec 1 winner clair → status resolved + event
+- [ ] Forcer deadline avec égalité → status pending_tiebreak + notification créateur → créateur choisit
+- [ ] Supprimer plan (créateur, status open) → OK ; (autre user ou status≠open) → bouton invisible
+- [ ] Multi-plans ouverts sur un groupe → tous affichés, badge dashboard correct
+- [ ] Tests responsive mobile 375px sur PlanDialog + PlanList
+
+### CI — Setup GitHub Actions (M11a, pré-requis)
+
+> Constat : aucun workflow `.github/workflows/` n'existe actuellement. L'item M1 « CI/CD pipeline » a été coché mais les fichiers ne sont pas dans le repo (probablement couvert par Vercel preview deployments côté plateforme).
+
+**Proposition** : créer `.github/workflows/ci.yml` déclenché sur PR + push sur `main` :
+- [ ] Job `lint` : `npm ci` + `npm run lint`
+- [ ] Job `typecheck` : `npx tsc --noEmit`
+- [ ] Job `test` : `npm test` (vitest run)
+- [ ] Job `build` : `npm run build` (avec env vars dummy pour Supabase)
+- [ ] Matrix Node 20 LTS uniquement (Next.js 16 requirement)
+- [ ] Cache npm dependencies
+
+**Décision à valider** : est-ce qu'on ajoute ce workflow CI dans M11a (pour cadrer le feature dès le départ), ou on le garde pour plus tard ? Sans CI, impossible de bloquer les PRs cassées.
+
 ### QA milestone (mandatoire avant done)
 - [ ] 3 passes QA + Debug successives (parallèles), fix tout
-- [ ] Build clean, 0 lint, 0 TS error
-- [ ] Tests : tous passent
-- [ ] Manuel : créer plan → vote → auto-resolve via quorum → event créé avec bons participants
-- [ ] Manuel : plan expiré 0 votes → expired ; 1 gagnant → event ; égalité → pending_tiebreak ; créateur résout
+- [ ] Build clean : `npm run build` → 0 erreur, 0 warning
+- [ ] Lint clean : `npm run lint` → 0 erreur
+- [ ] TypeScript clean : `npx tsc --noEmit` → 0 erreur
+- [ ] Tests : `npm test` → tous les tests passent (cible : couvrir toutes les couches 1-5 ci-dessus)
+- [ ] Manuel complet : checklist « Couche 5 » ci-dessus
 - [ ] Lessons capturées dans `tasks/lessons.md` si corrections
 
 ---
