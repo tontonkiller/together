@@ -185,8 +185,7 @@ begin
     raise exception 'Not a member of this group';
   end if;
 
-  select count(*)::int into v_total_members
-  from group_members where group_id = p_group_id;
+  v_total_members := (select count(*)::int from group_members where group_id = p_group_id);
 
   if p_quorum > v_total_members then
     raise exception 'Quorum exceeds group member count';
@@ -196,9 +195,9 @@ begin
     raise exception 'At least 2 slots required';
   end if;
 
-  insert into plans (group_id, created_by, title, description, duration, quorum)
-  values (p_group_id, auth.uid(), p_title, nullif(p_description, ''), p_duration, p_quorum)
-  returning id into v_plan_id;
+  v_plan_id := gen_random_uuid();
+  insert into plans (id, group_id, created_by, title, description, duration, quorum)
+  values (v_plan_id, p_group_id, auth.uid(), p_title, nullif(p_description, ''), p_duration, p_quorum);
 
   for v_slot in select * from jsonb_array_elements(p_slots) loop
     insert into plan_slots (plan_id, date, time, position)
@@ -221,32 +220,35 @@ security definer
 set search_path = public
 as $plpgsql$
 declare
-  v_plan plans%rowtype;
-  v_slot plan_slots%rowtype;
-  v_times record;
+  v_created_by uuid;
+  v_title text;
+  v_description text;
+  v_duration text;
+  v_slot_date date;
+  v_slot_time time;
+  v_start_time time;
+  v_end_time time;
+  v_is_all_day boolean;
   v_event_id uuid;
 begin
-  select * into v_plan from plans where id = p_plan_id;
-  select * into v_slot from plan_slots where id = p_slot_id and plan_id = p_plan_id;
+  v_created_by := (select created_by from plans where id = p_plan_id);
+  v_title := (select title from plans where id = p_plan_id);
+  v_description := (select description from plans where id = p_plan_id);
+  v_duration := (select duration from plans where id = p_plan_id);
+  v_slot_date := (select date from plan_slots where id = p_slot_id and plan_id = p_plan_id);
+  v_slot_time := (select time from plan_slots where id = p_slot_id and plan_id = p_plan_id);
 
-  if v_slot.id is null then
+  if v_slot_date is null then
     raise exception 'Slot not found in plan';
   end if;
 
-  select * into v_times from compute_event_times(v_slot.time, v_plan.duration);
+  v_start_time := (select start_time from compute_event_times(v_slot_time, v_duration));
+  v_end_time := (select end_time from compute_event_times(v_slot_time, v_duration));
+  v_is_all_day := (select is_all_day from compute_event_times(v_slot_time, v_duration));
 
-  insert into events (user_id, title, description, start_date, end_date, start_time, end_time, is_all_day)
-  values (
-    v_plan.created_by,
-    v_plan.title,
-    v_plan.description,
-    v_slot.date,
-    v_slot.date,
-    v_times.start_time,
-    v_times.end_time,
-    v_times.is_all_day
-  )
-  returning id into v_event_id;
+  v_event_id := gen_random_uuid();
+  insert into events (id, user_id, title, description, start_date, end_date, start_time, end_time, is_all_day)
+  values (v_event_id, v_created_by, v_title, v_description, v_slot_date, v_slot_date, v_start_time, v_end_time, v_is_all_day);
 
   insert into event_participants (event_id, user_id)
   select v_event_id, pv.user_id
@@ -265,23 +267,27 @@ security definer
 set search_path = public
 as $plpgsql$
 declare
-  v_plan plans%rowtype;
+  v_created_by uuid;
+  v_status text;
+  v_quorum int;
   v_yes_count int;
   v_event_id uuid;
 begin
-  select * into v_plan from plans where id = p_plan_id;
-  if v_plan.id is null then
+  v_created_by := (select created_by from plans where id = p_plan_id);
+  v_status := (select status from plans where id = p_plan_id);
+  v_quorum := (select quorum from plans where id = p_plan_id);
+
+  if v_created_by is null then
     raise exception 'Plan not found';
   end if;
-  if v_plan.status not in ('open', 'pending_tiebreak') then
+  if v_status not in ('open', 'pending_tiebreak') then
     raise exception 'Plan already resolved or expired';
   end if;
 
-  if v_plan.created_by <> auth.uid() then
-    select count(*)::int into v_yes_count
-    from plan_votes where slot_id = p_slot_id and available = true;
+  if v_created_by <> auth.uid() then
+    v_yes_count := (select count(*)::int from plan_votes where slot_id = p_slot_id and available = true);
 
-    if v_yes_count < v_plan.quorum then
+    if v_yes_count < v_quorum then
       raise exception 'Not permitted: not creator and quorum not reached';
     end if;
   end if;
@@ -303,40 +309,59 @@ security definer
 set search_path = public
 as $plpgsql$
 declare
-  v_plan plans%rowtype;
+  v_status text;
+  v_expires_at timestamptz;
   v_max_votes int;
   v_winning_count int;
   v_winning_slot uuid;
   v_event_id uuid;
 begin
-  select * into v_plan from plans where id = p_plan_id;
-  if v_plan.id is null then return 'not_found'; end if;
-  if v_plan.status <> 'open' then return v_plan.status; end if;
-  if v_plan.expires_at > now() then return v_plan.status; end if;
+  v_status := (select status from plans where id = p_plan_id);
+  v_expires_at := (select expires_at from plans where id = p_plan_id);
 
-  select coalesce(max(yes_count), 0) into v_max_votes
-  from (
-    select count(*) filter (where pv.available = true) as yes_count
-    from plan_slots ps
-    left join plan_votes pv on pv.slot_id = ps.id
-    where ps.plan_id = p_plan_id
-    group by ps.id
-  ) t;
+  if v_status is null then return 'not_found'; end if;
+  if v_status <> 'open' then return v_status; end if;
+  if v_expires_at > now() then return v_status; end if;
+
+  v_max_votes := (
+    select coalesce(max(yes_count), 0)
+    from (
+      select count(*) filter (where pv.available = true) as yes_count
+      from plan_slots ps
+      left join plan_votes pv on pv.slot_id = ps.id
+      where ps.plan_id = p_plan_id
+      group by ps.id
+    ) t
+  );
 
   if v_max_votes = 0 then
     update plans set status = 'expired' where id = p_plan_id;
     return 'expired';
   end if;
 
-  select count(*), min(slot_id) into v_winning_count, v_winning_slot
-  from (
-    select ps.id as slot_id, count(*) filter (where pv.available = true) as yes_count
-    from plan_slots ps
-    left join plan_votes pv on pv.slot_id = ps.id
-    where ps.plan_id = p_plan_id
-    group by ps.id
-    having count(*) filter (where pv.available = true) = v_max_votes
-  ) t;
+  v_winning_count := (
+    select count(*)
+    from (
+      select ps.id as slot_id
+      from plan_slots ps
+      left join plan_votes pv on pv.slot_id = ps.id
+      where ps.plan_id = p_plan_id
+      group by ps.id
+      having count(*) filter (where pv.available = true) = v_max_votes
+    ) t
+  );
+
+  v_winning_slot := (
+    select min(slot_id)
+    from (
+      select ps.id as slot_id
+      from plan_slots ps
+      left join plan_votes pv on pv.slot_id = ps.id
+      where ps.plan_id = p_plan_id
+      group by ps.id
+      having count(*) filter (where pv.available = true) = v_max_votes
+    ) t
+  );
 
   if v_winning_count = 1 then
     v_event_id := _create_event_from_slot(p_plan_id, v_winning_slot);
