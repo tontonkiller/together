@@ -161,6 +161,131 @@
 
 ---
 
+## M11 — Plans & Sondages de disponibilité ⏳ EN COURS
+
+> Spec complète : `tasks/plans-spec.md`
+> Branche : `claude/new-feature-ncU3z`
+
+### Décisions d'architecture (à valider avant M11a)
+
+1. **Participants de l'événement créé** → **Option B : table `event_participants`**
+   - `id, event_id FK, user_id FK, created_at, UNIQUE(event_id, user_id)`
+   - RLS : membres du groupe de l'event peuvent lire ; insert/delete = owner de l'event
+   - Raison : plus simple pour queries « qui vient ? », cohérent avec `plan_votes`, pas d'array pgsql
+
+2. **Validation automatique au quorum** → **côté API après chaque vote**
+   - Pas de trigger SQL (évite récursion RLS et complexité)
+   - Le route handler `POST /api/plans/[id]/vote` recalcule les votes après upsert et appelle un RPC `resolve_plan_with_slot(plan_id, slot_id)` (SECURITY DEFINER) si quorum atteint
+   - RPC : crée l'event + insère les participants + passe `status='resolved'` en une transaction
+
+3. **Expiration des plans** → **lazy check, pas de cron**
+   - À chaque GET `/api/groups/[id]/plans`, détecter les plans `open` avec `expires_at < now()`
+   - Appeler RPC `expire_plan(plan_id)` qui :
+     - 0 votes → `status='expired'`
+     - 1+ votes, pas d'égalité → choisit créneau max, crée event, `status='resolved'`
+     - 1+ votes, égalité → `status='pending_tiebreak'`
+   - Raison : pas d'infra cron à gérer, affichage en temps réel cohérent
+
+4. **Créneaux datetime** → **colonnes séparées `date date NOT NULL` + `time time NULL`**
+   - Conforme au spec (§1) — créneau « date seule » vs « date + heure » au choix par slot
+
+5. **Multi-votes** → un vote par (slot, user). Un user peut voter sur plusieurs slots. `plan_votes.available` bool obligatoire (pas de 3e état).
+
+---
+
+### M11a — Schéma SQL + RLS + migration ⏳
+
+Fichier : `supabase/migrations/010_plans_and_votes.sql`
+
+- [ ] Table `plans` (id, group_id, created_by, title, description, duration enum text check, quorum int check > 0, status text check, resolved_slot_id nullable, event_id nullable, expires_at, created_at, updated_at)
+- [ ] Table `plan_slots` (id, plan_id, date, time nullable, position int, created_at)
+- [ ] Table `plan_votes` (id, slot_id, user_id, available bool, created_at, UNIQUE(slot_id, user_id))
+- [ ] Table `event_participants` (id, event_id, user_id, created_at, UNIQUE(event_id, user_id))
+- [ ] Index : `plans(group_id, status)`, `plan_slots(plan_id, position)`, `plan_votes(slot_id)`, `plan_votes(user_id)`
+- [ ] Fonction SECURITY DEFINER `is_own_plan(plan_id uuid)` → bool (membre du groupe du plan)
+- [ ] Fonction SECURITY DEFINER `resolve_plan_with_slot(plan_id uuid, slot_id uuid)` → event_id
+  - Vérifie `auth.uid()` est créateur OU quorum atteint pour slot
+  - Crée event (start_date = slot.date, end_date = slot.date, start_time/end_time dérivés de slot.time + duration)
+  - Insère `event_participants` pour tous les users ayant voté `available=true` sur ce slot
+  - UPDATE plans SET status='resolved', resolved_slot_id, event_id
+  - Retourne event_id
+- [ ] Fonction SECURITY DEFINER `expire_plan(plan_id uuid)` → status text
+  - Si `expires_at > now()` → noop
+  - Compte votes par slot, applique règles (0 votes / max unique / égalité)
+  - Appelle `resolve_plan_with_slot` ou set `status='pending_tiebreak'` / `'expired'`
+- [ ] RLS `plans` :
+  - SELECT : `is_group_member(group_id, auth.uid())`
+  - INSERT : `created_by = auth.uid() AND is_group_member(group_id, auth.uid())`
+  - UPDATE : `created_by = auth.uid()` (pour resolve manuel + tiebreak)
+  - DELETE : `created_by = auth.uid() AND status = 'open'`
+- [ ] RLS `plan_slots` : SELECT via `is_own_plan`, INSERT = créateur du plan uniquement
+- [ ] RLS `plan_votes` :
+  - SELECT : `is_own_plan(...)` via sous-requête sur slot
+  - INSERT/UPDATE : `user_id = auth.uid() AND is_own_plan(...)`
+  - DELETE : `user_id = auth.uid()`
+- [ ] RLS `event_participants` :
+  - SELECT : `is_group_member(group_id_de_l_event, auth.uid())` via helper
+  - INSERT/DELETE : owner de l'event (`events.user_id = auth.uid()`)
+- [ ] Trigger `plans_updated_at`
+- [ ] Test manuel RLS dans Supabase SQL editor (pattern `set role authenticated; set request.jwt.claims...`)
+
+### M11b — API Routes ⏳
+
+- [ ] `src/lib/types/plans.ts` : interfaces `Plan`, `PlanSlot`, `PlanVote`, `PlanWithSlots`, `PlanSlotWithVotes`
+- [ ] `src/lib/plans/validation.ts` : fonctions pures `validatePlanInput`, `validateSlotInput`, `validateVoteInput`
+- [ ] `src/lib/plans/resolveHelpers.ts` : logique tiebreak (`findWinningSlot(slots)` → `{ slotId | tied }`)
+- [ ] `GET /api/groups/[id]/plans/route.ts` : liste + lazy expiration check (appelle `expire_plan` pour les plans expirés avant return)
+- [ ] `POST /api/groups/[id]/plans/route.ts` : création plan + slots (transaction via RPC `create_plan_with_slots`)
+- [ ] `GET /api/plans/[id]/route.ts` : détail plan avec slots + votes agrégés
+- [ ] `DELETE /api/plans/[id]/route.ts` : suppression (RLS gère la permission)
+- [ ] `POST /api/plans/[id]/vote/route.ts` : upsert votes (body: `[{ slot_id, available }]`), puis check quorum → auto-resolve si atteint
+- [ ] `POST /api/plans/[id]/resolve/route.ts` : resolve manuel (body: `{ slot_id }`), créateur only (RLS)
+- [ ] Tests unitaires : 1 fichier par route (mock Supabase, pattern `api/invite/[code]/route.test.ts`)
+- [ ] Tests validation : `src/lib/plans/validation.test.ts`, `src/lib/plans/resolveHelpers.test.ts`
+
+### M11c — UI page groupe ⏳
+
+Dossier : `src/app/[locale]/(authenticated)/groups/[id]/`
+
+- [ ] `PlanDialog.tsx` : création d'un plan (titre, desc, duration select, quorum input, slots dynamiques)
+  - Ajout/suppression de slots, toggle « ajouter heure » par slot
+  - Validation min 2 slots, quorum ≤ nb membres
+  - fullScreen sur mobile (pattern `EventDialog`)
+- [ ] `PlanList.tsx` : carte par plan
+  - Header : titre, créateur, durée, deadline (ex: « Expire dans 2j »)
+  - Slots avec barre de progression WhatsApp-style + avatars des votants
+  - Status chip (`open`, `resolved`, `expired`, `pending_tiebreak`)
+  - Bouton « Valider ce créneau » visible créateur only
+  - Bouton delete créateur only
+- [ ] `PlanVoteButtons.tsx` : toggle Disponible/Pas dispo par slot (upsert via API)
+- [ ] `PlanResolveConfirm.tsx` : confirm dialog pour resolve manuel + tiebreak
+- [ ] Intégration dans `GroupDetailContent.tsx` :
+  - Section « Plans » avant la liste des événements
+  - Visible si ≥ 1 plan (tous statuts, `expired` collapsible)
+  - Bouton « Créer un plan »
+- [ ] Clés i18n `plans` dans `fr.json` + `en.json` (toutes les clés du spec §10)
+- [ ] Tests unitaires : validation UI pure (`PlanDialog.test.ts`), tiebreak helpers
+
+### M11d — Badge dashboard + notifications ⏳
+
+- [ ] Fonction helper `src/lib/plans/queries.ts` : `countPendingVotesForUser(groupIds, userId)` → map group_id → count
+  - Compte les plans `open` où le user n'a voté sur aucun slot
+- [ ] Intégration dashboard : `DashboardContent.tsx` fetch les counts + affiche badge MUI sur chaque card groupe
+- [ ] Intégration page groupe : badge sur le bouton « Plans » si tiebreak en attente pour le créateur
+- [ ] Auto-refresh : revalidate le GET plans toutes les N secondes OU au mount (pas de websocket pour V1)
+- [ ] Clé i18n `plans.badge` (déjà dans §10)
+- [ ] Tests : `queries.test.ts` (calcul du badge)
+
+### QA milestone (mandatoire avant done)
+- [ ] 3 passes QA + Debug successives (parallèles), fix tout
+- [ ] Build clean, 0 lint, 0 TS error
+- [ ] Tests : tous passent
+- [ ] Manuel : créer plan → vote → auto-resolve via quorum → event créé avec bons participants
+- [ ] Manuel : plan expiré 0 votes → expired ; 1 gagnant → event ; égalité → pending_tiebreak ; créateur résout
+- [ ] Lessons capturées dans `tasks/lessons.md` si corrections
+
+---
+
 ## POST-V1 (ne PAS implémenter)
 
 - Sync bidirectionnelle (Together → Google)
