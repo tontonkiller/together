@@ -131,7 +131,7 @@ export default function PlanDialog({
     setLoading(false);
 
     if (!res.ok) {
-      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      const body = (await res.json().catch(() => ({}))) as { error?: string; detail?: string };
       const errKey = body.error ?? 'createFailed';
       const knownKeys = [
         'titleRequired',
@@ -146,11 +146,10 @@ export default function PlanDialog({
         'createFailed',
         'notAGroupMember',
       ];
-      setError(
-        knownKeys.includes(errKey)
-          ? t(`errors.${errKey}` as 'errors.createFailed')
-          : t('errors.createFailed'),
-      );
+      const label = knownKeys.includes(errKey)
+        ? t(`errors.${errKey}` as 'errors.createFailed')
+        : t('errors.createFailed');
+      setError(body.detail ? `${label} — ${body.detail}` : label);
       return;
     }
 
