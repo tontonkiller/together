@@ -29,7 +29,7 @@ export async function POST(
   const { data: plan, error: planError } = await supabase
     .from('plans')
     .select(
-      'id, quorum, status, created_by, slots:plan_slots(id, plan_id, date, time, position, created_at, votes:plan_votes(id, slot_id, user_id, available, created_at))',
+      'id, quorum, status, created_by, slots:plan_slots(id, plan_id, start_date, end_date, start_time, end_time, position, created_at, votes:plan_votes(id, slot_id, user_id, available, created_at))',
     )
     .eq('id', planId)
     .maybeSingle();
@@ -68,7 +68,7 @@ export async function POST(
   const { data: refreshed } = await supabase
     .from('plans')
     .select(
-      'id, quorum, status, created_by, slots:plan_slots(id, plan_id, date, time, position, created_at, votes:plan_votes(id, slot_id, user_id, available, created_at))',
+      'id, quorum, status, created_by, slots:plan_slots(id, plan_id, start_date, end_date, start_time, end_time, position, created_at, votes:plan_votes(id, slot_id, user_id, available, created_at))',
     )
     .eq('id', planId)
     .maybeSingle();

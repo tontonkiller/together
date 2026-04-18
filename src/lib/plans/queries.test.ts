@@ -15,7 +15,6 @@ function makePlan(
     created_by: createdBy,
     title: id,
     description: null,
-    duration: '1h',
     quorum: 2,
     status,
     resolved_slot_id: null,
@@ -28,8 +27,10 @@ function makePlan(
       {
         id: `${id}-s1`,
         plan_id: id,
-        date: '2026-05-01',
-        time: null,
+        start_date: '2026-05-01',
+        end_date: '2026-05-01',
+        start_time: null,
+        end_time: null,
         position: 0,
         created_at: '2026-04-15T00:00:00Z',
         votes: voters.map((u, i) => ({

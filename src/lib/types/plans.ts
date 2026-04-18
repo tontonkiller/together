@@ -1,5 +1,3 @@
-export type PlanDuration = '30min' | '1h' | '2h' | '3h' | 'half_day' | 'full_day';
-
 export type PlanStatus = 'open' | 'pending_tiebreak' | 'resolved' | 'expired';
 
 export interface Plan {
@@ -8,7 +6,6 @@ export interface Plan {
   created_by: string;
   title: string;
   description: string | null;
-  duration: PlanDuration;
   quorum: number;
   status: PlanStatus;
   resolved_slot_id: string | null;
@@ -21,8 +18,10 @@ export interface Plan {
 export interface PlanSlot {
   id: string;
   plan_id: string;
-  date: string;
-  time: string | null;
+  start_date: string;
+  end_date: string;
+  start_time: string | null;
+  end_time: string | null;
   position: number;
   created_at: string;
 }
@@ -45,15 +44,16 @@ export interface PlanWithSlots extends Plan {
 }
 
 export interface PlanSlotInput {
-  date: string;
-  time: string | null;
+  start_date: string;
+  end_date: string;
+  start_time: string | null;
+  end_time: string | null;
   position: number;
 }
 
 export interface PlanInput {
   title: string;
   description: string | null;
-  duration: PlanDuration;
   quorum: number;
   slots: PlanSlotInput[];
 }

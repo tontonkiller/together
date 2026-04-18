@@ -20,17 +20,24 @@ interface PlanResolveConfirmProps {
   onResolved: () => void;
 }
 
+function formatDate(iso: string, locale: string): string {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString(
+    locale === 'fr' ? 'fr-FR' : 'en-US',
+    { weekday: 'long', day: 'numeric', month: 'long' },
+  );
+}
+
 function formatSlotDate(slot: PlanSlot, locale: string): string {
-  const d = new Date(`${slot.date}T${slot.time ?? '00:00'}:00`);
-  const dateStr = d.toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  });
-  if (slot.time) {
-    return `${dateStr} — ${slot.time.slice(0, 5)}`;
+  const start = formatDate(slot.start_date, locale);
+  const range =
+    slot.end_date && slot.end_date !== slot.start_date
+      ? `${start} → ${formatDate(slot.end_date, locale)}`
+      : start;
+  if (slot.start_time) {
+    const end = slot.end_time ? ` → ${slot.end_time.slice(0, 5)}` : '';
+    return `${range}, ${slot.start_time.slice(0, 5)}${end}`;
   }
-  return dateStr;
+  return range;
 }
 
 export default function PlanResolveConfirm({

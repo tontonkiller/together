@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { isExpired } from '@/lib/plans/resolveHelpers';
 
 const PLAN_SELECT =
-  'id, group_id, created_by, title, description, duration, quorum, status, resolved_slot_id, event_id, expires_at, created_at, updated_at, creator_profile:profiles!created_by(display_name, avatar_url), slots:plan_slots(id, plan_id, date, time, position, created_at, votes:plan_votes(id, slot_id, user_id, available, created_at))';
+  'id, group_id, created_by, title, description, quorum, status, resolved_slot_id, event_id, expires_at, created_at, updated_at, creator_profile:profiles!created_by(display_name, avatar_url), slots:plan_slots(id, plan_id, start_date, end_date, start_time, end_time, position, created_at, votes:plan_votes(id, slot_id, user_id, available, created_at))';
 
 export async function GET(
   _request: Request,

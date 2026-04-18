@@ -1,8 +1,9 @@
-import type { PlanDuration, PlanInput, PlanSlotInput, VoteInput } from '@/lib/types/plans';
-
-export const VALID_DURATIONS: PlanDuration[] = ['30min', '1h', '2h', '3h', 'half_day', 'full_day'];
+import type { PlanInput, PlanSlotInput, VoteInput } from '@/lib/types/plans';
 
 export type ValidationResult = { valid: true } | { valid: false; errorKey: string };
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/;
 
 export function validatePlanInput(input: unknown, memberCount: number): ValidationResult {
   if (!input || typeof input !== 'object') {
@@ -19,10 +20,6 @@ export function validatePlanInput(input: unknown, memberCount: number): Validati
 
   if (d.description !== null && d.description !== undefined && typeof d.description !== 'string') {
     return { valid: false, errorKey: 'invalidDescription' };
-  }
-
-  if (typeof d.duration !== 'string' || !VALID_DURATIONS.includes(d.duration as PlanDuration)) {
-    return { valid: false, errorKey: 'invalidDuration' };
   }
 
   if (typeof d.quorum !== 'number' || !Number.isInteger(d.quorum) || d.quorum <= 0) {
@@ -53,18 +50,31 @@ export function validateSlotInput(input: unknown): ValidationResult {
   }
   const s = input as Record<string, unknown>;
 
-  if (typeof s.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(s.date)) {
+  if (typeof s.start_date !== 'string' || !DATE_RE.test(s.start_date)) {
     return { valid: false, errorKey: 'invalidSlotDate' };
   }
-  // Basic date sanity check (Date.parse accepts 2026-02-30 → NaN-safe path)
-  const parsed = new Date(s.date + 'T00:00:00Z');
-  if (Number.isNaN(parsed.getTime())) {
+  if (Number.isNaN(new Date(s.start_date + 'T00:00:00Z').getTime())) {
     return { valid: false, errorKey: 'invalidSlotDate' };
   }
 
-  if (s.time !== null && s.time !== undefined && s.time !== '') {
-    if (typeof s.time !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/.test(s.time)) {
-      return { valid: false, errorKey: 'invalidSlotTime' };
+  if (s.end_date !== null && s.end_date !== undefined && s.end_date !== '') {
+    if (typeof s.end_date !== 'string' || !DATE_RE.test(s.end_date)) {
+      return { valid: false, errorKey: 'invalidSlotDate' };
+    }
+    if (Number.isNaN(new Date(s.end_date + 'T00:00:00Z').getTime())) {
+      return { valid: false, errorKey: 'invalidSlotDate' };
+    }
+    if (s.end_date < s.start_date) {
+      return { valid: false, errorKey: 'slotEndBeforeStart' };
+    }
+  }
+
+  for (const field of ['start_time', 'end_time'] as const) {
+    const v = s[field];
+    if (v !== null && v !== undefined && v !== '') {
+      if (typeof v !== 'string' || !TIME_RE.test(v)) {
+        return { valid: false, errorKey: 'invalidSlotTime' };
+      }
     }
   }
 
@@ -117,13 +127,20 @@ export function extractPlanInput(input: unknown): PlanInput | null {
   const d = input as Record<string, unknown>;
   const slots = Array.isArray(d.slots)
     ? d.slots
-        .map((s) => {
+        .map((s, i) => {
           if (!s || typeof s !== 'object') return null;
           const o = s as Record<string, unknown>;
+          const start = String(o.start_date ?? '');
+          const end =
+            typeof o.end_date === 'string' && o.end_date.length > 0
+              ? o.end_date
+              : start;
           return {
-            date: String(o.date ?? ''),
-            time: o.time ? String(o.time) : null,
-            position: typeof o.position === 'number' ? o.position : 0,
+            start_date: start,
+            end_date: end,
+            start_time: o.start_time ? String(o.start_time) : null,
+            end_time: o.end_time ? String(o.end_time) : null,
+            position: typeof o.position === 'number' ? o.position : i,
           } as PlanSlotInput;
         })
         .filter((x): x is PlanSlotInput => x !== null)
@@ -135,7 +152,6 @@ export function extractPlanInput(input: unknown): PlanInput | null {
       typeof d.description === 'string' && d.description.trim().length > 0
         ? d.description.trim()
         : null,
-    duration: d.duration as PlanDuration,
     quorum: typeof d.quorum === 'number' ? d.quorum : 0,
     slots,
   };
