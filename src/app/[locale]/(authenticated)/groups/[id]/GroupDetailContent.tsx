@@ -38,6 +38,10 @@ import InviteDialog from './InviteDialog';
 import EventList from './EventList';
 import EventDialog from './EventDialog';
 import GroupCalendar from './GroupCalendar';
+import PlanList from './PlanList';
+import PlanDialog from './PlanDialog';
+import type { PlanWithSlots } from '@/lib/types/plans';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 
 export interface GroupMember {
   id: string;
@@ -69,6 +73,7 @@ interface GroupDetailContentProps {
   events: GroupEvent[];
   eventTypes: EventType[];
   googleEventIds?: string[];
+  initialPlans?: PlanWithSlots[];
 }
 
 export default function GroupDetailContent({
@@ -80,11 +85,31 @@ export default function GroupDetailContent({
   events: initialEvents,
   eventTypes,
   googleEventIds = [],
+  initialPlans = [],
 }: GroupDetailContentProps) {
   const t = useTranslations('groups');
   const tCommon = useTranslations('common');
+  const tPlans = useTranslations('plans');
   const locale = useLocale();
   const router = useRouter();
+
+  const [plans, setPlans] = useState<PlanWithSlots[]>(initialPlans);
+  const [planDialogOpen, setPlanDialogOpen] = useState(false);
+
+  const refreshPlans = async () => {
+    const res = await fetch(`/api/groups/${group.id}/plans`);
+    if (res.ok) {
+      const body = (await res.json()) as { plans: PlanWithSlots[] };
+      setPlans(
+        (body.plans ?? []).map((p) => ({
+          ...p,
+          creator_profile: Array.isArray(p.creator_profile)
+            ? (p.creator_profile as unknown as { display_name: string; avatar_url: string | null }[])[0] ?? null
+            : p.creator_profile,
+        })),
+      );
+    }
+  };
 
   const isAdmin = currentUserRole === 'admin';
   const [error, setError] = useState('');
@@ -472,6 +497,49 @@ export default function GroupDetailContent({
           </>
         )}
       </Collapse>
+
+      <Divider sx={{ my: 3 }} />
+
+      {/* Plans section (M11) */}
+      <Box sx={{ mb: 3 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+            {tPlans('title')}
+          </Typography>
+          <Button
+            variant="outlined"
+            size="small"
+            startIcon={<EventAvailableIcon />}
+            onClick={() => setPlanDialogOpen(true)}
+          >
+            {tPlans('create')}
+          </Button>
+        </Box>
+        {plans.length === 0 ? (
+          <Typography variant="body2" color="text.secondary">
+            {tPlans('empty')}
+          </Typography>
+        ) : (
+          <PlanList
+            plans={plans}
+            currentUserId={currentUserId}
+            members={members.map((m) => ({
+              user_id: m.user_id,
+              color: m.color,
+              profiles: m.profiles,
+            }))}
+            onRefresh={refreshPlans}
+          />
+        )}
+      </Box>
+
+      <PlanDialog
+        open={planDialogOpen}
+        onClose={() => setPlanDialogOpen(false)}
+        groupId={group.id}
+        memberCount={members.length}
+        onPlanCreated={refreshPlans}
+      />
 
       <Divider sx={{ my: 3 }} />
 

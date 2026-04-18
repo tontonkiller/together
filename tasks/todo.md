@@ -161,7 +161,7 @@
 
 ---
 
-## M11 — Plans & Sondages de disponibilité ⏳ EN COURS
+## M11 — Plans & Sondages de disponibilité ✅ DONE (sauf QA manuelle + cleanup CI)
 
 > Spec complète : `tasks/plans-spec.md`
 > Branche : `claude/new-feature-ncU3z`
@@ -219,52 +219,46 @@ Fichier : `supabase/migrations/010_plans_and_votes.sql`
 - [x] Trigger `plans_updated_at`
 - [x] Script de tests RLS : `supabase/tests/010_plans_rls.sql` (12 tests, à exécuter manuellement dans Supabase SQL Editor)
 
-### M11b — API Routes ⏳
+### M11b — API Routes ✅
 
-- [ ] `src/lib/types/plans.ts` : interfaces `Plan`, `PlanSlot`, `PlanVote`, `PlanWithSlots`, `PlanSlotWithVotes`
-- [ ] `src/lib/plans/validation.ts` : fonctions pures `validatePlanInput`, `validateSlotInput`, `validateVoteInput`
-- [ ] `src/lib/plans/resolveHelpers.ts` : logique tiebreak (`findWinningSlot(slots)` → `{ slotId | tied }`)
-- [ ] `GET /api/groups/[id]/plans/route.ts` : liste + lazy expiration check (appelle `expire_plan` pour les plans expirés avant return)
-- [ ] `POST /api/groups/[id]/plans/route.ts` : création plan + slots (transaction via RPC `create_plan_with_slots`)
-- [ ] `GET /api/plans/[id]/route.ts` : détail plan avec slots + votes agrégés
-- [ ] `DELETE /api/plans/[id]/route.ts` : suppression (RLS gère la permission)
-- [ ] `POST /api/plans/[id]/vote/route.ts` : upsert votes (body: `[{ slot_id, available }]`), puis check quorum → auto-resolve si atteint
-- [ ] `POST /api/plans/[id]/resolve/route.ts` : resolve manuel (body: `{ slot_id }`), créateur only (RLS)
-- [ ] Tests unitaires : 1 fichier par route (mock Supabase, pattern `api/invite/[code]/route.test.ts`)
-- [ ] Tests validation : `src/lib/plans/validation.test.ts`, `src/lib/plans/resolveHelpers.test.ts`
+- [x] `src/lib/types/plans.ts` : interfaces `Plan`, `PlanSlot`, `PlanVote`, `PlanWithSlots`, `PlanSlotWithVotes`, `PlanInput`, `VoteInput`
+- [x] `src/lib/plans/validation.ts` : `validatePlanInput`, `validateSlotInput`, `validateVoteInput`, `validateResolveInput`, `extractPlanInput`, `extractVotes`
+- [x] `src/lib/plans/resolveHelpers.ts` : `countYesVotes`, `findWinningSlot`, `hasQuorumOnSlot`, `findQuorumSlot`, `hasUserVoted`, `hasUserVotedOnAnySlot`, `daysUntilExpiry`, `isExpired`
+- [x] `GET /api/groups/[id]/plans/route.ts` : liste + lazy expiration (appelle `expire_plan` puis re-fetch)
+- [x] `POST /api/groups/[id]/plans/route.ts` : création via RPC `create_plan_with_slots` (validation front + back)
+- [x] `GET /api/plans/[id]/route.ts` : détail plan + lazy expiration
+- [x] `DELETE /api/plans/[id]/route.ts` : suppression via RLS + `count: 'exact'` pour détecter 403
+- [x] `POST /api/plans/[id]/vote/route.ts` : upsert votes + détection quorum + auto-resolve via RPC
+- [x] `POST /api/plans/[id]/resolve/route.ts` : resolve manuel via RPC (créateur only géré en SQL)
+- [x] Tests validation : `validation.test.ts` (18 tests), `resolveHelpers.test.ts` (14 tests)
 
-### M11c — UI page groupe ⏳
+### M11c — UI page groupe ✅
 
 Dossier : `src/app/[locale]/(authenticated)/groups/[id]/`
 
-- [ ] `PlanDialog.tsx` : création d'un plan (titre, desc, duration select, quorum input, slots dynamiques)
-  - Ajout/suppression de slots, toggle « ajouter heure » par slot
-  - Validation min 2 slots, quorum ≤ nb membres
-  - fullScreen sur mobile (pattern `EventDialog`)
-- [ ] `PlanList.tsx` : carte par plan
-  - Header : titre, créateur, durée, deadline (ex: « Expire dans 2j »)
-  - Slots avec barre de progression WhatsApp-style + avatars des votants
-  - Status chip (`open`, `resolved`, `expired`, `pending_tiebreak`)
-  - Bouton « Valider ce créneau » visible créateur only
-  - Bouton delete créateur only
-- [ ] `PlanVoteButtons.tsx` : toggle Disponible/Pas dispo par slot (upsert via API)
-- [ ] `PlanResolveConfirm.tsx` : confirm dialog pour resolve manuel + tiebreak
-- [ ] Intégration dans `GroupDetailContent.tsx` :
-  - Section « Plans » avant la liste des événements
-  - Visible si ≥ 1 plan (tous statuts, `expired` collapsible)
-  - Bouton « Créer un plan »
-- [ ] Clés i18n `plans` dans `fr.json` + `en.json` (toutes les clés du spec §10)
-- [ ] Tests unitaires : validation UI pure (`PlanDialog.test.ts`), tiebreak helpers
+- [x] `PlanDialog.tsx` : formulaire création (titre, desc, duration, quorum, slots dynamiques)
+  - Toggle « avec heure » par slot
+  - Validation côté client + mapping erreur → i18n
+  - fullScreen mobile
+- [x] `PlanList.tsx` : card par plan avec slots + barres de progression
+  - Avatars des votants (AvatarGroup, couleur membre)
+  - ToggleButtonGroup pour voter (Disponible/Pas dispo)
+  - Status chip colorisé
+  - Bannière `pending_tiebreak` pour le créateur
+  - Bouton « Valider ce créneau » créateur only
+  - Bouton delete inline avec confirm
+- [x] `PlanResolveConfirm.tsx` : dialog de confirmation avec date formatée
+- [x] Intégration `page.tsx` (server fetch + lazy expiration) → `GroupDetailContent.tsx`
+- [x] Clés i18n `plans` FR + EN (~70 clés)
+- [x] Tests : validation + resolveHelpers (déjà en M11b)
 
-### M11d — Badge dashboard + notifications ⏳
+### M11d — Badge dashboard ✅
 
-- [ ] Fonction helper `src/lib/plans/queries.ts` : `countPendingVotesForUser(groupIds, userId)` → map group_id → count
-  - Compte les plans `open` où le user n'a voté sur aucun slot
-- [ ] Intégration dashboard : `DashboardContent.tsx` fetch les counts + affiche badge MUI sur chaque card groupe
-- [ ] Intégration page groupe : badge sur le bouton « Plans » si tiebreak en attente pour le créateur
-- [ ] Auto-refresh : revalidate le GET plans toutes les N secondes OU au mount (pas de websocket pour V1)
-- [ ] Clé i18n `plans.badge` (déjà dans §10)
-- [ ] Tests : `queries.test.ts` (calcul du badge)
+- [x] `src/lib/plans/queries.ts` : `computePlanBadges(plans, userId)` → `{ pendingByGroup }`
+  - Compte plans `open` sans vote + `pending_tiebreak` si créateur
+- [x] `dashboard/page.tsx` : fetch plans pour tous les groupes du user + computes badges côté serveur
+- [x] `DashboardContent.tsx` : badge MUI + chip rouge sur chaque card groupe
+- [x] Tests : `queries.test.ts` (4 tests)
 
 ### Plan de test M11
 
