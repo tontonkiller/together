@@ -11,10 +11,6 @@ import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
-import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import Alert from '@mui/material/Alert';
@@ -26,7 +22,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { validatePlanInput } from '@/lib/plans/validation';
-import type { PlanDuration, PlanInput } from '@/lib/types/plans';
+import type { PlanInput } from '@/lib/types/plans';
 
 interface PlanDialogProps {
   open: boolean;
@@ -37,19 +33,22 @@ interface PlanDialogProps {
 }
 
 interface SlotDraft {
-  date: string;
+  startDate: string;
+  endDate: string;
   withTime: boolean;
-  time: string;
+  startTime: string;
+  endTime: string;
 }
 
-const DURATIONS: PlanDuration[] = ['30min', '1h', '2h', '3h', 'half_day', 'full_day'];
-
-function todayStr() {
-  return new Date().toISOString().split('T')[0];
+function todayStr(offsetDays = 0): string {
+  const d = new Date();
+  d.setDate(d.getDate() + offsetDays);
+  return d.toISOString().split('T')[0];
 }
 
-function makeEmptySlot(): SlotDraft {
-  return { date: todayStr(), withTime: false, time: '19:00' };
+function makeEmptySlot(startOffset = 0): SlotDraft {
+  const start = todayStr(startOffset);
+  return { startDate: start, endDate: start, withTime: false, startTime: '19:00', endTime: '22:00' };
 }
 
 export default function PlanDialog({
@@ -66,18 +65,16 @@ export default function PlanDialog({
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [duration, setDuration] = useState<PlanDuration>('1h');
   const [quorum, setQuorum] = useState(Math.min(2, memberCount));
-  const [slots, setSlots] = useState<SlotDraft[]>([makeEmptySlot(), makeEmptySlot()]);
+  const [slots, setSlots] = useState<SlotDraft[]>([makeEmptySlot(7), makeEmptySlot(14)]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const reset = () => {
     setTitle('');
     setDescription('');
-    setDuration('1h');
     setQuorum(Math.min(2, memberCount));
-    setSlots([makeEmptySlot(), makeEmptySlot()]);
+    setSlots([makeEmptySlot(7), makeEmptySlot(14)]);
     setError('');
   };
 
@@ -87,11 +84,21 @@ export default function PlanDialog({
     onClose();
   };
 
-  const addSlot = () => setSlots((s) => [...s, makeEmptySlot()]);
+  const addSlot = () => setSlots((s) => [...s, makeEmptySlot(s.length * 7 + 7)]);
   const removeSlot = (idx: number) =>
     setSlots((s) => (s.length > 2 ? s.filter((_, i) => i !== idx) : s));
   const updateSlot = (idx: number, patch: Partial<SlotDraft>) =>
-    setSlots((s) => s.map((slot, i) => (i === idx ? { ...slot, ...patch } : slot)));
+    setSlots((s) =>
+      s.map((slot, i) => {
+        if (i !== idx) return slot;
+        const next = { ...slot, ...patch };
+        // If startDate moved after endDate, snap endDate forward
+        if (patch.startDate && next.endDate < patch.startDate) {
+          next.endDate = patch.startDate;
+        }
+        return next;
+      }),
+    );
 
   const handleSubmit = async () => {
     setError('');
@@ -99,11 +106,12 @@ export default function PlanDialog({
     const input: PlanInput = {
       title: title.trim(),
       description: description.trim() || null,
-      duration,
       quorum,
       slots: slots.map((s, i) => ({
-        date: s.date,
-        time: s.withTime ? s.time : null,
+        start_date: s.startDate,
+        end_date: s.endDate,
+        start_time: s.withTime ? s.startTime : null,
+        end_time: s.withTime ? s.endTime : null,
         position: i,
       })),
     };
@@ -125,20 +133,24 @@ export default function PlanDialog({
     if (!res.ok) {
       const body = (await res.json().catch(() => ({}))) as { error?: string };
       const errKey = body.error ?? 'createFailed';
-      const hasKey = [
+      const knownKeys = [
         'titleRequired',
         'titleTooLong',
-        'invalidDuration',
         'invalidQuorum',
         'quorumExceedsMembers',
         'minTwoSlots',
         'invalidSlotDate',
         'invalidSlotTime',
+        'slotEndBeforeStart',
         'invalidBody',
         'createFailed',
         'notAGroupMember',
-      ].includes(errKey);
-      setError(hasKey ? t(`errors.${errKey}` as 'errors.createFailed') : t('errors.createFailed'));
+      ];
+      setError(
+        knownKeys.includes(errKey)
+          ? t(`errors.${errKey}` as 'errors.createFailed')
+          : t('errors.createFailed'),
+      );
       return;
     }
 
@@ -176,21 +188,6 @@ export default function PlanDialog({
           onChange={(e) => setDescription(e.target.value)}
           sx={{ mb: 2 }}
         />
-
-        <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel>{t('form.duration')}</InputLabel>
-          <Select
-            value={duration}
-            label={t('form.duration')}
-            onChange={(e) => setDuration(e.target.value as PlanDuration)}
-          >
-            {DURATIONS.map((d) => (
-              <MenuItem key={d} value={d}>
-                {t(`duration.${d}` as 'duration.1h')}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
 
         <TextField
           label={t('form.quorum')}
@@ -236,16 +233,26 @@ export default function PlanDialog({
                 )}
               </Stack>
 
-              <TextField
-                label={t('form.slotDate')}
-                type="date"
-                fullWidth
-                size="small"
-                value={slot.date}
-                onChange={(e) => updateSlot(idx, { date: e.target.value })}
-                slotProps={{ inputLabel: { shrink: true } }}
-                sx={{ mb: 1 }}
-              />
+              <Stack direction={isMobile ? 'column' : 'row'} spacing={1} sx={{ mb: 1 }}>
+                <TextField
+                  label={t('form.slotStartDate')}
+                  type="date"
+                  fullWidth
+                  size="small"
+                  value={slot.startDate}
+                  onChange={(e) => updateSlot(idx, { startDate: e.target.value })}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+                <TextField
+                  label={t('form.slotEndDate')}
+                  type="date"
+                  fullWidth
+                  size="small"
+                  value={slot.endDate}
+                  onChange={(e) => updateSlot(idx, { endDate: e.target.value })}
+                  slotProps={{ inputLabel: { shrink: true }, htmlInput: { min: slot.startDate } }}
+                />
+              </Stack>
 
               <FormControlLabel
                 control={
@@ -259,16 +266,26 @@ export default function PlanDialog({
               />
 
               {slot.withTime && (
-                <TextField
-                  label={t('form.slotTime')}
-                  type="time"
-                  fullWidth
-                  size="small"
-                  value={slot.time}
-                  onChange={(e) => updateSlot(idx, { time: e.target.value })}
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  sx={{ mt: 1 }}
-                />
+                <Stack direction={isMobile ? 'column' : 'row'} spacing={1} sx={{ mt: 1 }}>
+                  <TextField
+                    label={t('form.slotStartTime')}
+                    type="time"
+                    fullWidth
+                    size="small"
+                    value={slot.startTime}
+                    onChange={(e) => updateSlot(idx, { startTime: e.target.value })}
+                    slotProps={{ inputLabel: { shrink: true } }}
+                  />
+                  <TextField
+                    label={t('form.slotEndTime')}
+                    type="time"
+                    fullWidth
+                    size="small"
+                    value={slot.endTime}
+                    onChange={(e) => updateSlot(idx, { endTime: e.target.value })}
+                    slotProps={{ inputLabel: { shrink: true } }}
+                  />
+                </Stack>
               )}
             </Box>
           ))}

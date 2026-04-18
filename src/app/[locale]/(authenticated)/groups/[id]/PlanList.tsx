@@ -37,15 +37,24 @@ interface PlanListProps {
   onRefresh: () => void;
 }
 
+function formatDate(iso: string, locale: string): string {
+  return new Date(`${iso}T00:00:00`).toLocaleDateString(
+    locale === 'fr' ? 'fr-FR' : 'en-US',
+    { weekday: 'short', day: 'numeric', month: 'short' },
+  );
+}
+
 function formatSlotLabel(slot: PlanSlot, locale: string): string {
-  const d = new Date(`${slot.date}T${slot.time ?? '00:00'}:00`);
-  const dateStr = d.toLocaleDateString(locale === 'fr' ? 'fr-FR' : 'en-US', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  });
-  if (slot.time) return `${dateStr} — ${slot.time.slice(0, 5)}`;
-  return dateStr;
+  const start = formatDate(slot.start_date, locale);
+  const dateRange =
+    slot.end_date && slot.end_date !== slot.start_date
+      ? `${start} → ${formatDate(slot.end_date, locale)}`
+      : start;
+  if (slot.start_time) {
+    const end = slot.end_time ? ` → ${slot.end_time.slice(0, 5)}` : '';
+    return `${dateRange}, ${slot.start_time.slice(0, 5)}${end}`;
+  }
+  return dateRange;
 }
 
 export default function PlanList({ plans, currentUserId, members, onRefresh }: PlanListProps) {
@@ -137,8 +146,6 @@ function PlanCard({ plan, currentUserId, members, onRefresh }: PlanCardProps) {
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {t('createdBy', { name: plan.creator_profile?.display_name ?? '—' })}
-              {' · '}
-              {t(`duration.${plan.duration}` as 'duration.1h')}
               {plan.status === 'open' && (
                 <>
                   {' · '}

@@ -20,12 +20,12 @@ export async function GET(
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
 
-  // RLS will naturally filter out groups the user isn't in
+  const SELECT =
+    'id, group_id, created_by, title, description, quorum, status, resolved_slot_id, event_id, expires_at, created_at, updated_at, creator_profile:profiles!created_by(display_name, avatar_url), slots:plan_slots(id, plan_id, start_date, end_date, start_time, end_time, position, created_at, votes:plan_votes(id, slot_id, user_id, available, created_at))';
+
   const { data: plans, error } = await supabase
     .from('plans')
-    .select(
-      'id, group_id, created_by, title, description, duration, quorum, status, resolved_slot_id, event_id, expires_at, created_at, updated_at, creator_profile:profiles!created_by(display_name, avatar_url), slots:plan_slots(id, plan_id, date, time, position, created_at, votes:plan_votes(id, slot_id, user_id, available, created_at))',
-    )
+    .select(SELECT)
     .eq('group_id', groupId)
     .order('created_at', { ascending: false });
 
@@ -34,7 +34,6 @@ export async function GET(
     return NextResponse.json({ error: 'Failed to load plans' }, { status: 500 });
   }
 
-  // Lazy expiration: trigger expire_plan for any open plan past its deadline
   const expired = (plans ?? []).filter(
     (p) => p.status === 'open' && isExpired(p.expires_at),
   );
@@ -42,12 +41,9 @@ export async function GET(
     await Promise.all(
       expired.map((p) => supabase.rpc('expire_plan', { p_plan_id: p.id })),
     );
-    // Re-fetch to get fresh statuses
     const { data: refreshed } = await supabase
       .from('plans')
-      .select(
-        'id, group_id, created_by, title, description, duration, quorum, status, resolved_slot_id, event_id, expires_at, created_at, updated_at, creator_profile:profiles!created_by(display_name, avatar_url), slots:plan_slots(id, plan_id, date, time, position, created_at, votes:plan_votes(id, slot_id, user_id, available, created_at))',
-      )
+      .select(SELECT)
       .eq('group_id', groupId)
       .order('created_at', { ascending: false });
     return NextResponse.json({ plans: refreshed ?? [] });
@@ -99,11 +95,12 @@ export async function POST(
     p_group_id: groupId,
     p_title: input.title,
     p_description: input.description ?? '',
-    p_duration: input.duration,
     p_quorum: input.quorum,
     p_slots: input.slots.map((s, i) => ({
-      date: s.date,
-      time: s.time ?? null,
+      start_date: s.start_date,
+      end_date: s.end_date,
+      start_time: s.start_time ?? null,
+      end_time: s.end_time ?? null,
       position: typeof s.position === 'number' ? s.position : i,
     })),
   });

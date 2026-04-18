@@ -15,8 +15,10 @@ function makeSlot(id: string, votes: { user_id: string; available: boolean }[]):
   return {
     id,
     plan_id: 'p1',
-    date: '2026-05-15',
-    time: null,
+    start_date: '2026-05-15',
+    end_date: '2026-05-15',
+    start_time: null,
+    end_time: null,
     position: 0,
     created_at: '2026-04-15T00:00:00Z',
     votes: votes.map((v, i) => ({
@@ -36,7 +38,6 @@ function makePlan(slots: PlanSlotWithVotes[], quorum = 2): PlanWithSlots {
     created_by: 'u1',
     title: 'Test',
     description: null,
-    duration: '1h',
     quorum,
     status: 'open',
     resolved_slot_id: null,

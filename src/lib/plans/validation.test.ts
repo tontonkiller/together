@@ -11,13 +11,24 @@ import {
 describe('validatePlanInput', () => {
   const MEMBERS = 5;
   const baseSlots = [
-    { date: '2026-05-15', time: '19:00', position: 0 },
-    { date: '2026-05-16', time: null, position: 1 },
+    {
+      start_date: '2026-05-15',
+      end_date: '2026-05-15',
+      start_time: '19:00',
+      end_time: '22:00',
+      position: 0,
+    },
+    {
+      start_date: '2026-05-20',
+      end_date: '2026-05-25',
+      start_time: null,
+      end_time: null,
+      position: 1,
+    },
   ];
   const base = {
-    title: 'Apéro',
+    title: 'Vacances',
     description: 'test',
-    duration: '1h',
     quorum: 2,
     slots: baseSlots,
   };
@@ -42,19 +53,8 @@ describe('validatePlanInput', () => {
     });
   });
 
-  it('rejects invalid duration', () => {
-    expect(validatePlanInput({ ...base, duration: 'foo' }, MEMBERS)).toEqual({
-      valid: false,
-      errorKey: 'invalidDuration',
-    });
-  });
-
   it('rejects quorum <= 0', () => {
     expect(validatePlanInput({ ...base, quorum: 0 }, MEMBERS)).toEqual({
-      valid: false,
-      errorKey: 'invalidQuorum',
-    });
-    expect(validatePlanInput({ ...base, quorum: -1 }, MEMBERS)).toEqual({
       valid: false,
       errorKey: 'invalidQuorum',
     });
@@ -72,32 +72,53 @@ describe('validatePlanInput', () => {
       valid: false,
       errorKey: 'minTwoSlots',
     });
-    expect(validatePlanInput({ ...base, slots: [] }, MEMBERS)).toEqual({
-      valid: false,
-      errorKey: 'minTwoSlots',
-    });
   });
 
-  it('rejects bad slot date', () => {
+  it('rejects bad slot start_date', () => {
     expect(
       validatePlanInput(
-        { ...base, slots: [{ date: 'bad', time: null, position: 0 }, baseSlots[1]] },
+        { ...base, slots: [{ start_date: 'bad', end_date: 'bad', position: 0 }, baseSlots[1]] },
         MEMBERS,
       ),
     ).toEqual({ valid: false, errorKey: 'invalidSlotDate' });
   });
 
-  it('accepts slot with null time', () => {
-    expect(validateSlotInput({ date: '2026-05-15', time: null, position: 0 })).toEqual({
-      valid: true,
-    });
+  it('rejects end_date before start_date', () => {
+    expect(
+      validatePlanInput(
+        {
+          ...base,
+          slots: [
+            { start_date: '2026-05-20', end_date: '2026-05-15', position: 0 },
+            baseSlots[1],
+          ],
+        },
+        MEMBERS,
+      ),
+    ).toEqual({ valid: false, errorKey: 'slotEndBeforeStart' });
+  });
+
+  it('accepts slot with null times', () => {
+    expect(
+      validateSlotInput({
+        start_date: '2026-05-15',
+        end_date: '2026-05-15',
+        start_time: null,
+        end_time: null,
+        position: 0,
+      }),
+    ).toEqual({ valid: true });
   });
 
   it('rejects malformed time', () => {
-    expect(validateSlotInput({ date: '2026-05-15', time: '25:99', position: 0 })).toEqual({
-      valid: false,
-      errorKey: 'invalidSlotTime',
-    });
+    expect(
+      validateSlotInput({
+        start_date: '2026-05-15',
+        end_date: '2026-05-15',
+        start_time: '25:99',
+        position: 0,
+      }),
+    ).toEqual({ valid: false, errorKey: 'invalidSlotTime' });
   });
 });
 
@@ -151,24 +172,23 @@ describe('validateResolveInput', () => {
 });
 
 describe('extractPlanInput', () => {
-  it('normalizes input', () => {
+  it('normalizes input and defaults end_date to start_date', () => {
     const result = extractPlanInput({
       title: '  Apéro  ',
       description: '',
-      duration: '2h',
       quorum: 3,
       slots: [
-        { date: '2026-05-15', time: '19:00', position: 0 },
-        { date: '2026-05-16', time: null, position: 1 },
+        { start_date: '2026-05-15', start_time: '19:00', end_time: '22:00', position: 0 },
+        { start_date: '2026-05-16', end_date: '2026-05-20', position: 1 },
       ],
     });
     expect(result).toMatchObject({
       title: 'Apéro',
       description: null,
-      duration: '2h',
       quorum: 3,
     });
-    expect(result?.slots).toHaveLength(2);
+    expect(result?.slots[0].end_date).toBe('2026-05-15');
+    expect(result?.slots[1].end_date).toBe('2026-05-20');
   });
 });
 

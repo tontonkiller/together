@@ -12,7 +12,6 @@ create table if not exists plans (
   created_by uuid references profiles(id) on delete cascade not null,
   title text not null,
   description text,
-  duration text not null check (duration in ('30min', '1h', '2h', '3h', 'half_day', 'full_day')),
   quorum integer not null check (quorum > 0),
   status text not null default 'open' check (status in ('open', 'pending_tiebreak', 'resolved', 'expired')),
   resolved_slot_id uuid,
@@ -25,10 +24,13 @@ create table if not exists plans (
 create table if not exists plan_slots (
   id uuid primary key default gen_random_uuid(),
   plan_id uuid references plans(id) on delete cascade not null,
-  date date not null,
-  time time,
+  start_date date not null,
+  end_date date not null,
+  start_time time,
+  end_time time,
   position integer not null,
-  created_at timestamptz default now()
+  created_at timestamptz default now(),
+  constraint plan_slots_date_order check (end_date >= start_date)
 );
 
 -- Add FK for resolved_slot_id if missing
@@ -142,23 +144,8 @@ returns boolean language sql security definer set search_path = public as $sql$
   select exists (select 1 from events where id = p_event_id and user_id = auth.uid());
 $sql$;
 
-create or replace function compute_event_times(p_slot_time time, p_duration text)
-returns table(start_time time, end_time time, is_all_day boolean)
-language sql immutable as $sql$
-  select
-    case when p_slot_time is null or p_duration in ('half_day', 'full_day') then null::time
-         else p_slot_time
-    end as start_time,
-    case
-      when p_slot_time is null or p_duration in ('half_day', 'full_day') then null::time
-      when p_duration = '30min' then (p_slot_time + interval '30 minutes')::time
-      when p_duration = '1h'    then (p_slot_time + interval '1 hour')::time
-      when p_duration = '2h'    then (p_slot_time + interval '2 hours')::time
-      when p_duration = '3h'    then (p_slot_time + interval '3 hours')::time
-      else null::time
-    end as end_time,
-    (p_slot_time is null or p_duration in ('half_day', 'full_day')) as is_all_day;
-$sql$;
+-- (compute_event_times and duration_end_date_offset removed —
+-- slots now carry their own start_date/end_date/start_time/end_time directly)
 
 -- ============================================
 -- RPC: create_plan_with_slots (named dollar tag, safe variable name)
@@ -167,7 +154,6 @@ create or replace function create_plan_with_slots(
   p_group_id uuid,
   p_title text,
   p_description text,
-  p_duration text,
   p_quorum integer,
   p_slots jsonb
 )
@@ -180,6 +166,8 @@ declare
   v_plan_id uuid;
   v_total_members int;
   v_slot jsonb;
+  v_start date;
+  v_end date;
 begin
   if not is_group_member(p_group_id, auth.uid()) then
     raise exception 'Not a member of this group';
@@ -196,15 +184,24 @@ begin
   end if;
 
   v_plan_id := gen_random_uuid();
-  insert into plans (id, group_id, created_by, title, description, duration, quorum)
-  values (v_plan_id, p_group_id, auth.uid(), p_title, nullif(p_description, ''), p_duration, p_quorum);
+  insert into plans (id, group_id, created_by, title, description, quorum)
+  values (v_plan_id, p_group_id, auth.uid(), p_title, nullif(p_description, ''), p_quorum);
 
   for v_slot in select * from jsonb_array_elements(p_slots) loop
-    insert into plan_slots (plan_id, date, time, position)
+    v_start := (v_slot->>'start_date')::date;
+    v_end := coalesce(nullif(v_slot->>'end_date', '')::date, v_start);
+
+    if v_end < v_start then
+      raise exception 'Slot end_date must be >= start_date';
+    end if;
+
+    insert into plan_slots (plan_id, start_date, end_date, start_time, end_time, position)
     values (
       v_plan_id,
-      (v_slot->>'date')::date,
-      nullif(v_slot->>'time', '')::time,
+      v_start,
+      v_end,
+      nullif(v_slot->>'start_time', '')::time,
+      nullif(v_slot->>'end_time', '')::time,
       (v_slot->>'position')::int
     );
   end loop;
@@ -223,9 +220,8 @@ declare
   v_created_by uuid;
   v_title text;
   v_description text;
-  v_duration text;
-  v_slot_date date;
-  v_slot_time time;
+  v_start_date date;
+  v_end_date date;
   v_start_time time;
   v_end_time time;
   v_is_all_day boolean;
@@ -234,21 +230,24 @@ begin
   v_created_by := (select created_by from plans where id = p_plan_id);
   v_title := (select title from plans where id = p_plan_id);
   v_description := (select description from plans where id = p_plan_id);
-  v_duration := (select duration from plans where id = p_plan_id);
-  v_slot_date := (select date from plan_slots where id = p_slot_id and plan_id = p_plan_id);
-  v_slot_time := (select time from plan_slots where id = p_slot_id and plan_id = p_plan_id);
+  v_start_date := (select start_date from plan_slots where id = p_slot_id and plan_id = p_plan_id);
+  v_end_date := (select end_date from plan_slots where id = p_slot_id and plan_id = p_plan_id);
+  v_start_time := (select start_time from plan_slots where id = p_slot_id and plan_id = p_plan_id);
+  v_end_time := (select end_time from plan_slots where id = p_slot_id and plan_id = p_plan_id);
 
-  if v_slot_date is null then
+  if v_start_date is null then
     raise exception 'Slot not found in plan';
   end if;
 
-  v_start_time := (select start_time from compute_event_times(v_slot_time, v_duration));
-  v_end_time := (select end_time from compute_event_times(v_slot_time, v_duration));
-  v_is_all_day := (select is_all_day from compute_event_times(v_slot_time, v_duration));
+  v_is_all_day := v_start_time is null;
 
   v_event_id := gen_random_uuid();
   insert into events (id, user_id, title, description, start_date, end_date, start_time, end_time, is_all_day)
-  values (v_event_id, v_created_by, v_title, v_description, v_slot_date, v_slot_date, v_start_time, v_end_time, v_is_all_day);
+  values (
+    v_event_id, v_created_by, v_title, v_description,
+    v_start_date, v_end_date,
+    v_start_time, v_end_time, v_is_all_day
+  );
 
   insert into event_participants (event_id, user_id)
   select v_event_id, pv.user_id
