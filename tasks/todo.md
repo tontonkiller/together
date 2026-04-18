@@ -161,6 +161,180 @@
 
 ---
 
+## M11 — Plans & Sondages de disponibilité ✅ DONE (sauf QA manuelle + cleanup CI)
+
+> Spec complète : `tasks/plans-spec.md`
+> Branche : `claude/new-feature-ncU3z`
+
+### Décisions d'architecture (à valider avant M11a)
+
+1. **Participants de l'événement créé** → **Option B : table `event_participants`**
+   - `id, event_id FK, user_id FK, created_at, UNIQUE(event_id, user_id)`
+   - RLS : membres du groupe de l'event peuvent lire ; insert/delete = owner de l'event
+   - Raison : plus simple pour queries « qui vient ? », cohérent avec `plan_votes`, pas d'array pgsql
+
+2. **Validation automatique au quorum** → **côté API après chaque vote**
+   - Pas de trigger SQL (évite récursion RLS et complexité)
+   - Le route handler `POST /api/plans/[id]/vote` recalcule les votes après upsert et appelle un RPC `resolve_plan_with_slot(plan_id, slot_id)` (SECURITY DEFINER) si quorum atteint
+   - RPC : crée l'event + insère les participants + passe `status='resolved'` en une transaction
+
+3. **Expiration des plans** → **lazy check, pas de cron**
+   - À chaque GET `/api/groups/[id]/plans`, détecter les plans `open` avec `expires_at < now()`
+   - Appeler RPC `expire_plan(plan_id)` qui :
+     - 0 votes → `status='expired'`
+     - 1+ votes, pas d'égalité → choisit créneau max, crée event, `status='resolved'`
+     - 1+ votes, égalité → `status='pending_tiebreak'`
+   - Raison : pas d'infra cron à gérer, affichage en temps réel cohérent
+
+4. **Créneaux datetime** → **colonnes séparées `date date NOT NULL` + `time time NULL`**
+   - Conforme au spec (§1) — créneau « date seule » vs « date + heure » au choix par slot
+
+5. **Multi-votes** → un vote par (slot, user). Un user peut voter sur plusieurs slots. `plan_votes.available` bool obligatoire (pas de 3e état).
+
+---
+
+### M11a — Schéma SQL + RLS + migration ✅
+
+Fichier : `supabase/migrations/010_plans_and_votes.sql`
+
+- [x] Table `plans` (id, group_id, created_by, title, description, duration text check, quorum int check > 0, status text check, resolved_slot_id nullable, event_id nullable, expires_at default now()+3d, created_at, updated_at)
+- [x] Table `plan_slots` (id, plan_id, date, time nullable, position int, created_at)
+- [x] Table `plan_votes` (id, slot_id, user_id, available bool, created_at, UNIQUE(slot_id, user_id))
+- [x] Table `event_participants` (id, event_id, user_id, created_at, UNIQUE(event_id, user_id))
+- [x] Indexes : `plans(group_id, status)`, `plans(created_by)`, `plan_slots(plan_id, position)`, `plan_votes(slot_id)`, `plan_votes(user_id)`, `event_participants(event_id)`, `event_participants(user_id)`
+- [x] Fonctions SECURITY DEFINER : `is_own_plan`, `is_own_slot`, `can_view_event`, `is_event_owner`, `compute_event_times`
+- [x] RPC `create_plan_with_slots(group_id, title, description, duration, quorum, slots jsonb)` → plan_id
+  - Vérifie membership + quorum ≤ member_count + min 2 slots
+- [x] RPC `_create_event_from_slot(plan_id, slot_id)` → event_id (interne, sans check permission)
+- [x] RPC `resolve_plan_with_slot(plan_id, slot_id)` → event_id
+  - Permission : créateur OU quorum atteint
+  - Crée event + participants + update plan status='resolved'
+- [x] RPC `expire_plan(plan_id)` → status text
+  - Noop si `expires_at > now()` ou `status != 'open'`
+  - 0 votes → expired ; 1 gagnant → resolved + event ; égalité → pending_tiebreak
+- [x] RLS `plans` : SELECT membre, INSERT créateur+membre, UPDATE créateur, DELETE créateur+open
+- [x] RLS `plan_slots` : SELECT via `is_own_plan`, INSERT/DELETE créateur du plan + status open
+- [x] RLS `plan_votes` : SELECT via `is_own_slot`, INSERT `user_id=auth.uid()+is_own_slot`, UPDATE/DELETE `user_id=auth.uid()`
+- [x] RLS `event_participants` : SELECT `can_view_event`, INSERT/DELETE `is_event_owner`
+- [x] Trigger `plans_updated_at`
+- [x] Script de tests RLS : `supabase/tests/010_plans_rls.sql` (12 tests, à exécuter manuellement dans Supabase SQL Editor)
+
+### M11b — API Routes ✅
+
+- [x] `src/lib/types/plans.ts` : interfaces `Plan`, `PlanSlot`, `PlanVote`, `PlanWithSlots`, `PlanSlotWithVotes`, `PlanInput`, `VoteInput`
+- [x] `src/lib/plans/validation.ts` : `validatePlanInput`, `validateSlotInput`, `validateVoteInput`, `validateResolveInput`, `extractPlanInput`, `extractVotes`
+- [x] `src/lib/plans/resolveHelpers.ts` : `countYesVotes`, `findWinningSlot`, `hasQuorumOnSlot`, `findQuorumSlot`, `hasUserVoted`, `hasUserVotedOnAnySlot`, `daysUntilExpiry`, `isExpired`
+- [x] `GET /api/groups/[id]/plans/route.ts` : liste + lazy expiration (appelle `expire_plan` puis re-fetch)
+- [x] `POST /api/groups/[id]/plans/route.ts` : création via RPC `create_plan_with_slots` (validation front + back)
+- [x] `GET /api/plans/[id]/route.ts` : détail plan + lazy expiration
+- [x] `DELETE /api/plans/[id]/route.ts` : suppression via RLS + `count: 'exact'` pour détecter 403
+- [x] `POST /api/plans/[id]/vote/route.ts` : upsert votes + détection quorum + auto-resolve via RPC
+- [x] `POST /api/plans/[id]/resolve/route.ts` : resolve manuel via RPC (créateur only géré en SQL)
+- [x] Tests validation : `validation.test.ts` (18 tests), `resolveHelpers.test.ts` (14 tests)
+
+### M11c — UI page groupe ✅
+
+Dossier : `src/app/[locale]/(authenticated)/groups/[id]/`
+
+- [x] `PlanDialog.tsx` : formulaire création (titre, desc, duration, quorum, slots dynamiques)
+  - Toggle « avec heure » par slot
+  - Validation côté client + mapping erreur → i18n
+  - fullScreen mobile
+- [x] `PlanList.tsx` : card par plan avec slots + barres de progression
+  - Avatars des votants (AvatarGroup, couleur membre)
+  - ToggleButtonGroup pour voter (Disponible/Pas dispo)
+  - Status chip colorisé
+  - Bannière `pending_tiebreak` pour le créateur
+  - Bouton « Valider ce créneau » créateur only
+  - Bouton delete inline avec confirm
+- [x] `PlanResolveConfirm.tsx` : dialog de confirmation avec date formatée
+- [x] Intégration `page.tsx` (server fetch + lazy expiration) → `GroupDetailContent.tsx`
+- [x] Clés i18n `plans` FR + EN (~70 clés)
+- [x] Tests : validation + resolveHelpers (déjà en M11b)
+
+### M11d — Badge dashboard ✅
+
+- [x] `src/lib/plans/queries.ts` : `computePlanBadges(plans, userId)` → `{ pendingByGroup }`
+  - Compte plans `open` sans vote + `pending_tiebreak` si créateur
+- [x] `dashboard/page.tsx` : fetch plans pour tous les groupes du user + computes badges côté serveur
+- [x] `DashboardContent.tsx` : badge MUI + chip rouge sur chaque card groupe
+- [x] Tests : `queries.test.ts` (4 tests)
+
+### Plan de test M11
+
+**Couche 1 — SQL / RLS (M11a)**
+- [ ] `supabase/tests/010_plans_rls.sql` : script de tests manuels à exécuter dans Supabase SQL Editor
+  - Setup : créer 2 users, 1 groupe, 1 non-membre
+  - Test SELECT : membre voit les plans du groupe, non-membre non
+  - Test INSERT plan : membre OK, non-membre bloqué, `created_by != auth.uid()` bloqué
+  - Test INSERT slot : créateur du plan OK, autre membre bloqué
+  - Test INSERT vote : membre vote pour soi OK, vote pour autre user bloqué, `available` NULL bloqué
+  - Test DELETE plan : créateur + `status='open'` OK, `status='resolved'` bloqué, autre user bloqué
+  - Test RPC `resolve_plan_with_slot` : quorum non atteint + pas créateur → bloqué ; créateur → OK ; quorum atteint → OK
+  - Test RPC `expire_plan` : 0 votes → expired ; 1 winner → resolved + event créé ; tie → pending_tiebreak
+  - Test `event_participants` auto-créé pour tous les `available=true` du slot gagnant
+
+**Couche 2 — Unit tests purs (M11b, M11c)**
+- [ ] `src/lib/plans/validation.test.ts` :
+  - `validatePlanInput` : titre vide, quorum ≤ 0, quorum > members, < 2 slots, duration invalide, OK
+  - `validateSlotInput` : date passée, date + time incohérent, OK
+  - `validateVoteInput` : slot_id manquant, available non-bool, OK
+- [ ] `src/lib/plans/resolveHelpers.test.ts` :
+  - `findWinningSlot` : 0 votes → null, 1 winner → id, tie → { tied: [id1, id2] }
+  - `computeEventTimes` : half_day/full_day → all_day ; 30min/1h/2h/3h + time → calcul end_time
+- [ ] `src/lib/plans/queries.test.ts` (M11d) :
+  - `countPendingVotesForUser` : user sans vote → count++ ; user ayant voté → ignore ; plan expired → ignore
+
+**Couche 3 — API route tests (M11b)**
+- [ ] `src/app/api/groups/[id]/plans/route.test.ts` :
+  - 401 non-authentifié, 403 non-membre, 400 invalid body, 201 création OK
+  - GET : filtrage par group_id, lazy expiration déclenchée pour plans expirés
+- [ ] `src/app/api/plans/[id]/route.test.ts` : GET/DELETE, permissions
+- [ ] `src/app/api/plans/[id]/vote/route.test.ts` :
+  - 401, 403 non-membre, vote OK, update vote existant
+  - Auto-resolve déclenché si quorum atteint (mock RPC)
+- [ ] `src/app/api/plans/[id]/resolve/route.test.ts` : créateur OK, non-créateur bloqué, plan déjà resolved bloqué
+
+**Couche 4 — Component tests (M11c)**
+- [ ] `PlanDialog.test.ts` : logique pure extraite (validation du form), comme `EventDialog.test.ts`
+- [ ] `PlanList.test.ts` : rendu des status chips, affichage deadline, visibilité des boutons selon user/status
+
+**Couche 5 — Manuel (QA milestone)**
+- [ ] Créer plan → vote d'un autre membre → vérifier barres de progression temps réel
+- [ ] Atteindre quorum via votes → vérifier event auto-créé + participants corrects
+- [ ] Valider manuellement un créneau (créateur) avant deadline → event créé
+- [ ] Attendre (ou forcer via update SQL) deadline sur plan avec 0 votes → status expired
+- [ ] Forcer deadline avec 1 winner clair → status resolved + event
+- [ ] Forcer deadline avec égalité → status pending_tiebreak + notification créateur → créateur choisit
+- [ ] Supprimer plan (créateur, status open) → OK ; (autre user ou status≠open) → bouton invisible
+- [ ] Multi-plans ouverts sur un groupe → tous affichés, badge dashboard correct
+- [ ] Tests responsive mobile 375px sur PlanDialog + PlanList
+
+### CI — Setup GitHub Actions (M11a, pré-requis)
+
+> Constat : aucun workflow `.github/workflows/` n'existe actuellement. L'item M1 « CI/CD pipeline » a été coché mais les fichiers ne sont pas dans le repo (probablement couvert par Vercel preview deployments côté plateforme).
+
+**Proposition** : créer `.github/workflows/ci.yml` déclenché sur PR + push sur `main` :
+- [ ] Job `lint` : `npm ci` + `npm run lint`
+- [ ] Job `typecheck` : `npx tsc --noEmit`
+- [ ] Job `test` : `npm test` (vitest run)
+- [ ] Job `build` : `npm run build` (avec env vars dummy pour Supabase)
+- [ ] Matrix Node 20 LTS uniquement (Next.js 16 requirement)
+- [ ] Cache npm dependencies
+
+**Décision à valider** : est-ce qu'on ajoute ce workflow CI dans M11a (pour cadrer le feature dès le départ), ou on le garde pour plus tard ? Sans CI, impossible de bloquer les PRs cassées.
+
+### QA milestone (mandatoire avant done)
+- [ ] 3 passes QA + Debug successives (parallèles), fix tout
+- [ ] Build clean : `npm run build` → 0 erreur, 0 warning
+- [ ] Lint clean : `npm run lint` → 0 erreur
+- [ ] TypeScript clean : `npx tsc --noEmit` → 0 erreur
+- [ ] Tests : `npm test` → tous les tests passent (cible : couvrir toutes les couches 1-5 ci-dessus)
+- [ ] Manuel complet : checklist « Couche 5 » ci-dessus
+- [ ] Lessons capturées dans `tasks/lessons.md` si corrections
+
+---
+
 ## POST-V1 (ne PAS implémenter)
 
 - Sync bidirectionnelle (Together → Google)

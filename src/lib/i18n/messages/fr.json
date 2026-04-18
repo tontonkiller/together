@@ -243,5 +243,87 @@
     "bob": "Bob",
     "profile": "Profil",
     "toggleLanguage": "Changer de langue"
+  },
+  "plans": {
+    "title": "Plans",
+    "create": "Créer un plan",
+    "empty": "Aucun plan en cours",
+    "badge": "{count} à voter",
+    "noVotesYet": "Aucun vote",
+    "voteCount": "{count} dispo",
+    "expiresIn": "Expire dans {days} j",
+    "expiresToday": "Expire aujourd'hui",
+    "expired": "Expiré",
+    "createdBy": "par {name}",
+    "duration": {
+      "30min": "30 min",
+      "1h": "1 h",
+      "2h": "2 h",
+      "3h": "3 h",
+      "half_day": "Demi-journée",
+      "full_day": "Journée entière"
+    },
+    "status": {
+      "open": "En cours",
+      "pending_tiebreak": "Égalité — choisir",
+      "resolved": "Résolu",
+      "expired": "Expiré"
+    },
+    "form": {
+      "title": "Titre",
+      "titlePlaceholder": "Ex: Apéro, randonnée...",
+      "description": "Description (optionnel)",
+      "duration": "Durée estimée",
+      "quorum": "Quorum (membres minimum)",
+      "quorumHint": "Event créé auto si ce nombre de membres est dispo",
+      "slots": "Créneaux proposés",
+      "addSlot": "Ajouter un créneau",
+      "removeSlot": "Retirer",
+      "slotDate": "Date",
+      "slotTime": "Heure (optionnel)",
+      "slotWithTime": "Avec heure",
+      "slotAllDay": "Journée entière",
+      "submit": "Créer le plan",
+      "creating": "Création..."
+    },
+    "vote": {
+      "available": "Dispo",
+      "unavailable": "Pas dispo",
+      "change": "Modifier mon vote",
+      "saving": "..."
+    },
+    "resolve": {
+      "button": "Valider ce créneau",
+      "confirmTitle": "Valider ce créneau ?",
+      "confirmMessage": "Un événement sera créé pour {date}.",
+      "confirm": "Valider et créer l'événement",
+      "resolved": "Événement créé !"
+    },
+    "tiebreak": {
+      "title": "Égalité — à toi de choisir",
+      "message": "Plusieurs créneaux sont à égalité. Choisis lequel retenir."
+    },
+    "delete": {
+      "confirmTitle": "Supprimer ce plan ?",
+      "confirmMessage": "Cette action est définitive.",
+      "confirm": "Supprimer"
+    },
+    "errors": {
+      "titleRequired": "Le titre est obligatoire",
+      "titleTooLong": "Titre trop long (max 200 caractères)",
+      "invalidDuration": "Durée invalide",
+      "invalidQuorum": "Le quorum doit être un entier positif",
+      "quorumExceedsMembers": "Le quorum dépasse le nombre de membres",
+      "minTwoSlots": "Au moins 2 créneaux requis",
+      "invalidSlotDate": "Date invalide",
+      "invalidSlotTime": "Heure invalide",
+      "invalidBody": "Données invalides",
+      "createFailed": "Impossible de créer le plan",
+      "voteFailed": "Vote impossible",
+      "resolveFailed": "Validation impossible",
+      "deleteFailed": "Suppression impossible",
+      "notAGroupMember": "Tu n'es pas membre de ce groupe",
+      "planNotOpen": "Ce plan n'est plus ouvert au vote"
+    }
   }
 }

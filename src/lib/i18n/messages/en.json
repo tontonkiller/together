@@ -243,5 +243,87 @@
     "bob": "Bob",
     "profile": "Profile",
     "toggleLanguage": "Toggle language"
+  },
+  "plans": {
+    "title": "Plans",
+    "create": "Create a plan",
+    "empty": "No plans yet",
+    "badge": "{count} to vote",
+    "noVotesYet": "No votes",
+    "voteCount": "{count} available",
+    "expiresIn": "Expires in {days}d",
+    "expiresToday": "Expires today",
+    "expired": "Expired",
+    "createdBy": "by {name}",
+    "duration": {
+      "30min": "30 min",
+      "1h": "1 h",
+      "2h": "2 h",
+      "3h": "3 h",
+      "half_day": "Half day",
+      "full_day": "Full day"
+    },
+    "status": {
+      "open": "Open",
+      "pending_tiebreak": "Tie — pick one",
+      "resolved": "Resolved",
+      "expired": "Expired"
+    },
+    "form": {
+      "title": "Title",
+      "titlePlaceholder": "E.g. Dinner, hike...",
+      "description": "Description (optional)",
+      "duration": "Estimated duration",
+      "quorum": "Quorum (minimum members)",
+      "quorumHint": "Event auto-created when this many members are available",
+      "slots": "Proposed slots",
+      "addSlot": "Add a slot",
+      "removeSlot": "Remove",
+      "slotDate": "Date",
+      "slotTime": "Time (optional)",
+      "slotWithTime": "With time",
+      "slotAllDay": "All day",
+      "submit": "Create plan",
+      "creating": "Creating..."
+    },
+    "vote": {
+      "available": "Available",
+      "unavailable": "Not available",
+      "change": "Change my vote",
+      "saving": "..."
+    },
+    "resolve": {
+      "button": "Pick this slot",
+      "confirmTitle": "Pick this slot?",
+      "confirmMessage": "An event will be created for {date}.",
+      "confirm": "Confirm & create event",
+      "resolved": "Event created!"
+    },
+    "tiebreak": {
+      "title": "Tie — your call",
+      "message": "Several slots are tied. Pick one to resolve."
+    },
+    "delete": {
+      "confirmTitle": "Delete this plan?",
+      "confirmMessage": "This is permanent.",
+      "confirm": "Delete"
+    },
+    "errors": {
+      "titleRequired": "Title is required",
+      "titleTooLong": "Title too long (max 200 chars)",
+      "invalidDuration": "Invalid duration",
+      "invalidQuorum": "Quorum must be a positive integer",
+      "quorumExceedsMembers": "Quorum exceeds member count",
+      "minTwoSlots": "At least 2 slots required",
+      "invalidSlotDate": "Invalid date",
+      "invalidSlotTime": "Invalid time",
+      "invalidBody": "Invalid data",
+      "createFailed": "Could not create plan",
+      "voteFailed": "Vote failed",
+      "resolveFailed": "Resolve failed",
+      "deleteFailed": "Delete failed",
+      "notAGroupMember": "You're not a group member",
+      "planNotOpen": "This plan is no longer open"
+    }
   }
 }

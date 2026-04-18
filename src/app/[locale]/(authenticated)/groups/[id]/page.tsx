@@ -2,6 +2,8 @@ import { redirect } from '@/lib/i18n/navigation';
 import { createClient } from '@/lib/supabase/server';
 import GroupDetailContent from './GroupDetailContent';
 import type { GroupMember, PendingInvitation, GroupEvent, EventType } from './GroupDetailContent';
+import type { PlanWithSlots } from '@/lib/types/plans';
+import { isExpired } from '@/lib/plans/resolveHelpers';
 
 export default async function GroupDetailPage({
   params,
@@ -73,6 +75,40 @@ export default async function GroupDetailPage({
     .select('id, name, icon, is_system')
     .order('is_system', { ascending: false });
 
+  // Fetch plans for this group + trigger lazy expiration for stale plans
+  const PLAN_SELECT =
+    'id, group_id, created_by, title, description, duration, quorum, status, resolved_slot_id, event_id, expires_at, created_at, updated_at, creator_profile:profiles!created_by(display_name, avatar_url), slots:plan_slots(id, plan_id, date, time, position, created_at, votes:plan_votes(id, slot_id, user_id, available, created_at))';
+
+  const { data: rawPlans } = await supabase
+    .from('plans')
+    .select(PLAN_SELECT)
+    .eq('group_id', id)
+    .order('created_at', { ascending: false });
+
+  const staleOpenPlanIds = (rawPlans ?? [])
+    .filter((p) => p.status === 'open' && isExpired(p.expires_at as string))
+    .map((p) => p.id as string);
+
+  let plansData = rawPlans ?? [];
+  if (staleOpenPlanIds.length > 0) {
+    await Promise.all(
+      staleOpenPlanIds.map((pid) => supabase.rpc('expire_plan', { p_plan_id: pid })),
+    );
+    const { data: refreshed } = await supabase
+      .from('plans')
+      .select(PLAN_SELECT)
+      .eq('group_id', id)
+      .order('created_at', { ascending: false });
+    plansData = refreshed ?? plansData;
+  }
+
+  const normalizedPlans: PlanWithSlots[] = plansData.map((p) => ({
+    ...(p as unknown as PlanWithSlots),
+    creator_profile: Array.isArray(p.creator_profile)
+      ? p.creator_profile[0] ?? null
+      : p.creator_profile,
+  }));
+
   // Fetch Google-imported event IDs for badge display
   const { data: googleSyncedEvents } = await supabase
     .from('google_synced_events')
@@ -105,6 +141,7 @@ export default async function GroupDetailPage({
       events={normalizedEvents}
       eventTypes={(eventTypes ?? []) as EventType[]}
       googleEventIds={googleEventIds}
+      initialPlans={normalizedPlans}
     />
   );
 }

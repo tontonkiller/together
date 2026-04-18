@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import Box from '@mui/material/Box';
+import Badge from '@mui/material/Badge';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CardActionArea from '@mui/material/CardActionArea';
@@ -30,6 +31,7 @@ export interface DashboardContentProps {
   }>;
   upcomingEvents: UpcomingEvent[];
   eventTypes: EventType[];
+  planBadges?: Record<string, number>;
 }
 
 function formatEventDate(startDate: string, endDate: string, isAllDay: boolean, startTime: string | null, locale: string): string {
@@ -47,8 +49,9 @@ function formatEventDate(startDate: string, endDate: string, isAllDay: boolean, 
   return dateStr;
 }
 
-export default function DashboardContent({ profile, groups, upcomingEvents, eventTypes }: DashboardContentProps) {
+export default function DashboardContent({ profile, groups, upcomingEvents, eventTypes, planBadges = {} }: DashboardContentProps) {
   const t = useTranslations('dashboard');
+  const tPlans = useTranslations('plans');
   const locale = useLocale();
   const router = useRouter();
   const [events, setEvents] = useState(upcomingEvents);
@@ -122,9 +125,24 @@ export default function DashboardContent({ profile, groups, upcomingEvents, even
                           {gm.groups.description}
                         </Typography>
                       )}
+                      {(planBadges[gm.group_id] ?? 0) > 0 && (
+                        <Chip
+                          size="small"
+                          color="error"
+                          label={tPlans('badge', { count: planBadges[gm.group_id] })}
+                          sx={{ mt: 0.5, height: 20, fontSize: 11 }}
+                        />
+                      )}
                     </Box>
                   </Box>
-                  <ChevronRightIcon sx={{ color: 'text.secondary', opacity: 0.5 }} />
+                  <Badge
+                    badgeContent={planBadges[gm.group_id] ?? 0}
+                    color="error"
+                    overlap="circular"
+                    invisible={(planBadges[gm.group_id] ?? 0) === 0}
+                  >
+                    <ChevronRightIcon sx={{ color: 'text.secondary', opacity: 0.5 }} />
+                  </Badge>
                 </CardContent>
               </CardActionArea>
             </Card>

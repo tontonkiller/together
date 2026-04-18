@@ -1,6 +1,8 @@
 import { redirect } from '@/lib/i18n/navigation';
 import { createClient } from '@/lib/supabase/server';
 import DashboardContent, { type DashboardContentProps } from './DashboardContent';
+import { computePlanBadges } from '@/lib/plans/queries';
+import type { PlanWithSlots } from '@/lib/types/plans';
 
 export default async function DashboardPage({
   params,
@@ -66,12 +68,35 @@ export default async function DashboardPage({
     .select('id, name, icon, is_system')
     .order('is_system', { ascending: false });
 
+  // Fetch open plans across all user's groups to compute badge counts
+  const groupIds = normalizedGroups.map((g) => g.group_id);
+  let planBadges: Record<string, number> = {};
+  if (groupIds.length > 0) {
+    const { data: openPlans } = await supabase
+      .from('plans')
+      .select(
+        'id, group_id, created_by, title, description, duration, quorum, status, resolved_slot_id, event_id, expires_at, created_at, updated_at, creator_profile:profiles!created_by(display_name, avatar_url), slots:plan_slots(id, plan_id, date, time, position, created_at, votes:plan_votes(id, slot_id, user_id, available, created_at))',
+      )
+      .in('group_id', groupIds)
+      .in('status', ['open', 'pending_tiebreak']);
+
+    const plansList = ((openPlans ?? []) as unknown as PlanWithSlots[]).map((p) => ({
+      ...p,
+      creator_profile: Array.isArray(p.creator_profile)
+        ? (p.creator_profile as unknown as { display_name: string; avatar_url: string | null }[])[0] ?? null
+        : p.creator_profile,
+    }));
+
+    planBadges = computePlanBadges(plansList, user.id).pendingByGroup;
+  }
+
   return (
     <DashboardContent
       profile={profile}
       groups={normalizedGroups}
       upcomingEvents={normalizedEvents as DashboardContentProps['upcomingEvents']}
       eventTypes={(eventTypes ?? []) as DashboardContentProps['eventTypes']}
+      planBadges={planBadges}
     />
   );
 }
