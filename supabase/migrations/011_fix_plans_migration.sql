@@ -3,25 +3,8 @@
 -- Recreates functions with named dollar tags and idempotent policies.
 
 -- ============================================
--- Drop old policies (idempotent)
--- ============================================
-drop policy if exists "Group members can view plans in their groups" on plans;
-drop policy if exists "Group members can create plans" on plans;
-drop policy if exists "Plan creators can update their plans" on plans;
-drop policy if exists "Plan creators can delete their open plans" on plans;
-drop policy if exists "Group members can view plan slots" on plan_slots;
-drop policy if exists "Plan creators can insert slots" on plan_slots;
-drop policy if exists "Plan creators can delete slots of open plans" on plan_slots;
-drop policy if exists "Group members can view all votes in their plans" on plan_votes;
-drop policy if exists "Members can insert their own votes" on plan_votes;
-drop policy if exists "Members can update their own votes" on plan_votes;
-drop policy if exists "Members can delete their own votes" on plan_votes;
-drop policy if exists "Users can view event participants they can see" on event_participants;
-drop policy if exists "Event owners can insert participants" on event_participants;
-drop policy if exists "Event owners can delete participants" on event_participants;
-
--- ============================================
--- Ensure tables exist (idempotent — matches 010)
+-- Ensure tables exist first (idempotent — matches 010)
+-- Must come BEFORE drop policy (which requires the table)
 -- ============================================
 create table if not exists plans (
   id uuid primary key default gen_random_uuid(),
@@ -96,6 +79,25 @@ alter table event_participants enable row level security;
 drop trigger if exists plans_updated_at on plans;
 create trigger plans_updated_at before update on plans
   for each row execute function update_updated_at();
+
+-- ============================================
+-- Drop old policies on the 4 new tables (idempotent)
+-- Tables must exist first — that's why drop policy is here, not at top
+-- ============================================
+drop policy if exists "Group members can view plans in their groups" on plans;
+drop policy if exists "Group members can create plans" on plans;
+drop policy if exists "Plan creators can update their plans" on plans;
+drop policy if exists "Plan creators can delete their open plans" on plans;
+drop policy if exists "Group members can view plan slots" on plan_slots;
+drop policy if exists "Plan creators can insert slots" on plan_slots;
+drop policy if exists "Plan creators can delete slots of open plans" on plan_slots;
+drop policy if exists "Group members can view all votes in their plans" on plan_votes;
+drop policy if exists "Members can insert their own votes" on plan_votes;
+drop policy if exists "Members can update their own votes" on plan_votes;
+drop policy if exists "Members can delete their own votes" on plan_votes;
+drop policy if exists "Users can view event participants they can see" on event_participants;
+drop policy if exists "Event owners can insert participants" on event_participants;
+drop policy if exists "Event owners can delete participants" on event_participants;
 
 -- ============================================
 -- Helper functions (named dollar tags)
