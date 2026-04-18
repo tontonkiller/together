@@ -193,41 +193,31 @@
 
 ---
 
-### M11a — Schéma SQL + RLS + migration ⏳
+### M11a — Schéma SQL + RLS + migration ✅
 
 Fichier : `supabase/migrations/010_plans_and_votes.sql`
 
-- [ ] Table `plans` (id, group_id, created_by, title, description, duration enum text check, quorum int check > 0, status text check, resolved_slot_id nullable, event_id nullable, expires_at, created_at, updated_at)
-- [ ] Table `plan_slots` (id, plan_id, date, time nullable, position int, created_at)
-- [ ] Table `plan_votes` (id, slot_id, user_id, available bool, created_at, UNIQUE(slot_id, user_id))
-- [ ] Table `event_participants` (id, event_id, user_id, created_at, UNIQUE(event_id, user_id))
-- [ ] Index : `plans(group_id, status)`, `plan_slots(plan_id, position)`, `plan_votes(slot_id)`, `plan_votes(user_id)`
-- [ ] Fonction SECURITY DEFINER `is_own_plan(plan_id uuid)` → bool (membre du groupe du plan)
-- [ ] Fonction SECURITY DEFINER `resolve_plan_with_slot(plan_id uuid, slot_id uuid)` → event_id
-  - Vérifie `auth.uid()` est créateur OU quorum atteint pour slot
-  - Crée event (start_date = slot.date, end_date = slot.date, start_time/end_time dérivés de slot.time + duration)
-  - Insère `event_participants` pour tous les users ayant voté `available=true` sur ce slot
-  - UPDATE plans SET status='resolved', resolved_slot_id, event_id
-  - Retourne event_id
-- [ ] Fonction SECURITY DEFINER `expire_plan(plan_id uuid)` → status text
-  - Si `expires_at > now()` → noop
-  - Compte votes par slot, applique règles (0 votes / max unique / égalité)
-  - Appelle `resolve_plan_with_slot` ou set `status='pending_tiebreak'` / `'expired'`
-- [ ] RLS `plans` :
-  - SELECT : `is_group_member(group_id, auth.uid())`
-  - INSERT : `created_by = auth.uid() AND is_group_member(group_id, auth.uid())`
-  - UPDATE : `created_by = auth.uid()` (pour resolve manuel + tiebreak)
-  - DELETE : `created_by = auth.uid() AND status = 'open'`
-- [ ] RLS `plan_slots` : SELECT via `is_own_plan`, INSERT = créateur du plan uniquement
-- [ ] RLS `plan_votes` :
-  - SELECT : `is_own_plan(...)` via sous-requête sur slot
-  - INSERT/UPDATE : `user_id = auth.uid() AND is_own_plan(...)`
-  - DELETE : `user_id = auth.uid()`
-- [ ] RLS `event_participants` :
-  - SELECT : `is_group_member(group_id_de_l_event, auth.uid())` via helper
-  - INSERT/DELETE : owner de l'event (`events.user_id = auth.uid()`)
-- [ ] Trigger `plans_updated_at`
-- [ ] Test manuel RLS dans Supabase SQL editor (pattern `set role authenticated; set request.jwt.claims...`)
+- [x] Table `plans` (id, group_id, created_by, title, description, duration text check, quorum int check > 0, status text check, resolved_slot_id nullable, event_id nullable, expires_at default now()+3d, created_at, updated_at)
+- [x] Table `plan_slots` (id, plan_id, date, time nullable, position int, created_at)
+- [x] Table `plan_votes` (id, slot_id, user_id, available bool, created_at, UNIQUE(slot_id, user_id))
+- [x] Table `event_participants` (id, event_id, user_id, created_at, UNIQUE(event_id, user_id))
+- [x] Indexes : `plans(group_id, status)`, `plans(created_by)`, `plan_slots(plan_id, position)`, `plan_votes(slot_id)`, `plan_votes(user_id)`, `event_participants(event_id)`, `event_participants(user_id)`
+- [x] Fonctions SECURITY DEFINER : `is_own_plan`, `is_own_slot`, `can_view_event`, `is_event_owner`, `compute_event_times`
+- [x] RPC `create_plan_with_slots(group_id, title, description, duration, quorum, slots jsonb)` → plan_id
+  - Vérifie membership + quorum ≤ member_count + min 2 slots
+- [x] RPC `_create_event_from_slot(plan_id, slot_id)` → event_id (interne, sans check permission)
+- [x] RPC `resolve_plan_with_slot(plan_id, slot_id)` → event_id
+  - Permission : créateur OU quorum atteint
+  - Crée event + participants + update plan status='resolved'
+- [x] RPC `expire_plan(plan_id)` → status text
+  - Noop si `expires_at > now()` ou `status != 'open'`
+  - 0 votes → expired ; 1 gagnant → resolved + event ; égalité → pending_tiebreak
+- [x] RLS `plans` : SELECT membre, INSERT créateur+membre, UPDATE créateur, DELETE créateur+open
+- [x] RLS `plan_slots` : SELECT via `is_own_plan`, INSERT/DELETE créateur du plan + status open
+- [x] RLS `plan_votes` : SELECT via `is_own_slot`, INSERT `user_id=auth.uid()+is_own_slot`, UPDATE/DELETE `user_id=auth.uid()`
+- [x] RLS `event_participants` : SELECT `can_view_event`, INSERT/DELETE `is_event_owner`
+- [x] Trigger `plans_updated_at`
+- [x] Script de tests RLS : `supabase/tests/010_plans_rls.sql` (12 tests, à exécuter manuellement dans Supabase SQL Editor)
 
 ### M11b — API Routes ⏳
 
