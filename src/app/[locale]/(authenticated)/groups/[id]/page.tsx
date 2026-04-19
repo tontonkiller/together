@@ -77,13 +77,17 @@ export default async function GroupDetailPage({
 
   // Fetch plans for this group + trigger lazy expiration for stale plans
   const PLAN_SELECT =
-    'id, group_id, created_by, title, description, quorum, status, resolved_slot_id, event_id, expires_at, created_at, updated_at, creator_profile:profiles!created_by(display_name, avatar_url), slots:plan_slots(id, plan_id, start_date, end_date, start_time, end_time, position, created_at, votes:plan_votes(id, slot_id, user_id, available, created_at))';
+    'id, group_id, created_by, title, description, quorum, status, resolved_slot_id, event_id, expires_at, created_at, updated_at, slots:plan_slots(id, plan_id, start_date, end_date, start_time, end_time, position, created_at, votes:plan_votes(id, slot_id, user_id, available, created_at))';
 
-  const { data: rawPlans } = await supabase
+  const { data: rawPlans, error: plansError } = await supabase
     .from('plans')
     .select(PLAN_SELECT)
     .eq('group_id', id)
     .order('created_at', { ascending: false });
+
+  if (plansError) {
+    console.error('[groups/detail] Plans fetch failed:', plansError.message);
+  }
 
   const staleOpenPlanIds = (rawPlans ?? [])
     .filter((p) => p.status === 'open' && isExpired(p.expires_at as string))
@@ -102,11 +106,25 @@ export default async function GroupDetailPage({
     plansData = refreshed ?? plansData;
   }
 
+  // Fetch creator profiles separately (avoids FK hint quirks)
+  const planCreatorIds = Array.from(new Set(plansData.map((p) => p.created_by as string)));
+  const planProfilesById: Record<string, { display_name: string; avatar_url: string | null }> = {};
+  if (planCreatorIds.length > 0) {
+    const { data: pp } = await supabase
+      .from('profiles')
+      .select('id, display_name, avatar_url')
+      .in('id', planCreatorIds);
+    for (const p of pp ?? []) {
+      planProfilesById[p.id as string] = {
+        display_name: p.display_name as string,
+        avatar_url: (p.avatar_url as string | null) ?? null,
+      };
+    }
+  }
+
   const normalizedPlans: PlanWithSlots[] = plansData.map((p) => ({
     ...(p as unknown as PlanWithSlots),
-    creator_profile: Array.isArray(p.creator_profile)
-      ? p.creator_profile[0] ?? null
-      : p.creator_profile,
+    creator_profile: planProfilesById[p.created_by as string] ?? null,
   }));
 
   // Fetch Google-imported event IDs for badge display
