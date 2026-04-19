@@ -335,6 +335,101 @@ Dossier : `src/app/[locale]/(authenticated)/groups/[id]/`
 
 ---
 
+## M12 — Google OAuth signup unifié avec Calendar scope ⏳ EN COURS
+
+> Spec : demander Google auth + Calendar scope en un seul consent screen au signup.
+> Branche : `claude/new-feature-ncU3z` (sync avec main après merge M11)
+
+### Contexte & constat
+
+- Actuellement : Google sign-in via `supabase.auth.signInWithOAuth({ provider: 'google' })` demande uniquement les scopes basiques (email, profile). Pour connecter Calendar les users doivent faire un 2e flow séparé via M9a (`/api/google/connect`).
+- La majorité des users signe avec Google — ergonomie à améliorer.
+- M9a a déjà : table `google_accounts`, `getAccessToken.ts` (refresh), `sync.ts`, helpers Calendar API. Tout réutilisable.
+
+### Recherche préalable (validée via doc Supabase + issues GitHub)
+
+1. Supabase **renvoie bien** `provider_refresh_token` avec `access_type=offline` + `prompt=consent` (doc officielle `auth-google`).
+2. Disponible **uniquement** dans le callback SSR juste après `exchangeCodeForSession` — **fenêtre unique**, disparaît ensuite.
+3. Supabase **ne refresh jamais** le Google token — on réutilise `getAccessToken` M9a.
+4. Avec `prompt=consent`, nouveau `refresh_token` à chaque login → upsert (pas insert).
+5. **Granular consent** : users peuvent décocher Calendar → session créée quand même, scopes à vérifier via `oauth2/v3/tokeninfo`.
+6. Gotcha : scope `/auth/calendar` est "sensitive" → vérif Google OAuth requise (~4-6 semaines). **Statut actuel de la Cloud Console à vérifier** (probablement déjà OK via M9a).
+
+### Décisions d'architecture (validées)
+
+| # | Décision | Rationale |
+|---|----------|-----------|
+| 1 | **Additif, pas remplacement** | Magic link reste en fallback. Google sign-in upgrade seulement. |
+| 2 | **Supabase provider avec scopes custom** | Utilise l'API Supabase native, pas besoin de reimplémenter OAuth. |
+| 3 | **Réutilise `google_accounts` de M9a** | Zéro nouvelle table. Ajoute juste `calendar_granted bool` pour tracker le cas granular-consent. |
+| 4 | **Scope R+W** : `https://www.googleapis.com/auth/calendar` | Spec default. M9a utilise déjà ce scope. |
+| 5 | **Capture stricte dans `/auth/callback`** | Seul endroit possible. |
+| 6 | **Fallback `/api/google/connect` (M9a) conservé** | Pour users magic-link + pour re-consent granular. |
+| 7 | **Migration users existants** : aucune — `prompt=consent` force le nouveau consent au prochain login | Pas de data migration, auto-onboarding. |
+
+### M12a — Migration SQL ⏳
+
+Fichier : `supabase/migrations/012_google_calendar_granted.sql`
+
+- [ ] Ajouter colonne `calendar_granted boolean not null default true` à `google_accounts`
+  - Note : `default true` pour compatibilité avec les rows M9a existantes (elles ont toutes Calendar, c'était le seul scope demandé)
+- [ ] Idempotent via `alter table ... add column if not exists`
+- [ ] Test local sur Postgres 16
+
+### M12b — Login + callback ⏳
+
+- [ ] **`src/app/[locale]/login/page.tsx`** : ajouter `scopes` + `queryParams` au `signInWithOAuth` :
+  ```ts
+  options: {
+    scopes: 'openid email profile https://www.googleapis.com/auth/calendar',
+    queryParams: { access_type: 'offline', prompt: 'consent', include_granted_scopes: 'true' },
+    redirectTo: getCallbackUrl(),
+  }
+  ```
+- [ ] **`src/app/[locale]/auth/callback/route.ts`** : après `exchangeCodeForSession(code)` :
+  - Récupérer `data.session.provider_token` + `data.session.provider_refresh_token` + `user.email`
+  - Si `provider_refresh_token` absent (= magic link, pas Google) → skip
+  - Sinon : appeler `oauth2/v3/tokeninfo?access_token={provider_token}` → lire `scope` string → vérifier si contient `https://www.googleapis.com/auth/calendar` → calendar_granted bool
+  - Upsert dans `google_accounts` : `{ user_id, google_email, refresh_token, access_token, token_expires_at, calendar_granted }` avec `onConflict: 'user_id,google_email'`
+  - Si erreur tokeninfo ou upsert : **ne pas bloquer le login**, juste log et redirect comme avant
+- [ ] **`src/lib/google/tokens.ts`** : vérifier que le refresh logic gère bien la rotation (si Google renvoie nouveau refresh_token, le persister)
+
+### M12c — UI banner re-consent granular ⏳
+
+- [ ] **`src/app/[locale]/(authenticated)/dashboard/DashboardContent.tsx`** :
+  - Fetch côté serveur : `google_accounts.calendar_granted` pour l'user connecté
+  - Si `false` ET user a un Google account connecté : banner non-bloquant
+  - Banner : "Reconnecte ton Calendar pour synchroniser tes events" + bouton qui déclenche `/api/google/connect` (flow M9a existant)
+- [ ] i18n : clés `calendar.reconnectBanner.*` en FR + EN
+
+### M12d — Tests ⏳
+
+**Unit tests**
+- [ ] `src/lib/google/tokens.test.ts` : rotation du refresh_token lors du refresh call
+- [ ] `src/app/[locale]/auth/callback/route.test.ts` : cas Google avec Calendar OK, Google avec Calendar unchecked, magic link (skip google_accounts)
+
+**Manuel (QA)**
+- [ ] Nouveau user Google avec Calendar coché → compte créé + `google_accounts` rempli + `calendar_granted=true` + sync fonctionne
+- [ ] Nouveau user Google avec Calendar décoché → compte créé + `calendar_granted=false` + banner affiché → clic sur banner → M9a flow → banner disparaît
+- [ ] User existant se re-login Google → nouveau refresh_token upsert (pas de duplication)
+- [ ] User révoque accès depuis Google settings → next refresh call retourne `invalid_grant` → vérifier que le code M9a gère (logger / flag)
+- [ ] User magic link signs in → aucune row `google_accounts` créée (skip correct)
+- [ ] Vérification Cloud Console : scope `calendar` approuvé en Production
+
+### Risques identifiés
+
+1. **Vérification OAuth Google** : si pas encore approuvée, les nouveaux users verront "unverified app warning". Impact UX. À vérifier en amont.
+2. **Migration users existants** : ils ne seront pas synchros calendar tant qu'ils n'auront pas re-login. Pas de data migration possible côté DB — c'est inhérent à OAuth.
+3. **Fenêtre unique du provider_refresh_token** : si le callback plante avant persist → user pas bloqué (auth créée) mais calendar pas connecté → banner apparaît → ils re-consent via M9a. Ce fallback ABSORBE le risque.
+4. **Rotation refresh_token** : Google **peut** renvoyer un nouveau refresh_token lors d'un refresh call. Si on l'ignore et qu'il révoque l'ancien, on perd l'accès. Le code M9a doit le gérer (à vérifier).
+
+### CI & lint
+
+- [ ] `npm test` + `npx tsc --noEmit` + `npm run lint` + `npm run build` tous verts avant commit
+- [ ] Tests locaux sur Postgres 16 pour la migration SQL
+
+---
+
 ## POST-V1 (ne PAS implémenter)
 
 - Sync bidirectionnelle (Together → Google)
