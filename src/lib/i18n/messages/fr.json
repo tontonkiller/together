@@ -176,7 +176,12 @@
     "today": "Aujourd'hui",
     "clickToCreate": "Cliquez sur un jour pour créer un événement",
     "myEvents": "Mes événements",
-    "selectGroup": "Voir un groupe"
+    "selectGroup": "Voir un groupe",
+    "reconnectBanner": {
+      "message": "Ton calendrier Google n'est pas connecté — reconnecte-le pour synchroniser tes événements.",
+      "cta": "Reconnecter",
+      "error": "La reconnexion a échoué. Réessaie."
+    }
   },
   "googleSync": {
     "sectionTitle": "Google Calendar",

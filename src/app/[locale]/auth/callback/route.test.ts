@@ -8,11 +8,19 @@ vi.mock('next/headers', () => ({
   })),
 }));
 
+// Mock Google tokens helpers
+const mockGetGrantedScopes = vi.fn();
+vi.mock('@/lib/google/tokens', () => ({
+  GOOGLE_CALENDAR_SCOPE: 'https://www.googleapis.com/auth/calendar',
+  getGrantedScopes: (...args: unknown[]) => mockGetGrantedScopes(...args),
+}));
+
 // Mock the Supabase server client
 const mockExchangeCodeForSession = vi.fn();
 const mockGetUser = vi.fn();
 const mockInsert = vi.fn();
-const mockUpsert = vi.fn();
+const mockProfilesUpsert = vi.fn();
+const mockGoogleAccountsUpsert = vi.fn();
 const mockSingle = vi.fn();
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -21,14 +29,14 @@ vi.mock('@/lib/supabase/server', () => ({
       exchangeCodeForSession: mockExchangeCodeForSession,
       getUser: mockGetUser,
     },
-    from: vi.fn(() => ({
+    from: vi.fn((table: string) => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
           single: mockSingle,
         })),
       })),
       insert: mockInsert,
-      upsert: mockUpsert,
+      upsert: table === 'google_accounts' ? mockGoogleAccountsUpsert : mockProfilesUpsert,
     })),
   })),
 }));
@@ -39,13 +47,26 @@ import { GET } from './route';
 describe('Auth callback route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockExchangeCodeForSession.mockResolvedValue({ error: null });
+    mockExchangeCodeForSession.mockResolvedValue({
+      data: { session: null },
+      error: null,
+    });
     mockGetUser.mockResolvedValue({
       data: { user: { id: 'user-123', email: 'test@example.com' } },
       error: null,
     });
     mockSingle.mockResolvedValue({ data: { id: 'user-123' }, error: null });
     mockInsert.mockResolvedValue({ error: null });
+    mockGoogleAccountsUpsert.mockResolvedValue({ error: null });
+    mockGetGrantedScopes.mockResolvedValue([]);
+    // Default fetch mock (tokeninfo / userinfo)
+    globalThis.fetch = vi.fn(async (url: string | URL | Request) => {
+      const u = typeof url === 'string' ? url : url.toString();
+      if (u.includes('userinfo')) {
+        return new Response(JSON.stringify({ email: 'test@gmail.com' }), { status: 200 });
+      }
+      return new Response('{}', { status: 404 });
+    }) as unknown as typeof fetch;
   });
 
   function makeRequest(url: string) {
@@ -141,12 +162,99 @@ describe('Auth callback route', () => {
   it('falls back to upsert if insert fails', async () => {
     mockSingle.mockResolvedValue({ data: null, error: null });
     mockInsert.mockResolvedValue({ error: { message: 'duplicate' } });
-    mockUpsert.mockResolvedValue({ error: null });
+    mockProfilesUpsert.mockResolvedValue({ error: null });
 
     const request = makeRequest('http://localhost/fr/auth/callback?code=abc123');
     await GET(request, makeParams('fr'));
 
-    expect(mockUpsert).toHaveBeenCalled();
+    expect(mockProfilesUpsert).toHaveBeenCalled();
+  });
+
+  describe('Google provider tokens', () => {
+    const withGoogleSession = () => {
+      mockExchangeCodeForSession.mockResolvedValue({
+        data: {
+          session: {
+            provider_token: 'google-access-token',
+            provider_refresh_token: 'google-refresh-token',
+          },
+        },
+        error: null,
+      });
+    };
+
+    it('upserts google_accounts with calendar_granted=true when Calendar scope is present', async () => {
+      withGoogleSession();
+      mockGetGrantedScopes.mockResolvedValue([
+        'openid',
+        'email',
+        'profile',
+        'https://www.googleapis.com/auth/calendar',
+      ]);
+
+      const request = makeRequest('http://localhost/fr/auth/callback?code=abc123');
+      await GET(request, makeParams('fr'));
+
+      expect(mockGoogleAccountsUpsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          user_id: 'user-123',
+          google_email: 'test@gmail.com',
+          refresh_token: 'google-refresh-token',
+          access_token: 'google-access-token',
+          calendar_granted: true,
+        }),
+        { onConflict: 'user_id,google_email' },
+      );
+    });
+
+    it('upserts with calendar_granted=false when user unchecked Calendar', async () => {
+      withGoogleSession();
+      mockGetGrantedScopes.mockResolvedValue(['openid', 'email', 'profile']);
+
+      const request = makeRequest('http://localhost/fr/auth/callback?code=abc123');
+      await GET(request, makeParams('fr'));
+
+      expect(mockGoogleAccountsUpsert).toHaveBeenCalledWith(
+        expect.objectContaining({ calendar_granted: false }),
+        { onConflict: 'user_id,google_email' },
+      );
+    });
+
+    it('skips google_accounts upsert for magic-link sign-ins (no provider tokens)', async () => {
+      // Default session is null — no provider tokens
+      const request = makeRequest('http://localhost/fr/auth/callback?code=abc123');
+      await GET(request, makeParams('fr'));
+
+      expect(mockGoogleAccountsUpsert).not.toHaveBeenCalled();
+    });
+
+    it('does not block login on google_accounts upsert failure', async () => {
+      withGoogleSession();
+      mockGetGrantedScopes.mockResolvedValue([
+        'https://www.googleapis.com/auth/calendar',
+      ]);
+      mockGoogleAccountsUpsert.mockResolvedValue({ error: { message: 'db down' } });
+
+      const request = makeRequest('http://localhost/fr/auth/callback?code=abc123');
+      const response = await GET(request, makeParams('fr'));
+
+      // User still reaches dashboard — banner will prompt to reconnect later
+      expect(response.headers.get('location')).toBe('http://localhost/fr/dashboard');
+    });
+
+    it('does not block login when userinfo fetch fails', async () => {
+      withGoogleSession();
+      mockGetGrantedScopes.mockResolvedValue([
+        'https://www.googleapis.com/auth/calendar',
+      ]);
+      globalThis.fetch = vi.fn(async () => new Response('error', { status: 500 })) as unknown as typeof fetch;
+
+      const request = makeRequest('http://localhost/fr/auth/callback?code=abc123');
+      const response = await GET(request, makeParams('fr'));
+
+      expect(mockGoogleAccountsUpsert).not.toHaveBeenCalled();
+      expect(response.headers.get('location')).toBe('http://localhost/fr/dashboard');
+    });
   });
 
   it('falls back to default locale for invalid locale param', async () => {

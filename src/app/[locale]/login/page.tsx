@@ -67,6 +67,14 @@ export default function LoginPage() {
       provider: 'google',
       options: {
         redirectTo: getCallbackUrl(),
+        // Request Calendar scope in the same consent screen as identity.
+        // access_type=offline + prompt=consent are REQUIRED to get a refresh_token.
+        scopes: 'openid email profile https://www.googleapis.com/auth/calendar',
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+          include_granted_scopes: 'true',
+        },
       },
     });
 

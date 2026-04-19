@@ -19,6 +19,7 @@ import EventIcon from '@mui/icons-material/Event';
 import EventDialog from '@/app/[locale]/(authenticated)/groups/[id]/EventDialog';
 import { useRouter } from '@/lib/i18n/navigation';
 import type { CalendarEvent, EventType } from '@/lib/types/events';
+import CalendarReconnectBanner from './CalendarReconnectBanner';
 
 export type UpcomingEvent = CalendarEvent;
 
@@ -32,6 +33,7 @@ export interface DashboardContentProps {
   upcomingEvents: UpcomingEvent[];
   eventTypes: EventType[];
   planBadges?: Record<string, number>;
+  calendarReconnectNeeded?: boolean;
 }
 
 function formatEventDate(startDate: string, endDate: string, isAllDay: boolean, startTime: string | null, locale: string): string {
@@ -49,7 +51,7 @@ function formatEventDate(startDate: string, endDate: string, isAllDay: boolean, 
   return dateStr;
 }
 
-export default function DashboardContent({ profile, groups, upcomingEvents, eventTypes, planBadges = {} }: DashboardContentProps) {
+export default function DashboardContent({ profile, groups, upcomingEvents, eventTypes, planBadges = {}, calendarReconnectNeeded = false }: DashboardContentProps) {
   const t = useTranslations('dashboard');
   const tPlans = useTranslations('plans');
   const locale = useLocale();
@@ -70,6 +72,9 @@ export default function DashboardContent({ profile, groups, upcomingEvents, even
       <Typography variant="h2" sx={{ mb: 3 }}>
         {t('greeting', { name: profile?.display_name ?? 'User' })}
       </Typography>
+
+      {calendarReconnectNeeded && <CalendarReconnectBanner />}
+
 
       {/* Groups first */}
       <Typography variant="h3" sx={{ mb: 1.5, color: 'text.secondary' }}>

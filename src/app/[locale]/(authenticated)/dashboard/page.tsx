@@ -90,6 +90,18 @@ export default async function DashboardPage({
     planBadges = computePlanBadges(plansList, user.id).pendingByGroup;
   }
 
+  // Check if the user has a Google account connected but calendar scope
+  // was unchecked during consent — if so, show a banner to reconnect.
+  const { data: googleAccounts } = await supabase
+    .from('google_accounts')
+    .select('id, calendar_granted')
+    .eq('user_id', user.id);
+
+  const hasGoogleAccount = (googleAccounts ?? []).length > 0;
+  const calendarMissing =
+    hasGoogleAccount &&
+    (googleAccounts ?? []).every((a) => a.calendar_granted === false);
+
   return (
     <DashboardContent
       profile={profile}
@@ -97,6 +109,7 @@ export default async function DashboardPage({
       upcomingEvents={normalizedEvents as DashboardContentProps['upcomingEvents']}
       eventTypes={(eventTypes ?? []) as DashboardContentProps['eventTypes']}
       planBadges={planBadges}
+      calendarReconnectNeeded={calendarMissing}
     />
   );
 }

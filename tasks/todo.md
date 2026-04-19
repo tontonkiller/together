@@ -335,7 +335,7 @@ Dossier : `src/app/[locale]/(authenticated)/groups/[id]/`
 
 ---
 
-## M12 — Google OAuth signup unifié avec Calendar scope ⏳ EN COURS
+## M12 — Google OAuth signup unifié avec Calendar scope ✅ DONE
 
 > Spec : demander Google auth + Calendar scope en un seul consent screen au signup.
 > Branche : `claude/new-feature-ncU3z` (sync avec main après merge M11)

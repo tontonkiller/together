@@ -25,17 +25,24 @@ export async function getAccessToken(
     }
   }
 
-  // Refresh the token
-  const { access_token, expires_at } = await refreshAccessToken(account.refresh_token);
+  // Refresh the token (Google may rotate the refresh_token — persist if it does)
+  const { access_token, expires_at, refresh_token } = await refreshAccessToken(
+    account.refresh_token,
+  );
 
-  // Update in DB
-  await supabase
-    .from('google_accounts')
-    .update({
-      access_token,
-      token_expires_at: expires_at.toISOString(),
-    })
-    .eq('id', account.id);
+  const update: {
+    access_token: string;
+    token_expires_at: string;
+    refresh_token?: string;
+  } = {
+    access_token,
+    token_expires_at: expires_at.toISOString(),
+  };
+  if (refresh_token) {
+    update.refresh_token = refresh_token;
+  }
+
+  await supabase.from('google_accounts').update(update).eq('id', account.id);
 
   return access_token;
 }
