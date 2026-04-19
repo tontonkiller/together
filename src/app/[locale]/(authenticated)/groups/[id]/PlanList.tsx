@@ -147,10 +147,10 @@ function PlanCard({ plan, currentUserId, members, onRefresh }: PlanCardProps) {
             <Typography variant="caption" color="text.secondary">
               {t('createdBy', { name: plan.creator_profile?.display_name ?? '—' })}
               {plan.status === 'open' && (
-                <>
+                <span suppressHydrationWarning>
                   {' · '}
                   {daysLeft === 0 ? t('expiresToday') : t('expiresIn', { days: daysLeft })}
-                </>
+                </span>
               )}
             </Typography>
           </Box>
@@ -235,7 +235,7 @@ function PlanCard({ plan, currentUserId, members, onRefresh }: PlanCardProps) {
               return (
                 <Box key={slot.id} sx={{ opacity: plan.status === 'expired' ? 0.6 : 1 }}>
                   <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
-                    <Typography variant="body2" sx={{ fontWeight: 500, flexGrow: 1 }}>
+                    <Typography variant="body2" sx={{ fontWeight: 500, flexGrow: 1 }} suppressHydrationWarning>
                       {formatSlotLabel(slot, locale)}
                     </Typography>
                     {isResolved && (

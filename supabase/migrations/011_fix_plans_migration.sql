@@ -1,10 +1,10 @@
--- Migration 011: Fix 010 (bare $$ caused Supabase SQL Editor split issue)
+-- Migration 011: Fix 010 (flex slot ranges + named dollar tags)
 -- Safe to run whether 010 partially applied or not.
--- Recreates functions with named dollar tags and idempotent policies.
+-- Migrates existing old-schema plan_slots (date, time) to new-schema
+-- (start_date, end_date, start_time, end_time).
 
 -- ============================================
--- Ensure tables exist first (idempotent — matches 010)
--- Must come BEFORE drop policy (which requires the table)
+-- 1. Ensure tables exist with final schema (no-op if already exist)
 -- ============================================
 create table if not exists plans (
   id uuid primary key default gen_random_uuid(),
@@ -32,6 +32,61 @@ create table if not exists plan_slots (
   created_at timestamptz default now(),
   constraint plan_slots_date_order check (end_date >= start_date)
 );
+
+-- ============================================
+-- 2. Migrate existing old-schema columns (idempotent)
+-- ============================================
+do $migrate$
+begin
+  -- plan_slots : rename date → start_date
+  if exists (
+    select 1 from information_schema.columns
+    where table_name = 'plan_slots' and column_name = 'date' and table_schema = 'public'
+  ) then
+    alter table plan_slots rename column date to start_date;
+  end if;
+
+  -- plan_slots : rename time → start_time
+  if exists (
+    select 1 from information_schema.columns
+    where table_name = 'plan_slots' and column_name = 'time' and table_schema = 'public'
+  ) then
+    alter table plan_slots rename column time to start_time;
+  end if;
+
+  -- plan_slots : add end_date (default = start_date for existing rows)
+  if not exists (
+    select 1 from information_schema.columns
+    where table_name = 'plan_slots' and column_name = 'end_date' and table_schema = 'public'
+  ) then
+    alter table plan_slots add column end_date date;
+    update plan_slots set end_date = start_date where end_date is null;
+    alter table plan_slots alter column end_date set not null;
+  end if;
+
+  -- plan_slots : add end_time nullable
+  if not exists (
+    select 1 from information_schema.columns
+    where table_name = 'plan_slots' and column_name = 'end_time' and table_schema = 'public'
+  ) then
+    alter table plan_slots add column end_time time;
+  end if;
+
+  -- plan_slots : add end_date >= start_date check if missing
+  if not exists (
+    select 1 from pg_constraint where conname = 'plan_slots_date_order'
+  ) then
+    alter table plan_slots add constraint plan_slots_date_order check (end_date >= start_date);
+  end if;
+
+  -- plans : drop duration column + its check constraint if still present
+  if exists (
+    select 1 from information_schema.columns
+    where table_name = 'plans' and column_name = 'duration' and table_schema = 'public'
+  ) then
+    alter table plans drop column duration;
+  end if;
+end $migrate$;
 
 -- Add FK for resolved_slot_id if missing
 do $fkcheck$

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -108,8 +108,17 @@ export default function GroupDetailContent({
             : p.creator_profile,
         })),
       );
+    } else {
+      console.error('[GroupDetail] refreshPlans failed:', res.status);
     }
   };
+
+  // Fetch latest plans on mount (covers the case where SSR missed a freshly
+  // created plan or where hydration bailed out).
+  useEffect(() => {
+    refreshPlans();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const isAdmin = currentUserRole === 'admin';
   const [error, setError] = useState('');
