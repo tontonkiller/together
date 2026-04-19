@@ -30,8 +30,11 @@ export async function GET(
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('[api/plans] List failed:', error.message);
-    return NextResponse.json({ error: 'Failed to load plans' }, { status: 500 });
+    console.error('[api/plans] List failed:', error.message, error);
+    return NextResponse.json(
+      { error: 'Failed to load plans', detail: error.message },
+      { status: 500 },
+    );
   }
 
   const expired = (plans ?? []).filter(
