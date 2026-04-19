@@ -20,8 +20,9 @@ export async function GET(
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
 
+  // Fetch plans (no embedded profile to avoid FK hint resolution issues)
   const SELECT =
-    'id, group_id, created_by, title, description, quorum, status, resolved_slot_id, event_id, expires_at, created_at, updated_at, creator_profile:profiles!created_by(display_name, avatar_url), slots:plan_slots(id, plan_id, start_date, end_date, start_time, end_time, position, created_at, votes:plan_votes(id, slot_id, user_id, available, created_at))';
+    'id, group_id, created_by, title, description, quorum, status, resolved_slot_id, event_id, expires_at, created_at, updated_at, slots:plan_slots(id, plan_id, start_date, end_date, start_time, end_time, position, created_at, votes:plan_votes(id, slot_id, user_id, available, created_at))';
 
   const { data: plans, error } = await supabase
     .from('plans')
@@ -30,15 +31,41 @@ export async function GET(
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('[api/plans] List failed:', error.message, error);
+    console.error('[api/plans] List failed:', JSON.stringify(error));
     return NextResponse.json(
-      { error: 'Failed to load plans', detail: error.message },
+      {
+        error: 'Failed to load plans',
+        detail: error.message,
+        code: error.code,
+        hint: error.hint,
+      },
       { status: 500 },
     );
   }
 
-  const expired = (plans ?? []).filter(
-    (p) => p.status === 'open' && isExpired(p.expires_at),
+  // Fetch creator profiles separately
+  const creatorIds = Array.from(new Set((plans ?? []).map((p) => p.created_by)));
+  const profilesById: Record<string, { display_name: string; avatar_url: string | null }> = {};
+  if (creatorIds.length > 0) {
+    const { data: profs } = await supabase
+      .from('profiles')
+      .select('id, display_name, avatar_url')
+      .in('id', creatorIds);
+    for (const p of profs ?? []) {
+      profilesById[p.id as string] = {
+        display_name: p.display_name as string,
+        avatar_url: (p.avatar_url as string | null) ?? null,
+      };
+    }
+  }
+
+  const enriched = (plans ?? []).map((p) => ({
+    ...p,
+    creator_profile: profilesById[p.created_by as string] ?? null,
+  }));
+
+  const expired = enriched.filter(
+    (p) => p.status === 'open' && isExpired(p.expires_at as string),
   );
   if (expired.length > 0) {
     await Promise.all(
@@ -49,10 +76,14 @@ export async function GET(
       .select(SELECT)
       .eq('group_id', groupId)
       .order('created_at', { ascending: false });
-    return NextResponse.json({ plans: refreshed ?? [] });
+    const refreshedEnriched = (refreshed ?? []).map((p) => ({
+      ...p,
+      creator_profile: profilesById[p.created_by as string] ?? null,
+    }));
+    return NextResponse.json({ plans: refreshedEnriched });
   }
 
-  return NextResponse.json({ plans: plans ?? [] });
+  return NextResponse.json({ plans: enriched });
 }
 
 export async function POST(
