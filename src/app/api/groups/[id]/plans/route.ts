@@ -22,7 +22,7 @@ export async function GET(
 
   // Fetch plans (no embedded profile to avoid FK hint resolution issues)
   const SELECT =
-    'id, group_id, created_by, title, description, quorum, status, resolved_slot_id, event_id, expires_at, created_at, updated_at, slots:plan_slots(id, plan_id, start_date, end_date, start_time, end_time, position, created_at, votes:plan_votes(id, slot_id, user_id, available, created_at))';
+    'id, group_id, created_by, title, description, quorum, status, resolved_slot_id, event_id, expires_at, created_at, updated_at, slots:plan_slots!plan_slots_plan_id_fkey(id, plan_id, start_date, end_date, start_time, end_time, position, created_at, votes:plan_votes(id, slot_id, user_id, available, created_at))';
 
   const { data: plans, error } = await supabase
     .from('plans')
