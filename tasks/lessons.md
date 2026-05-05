@@ -24,3 +24,8 @@
 ### 4. Don't guess, verify (2026-03-23)
 **Bug**: Suggested the Supabase key format was wrong when the real issue was RLS.
 **Rule**: When a user reports a bug, trace the exact error message to its root cause. Don't speculate about unrelated systems. The user was right: "if login worked, the key is fine."
+
+### 5. Read AGENTS.md before adding framework files (2026-05-05)
+**Bug**: Added `src/middleware.ts` claiming "the existing helper was never invoked" and "every page pays for getUser". Both claims were wrong: Next.js 16 renamed `middleware.ts` → `proxy.ts`, and `src/proxy.ts` already called `updateSession`. The new file caused a hard Vercel build error: "Both middleware file ... and proxy file ... are detected." The real perf win was just the `getUser` → `getSession` swap; the framing of "wire up dead code" was confabulated.
+**Rule**: AGENTS.md says "This is NOT the Next.js you know — read the relevant guide in node_modules/next/dist/docs/ before writing any code." Before adding any file with a framework-conventional name (middleware.ts, layout.tsx, route.ts, etc.), grep the repo for any existing file that might be the renamed equivalent. Specifically for Next 16: middleware → proxy, and check `next/dist/docs/` for the migration notes.
+

@@ -12,14 +12,14 @@ vi.mock('@/lib/i18n/navigation', () => ({
   useRouter: () => ({ push: mockPush, replace: vi.fn(), refresh: vi.fn() }),
 }));
 
-const mockGetUser = vi.fn();
+const mockGetSession = vi.fn();
 const mockInsertGroup = vi.fn();
 const mockInsertMember = vi.fn();
 const mockDeleteGroup = vi.fn();
 
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
-    auth: { getUser: mockGetUser },
+    auth: { getSession: mockGetSession },
     from: (table: string) => {
       if (table === 'groups') {
         return {
@@ -58,8 +58,8 @@ vi.mock('@/lib/supabase/client', () => ({
 describe('NewGroupPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'user-1' } },
+    mockGetSession.mockResolvedValue({
+      data: { session: { user: { id: 'user-1' } } },
       error: null,
     });
     mockInsertGroup.mockReturnValue(
@@ -156,7 +156,7 @@ describe('NewGroupPage', () => {
   });
 
   it('redirects to login when not authenticated', async () => {
-    mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
+    mockGetSession.mockResolvedValue({ data: { session: null }, error: null });
 
     render(<NewGroupPage />);
 

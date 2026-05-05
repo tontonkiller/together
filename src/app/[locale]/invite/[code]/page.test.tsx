@@ -18,12 +18,18 @@ vi.mock('@/lib/i18n/navigation', () => ({
 }));
 
 // Mock Supabase client
-const mockGetUser = vi.fn();
+const mockGetSession = vi.fn();
 vi.mock('@/lib/supabase/client', () => ({
   createClient: () => ({
-    auth: { getUser: mockGetUser },
+    auth: { getSession: mockGetSession },
   }),
 }));
+
+function mockSession(user: { id: string } | null) {
+  return user
+    ? { data: { session: { user } }, error: null }
+    : { data: { session: null }, error: null };
+}
 
 describe('InvitePage', () => {
   beforeEach(() => {
@@ -37,7 +43,7 @@ describe('InvitePage', () => {
   });
 
   it('shows login prompt when user is not authenticated', async () => {
-    mockGetUser.mockResolvedValue({ data: { user: null }, error: null });
+    mockGetSession.mockResolvedValue(mockSession(null));
 
     render(<InvitePage />);
 
@@ -50,10 +56,7 @@ describe('InvitePage', () => {
   });
 
   it('auto-joins when user is authenticated', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'user-1' } },
-      error: null,
-    });
+    mockGetSession.mockResolvedValue(mockSession({ id: 'user-1' }));
     mockFetch.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ groupId: 'group-1' }),
@@ -82,10 +85,7 @@ describe('InvitePage', () => {
   });
 
   it('shows already member message when user is already in group', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'user-1' } },
-      error: null,
-    });
+    mockGetSession.mockResolvedValue(mockSession({ id: 'user-1' }));
     mockFetch.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ groupId: 'group-1', alreadyMember: true }),
@@ -99,10 +99,7 @@ describe('InvitePage', () => {
   });
 
   it('shows error when API returns an error', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'user-1' } },
-      error: null,
-    });
+    mockGetSession.mockResolvedValue(mockSession({ id: 'user-1' }));
     mockFetch.mockResolvedValue({
       ok: false,
       json: () => Promise.resolve({ error: 'Invalid invite code' }),
@@ -116,10 +113,7 @@ describe('InvitePage', () => {
   });
 
   it('shows error when fetch throws', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'user-1' } },
-      error: null,
-    });
+    mockGetSession.mockResolvedValue(mockSession({ id: 'user-1' }));
     mockFetch.mockRejectedValue(new Error('Network error'));
 
     render(<InvitePage />);
@@ -130,10 +124,7 @@ describe('InvitePage', () => {
   });
 
   it('redirects to group page after successful join', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'user-1' } },
-      error: null,
-    });
+    mockGetSession.mockResolvedValue(mockSession({ id: 'user-1' }));
     mockFetch.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ groupId: 'group-1' }),
@@ -154,10 +145,7 @@ describe('InvitePage', () => {
   it('uses the invite code from URL params', async () => {
     (useParams as ReturnType<typeof vi.fn>).mockReturnValue({ code: 'xyz789' });
 
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'user-1' } },
-      error: null,
-    });
+    mockGetSession.mockResolvedValue(mockSession({ id: 'user-1' }));
     mockFetch.mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ groupId: 'group-1' }),
