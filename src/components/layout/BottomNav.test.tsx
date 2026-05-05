@@ -10,6 +10,7 @@ vi.mock('@/lib/i18n/navigation', () => ({
     push: mockPush,
     replace: vi.fn(),
     refresh: vi.fn(),
+    prefetch: vi.fn(),
   }),
   usePathname: () => mockPathname,
 }));

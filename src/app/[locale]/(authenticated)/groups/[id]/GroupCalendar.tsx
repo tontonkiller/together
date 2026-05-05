@@ -15,7 +15,9 @@ import LockIcon from '@mui/icons-material/Lock';
 import { getContrastTextColor } from '@/lib/utils/colors';
 import type { CalendarEvent, EventType } from '@/lib/types/events';
 import type { GroupMember } from './GroupDetailContent';
-import EventDetailDialog from './EventDetailDialog';
+import dynamic from 'next/dynamic';
+
+const EventDetailDialog = dynamic(() => import('./EventDetailDialog'));
 
 interface GroupCalendarProps {
   events: CalendarEvent[];

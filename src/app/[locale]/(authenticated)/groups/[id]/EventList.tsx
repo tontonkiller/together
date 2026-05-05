@@ -22,7 +22,9 @@ import EventIcon from '@mui/icons-material/Event';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LockIcon from '@mui/icons-material/Lock';
 import { createClient } from '@/lib/supabase/client';
-import EventDialog from './EventDialog';
+import dynamic from 'next/dynamic';
+
+const EventDialog = dynamic(() => import('./EventDialog'));
 import type { CalendarEvent, EventType } from '@/lib/types/events';
 
 interface EventListProps {

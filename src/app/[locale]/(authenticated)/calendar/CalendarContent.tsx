@@ -14,9 +14,13 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import LockIcon from '@mui/icons-material/Lock';
 import { getContrastTextColor } from '@/lib/utils/colors';
-import EventDialog from '@/app/[locale]/(authenticated)/groups/[id]/EventDialog';
-import EventDetailDialog from '@/app/[locale]/(authenticated)/groups/[id]/EventDetailDialog';
+import dynamic from 'next/dynamic';
 import type { CalendarEvent, EventType } from '@/lib/types/events';
+
+// Both dialogs are heavy (forms, validation, nested MUI Dialog) and only
+// render when the user clicks an event. Defer their JS until then.
+const EventDialog = dynamic(() => import('@/app/[locale]/(authenticated)/groups/[id]/EventDialog'));
+const EventDetailDialog = dynamic(() => import('@/app/[locale]/(authenticated)/groups/[id]/EventDetailDialog'));
 import type { GroupMember } from '@/app/[locale]/(authenticated)/groups/[id]/GroupDetailContent';
 import { createClient } from '@/lib/supabase/client';
 
