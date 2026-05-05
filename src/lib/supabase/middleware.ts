@@ -25,9 +25,12 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // Refresh the session
+  // Refresh the session. Unauthenticated visitors trigger an "Auth session
+  // missing!" error here on every request — that's expected, not a fault, so
+  // it's silenced. Other error codes (network blips, rate limits, JWT signing
+  // failures) are still surfaced for debugging.
   const { error } = await supabase.auth.getUser();
-  if (error) {
+  if (error && error.name !== 'AuthSessionMissingError') {
     console.error('[middleware] Session refresh failed:', error.message);
   }
 
