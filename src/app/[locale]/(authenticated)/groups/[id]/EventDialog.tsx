@@ -21,6 +21,7 @@ import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 import { createClient } from '@/lib/supabase/client';
+import { useBackButtonClose } from '@/lib/hooks/useBackButtonClose';
 import type { CalendarEvent, EventType } from '@/lib/types/events';
 
 interface EventDialogProps {
@@ -54,6 +55,8 @@ export default function EventDialog({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isEdit = !!event;
+
+  useBackButtonClose(open, onClose);
 
   const [title, setTitle] = useState(event?.title ?? '');
   const [description, setDescription] = useState(event?.description ?? '');

@@ -22,6 +22,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { validatePlanInput } from '@/lib/plans/validation';
+import { useBackButtonClose } from '@/lib/hooks/useBackButtonClose';
 import type { PlanInput } from '@/lib/types/plans';
 
 interface PlanDialogProps {
@@ -62,6 +63,8 @@ export default function PlanDialog({
   const tCommon = useTranslations('common');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  useBackButtonClose(open, onClose);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');

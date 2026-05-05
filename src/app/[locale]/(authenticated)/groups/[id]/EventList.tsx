@@ -23,6 +23,7 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import LockIcon from '@mui/icons-material/Lock';
 import { createClient } from '@/lib/supabase/client';
 import dynamic from 'next/dynamic';
+import { useBackButtonClose } from '@/lib/hooks/useBackButtonClose';
 
 const EventDialog = dynamic(() => import('./EventDialog'));
 import type { CalendarEvent, EventType } from '@/lib/types/events';
@@ -73,6 +74,9 @@ export default function EventList({
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState('');
+
+  // Don't intercept back while a network call is in flight.
+  useBackButtonClose(!!deleteId && !deleteLoading, () => setDeleteId(null));
 
   const handleDelete = async () => {
     if (!deleteId) return;
