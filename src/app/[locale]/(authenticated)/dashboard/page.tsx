@@ -71,22 +71,23 @@ export default async function DashboardPage({
   const groupIds = normalizedGroups.map((g) => g.group_id);
   let planBadges: Record<string, number> = {};
   if (groupIds.length > 0) {
+    // Slim shape: computePlanBadges only reads status, group_id, created_by,
+    // and slot.votes[].user_id (via hasUserVotedOnAnySlot). Selecting the full
+    // plan tree (titles, dates, descriptions, vote rows with timestamps, etc.)
+    // for every group on every dashboard load was wasting tens of KB of RSC
+    // payload per render.
     const { data: openPlans } = await supabase
       .from('plans')
       .select(
-        'id, group_id, created_by, title, description, quorum, status, resolved_slot_id, event_id, expires_at, created_at, updated_at, slots:plan_slots!plan_slots_plan_id_fkey(id, plan_id, start_date, end_date, start_time, end_time, position, created_at, votes:plan_votes(id, slot_id, user_id, available, created_at))',
+        'group_id, created_by, status, slots:plan_slots!plan_slots_plan_id_fkey(votes:plan_votes(user_id))',
       )
       .in('group_id', groupIds)
       .in('status', ['open', 'pending_tiebreak']);
 
-    const plansList = ((openPlans ?? []) as unknown as PlanWithSlots[]).map((p) => ({
-      ...p,
-      creator_profile: Array.isArray(p.creator_profile)
-        ? (p.creator_profile as unknown as { display_name: string; avatar_url: string | null }[])[0] ?? null
-        : p.creator_profile,
-    }));
-
-    planBadges = computePlanBadges(plansList, user.id).pendingByGroup;
+    planBadges = computePlanBadges(
+      (openPlans ?? []) as unknown as PlanWithSlots[],
+      user.id,
+    ).pendingByGroup;
   }
 
   return (
