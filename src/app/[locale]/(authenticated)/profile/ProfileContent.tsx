@@ -30,6 +30,7 @@ import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import GoogleCalendarSelect from './GoogleCalendarSelect';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from '@/lib/i18n/navigation';
+import { useBackButtonClose } from '@/lib/hooks/useBackButtonClose';
 import { useSearchParams } from 'next/navigation';
 import { useImageUpload } from '@/lib/hooks/useImageUpload';
 
@@ -94,6 +95,8 @@ export default function ProfileContent({ profile, email, googleAccounts: initial
   const [googleSuccess, setGoogleSuccess] = useState('');
   const [disconnectDialogId, setDisconnectDialogId] = useState<string | null>(null);
   const [disconnecting, setDisconnecting] = useState(false);
+
+  useBackButtonClose(!!disconnectDialogId && !disconnecting, () => setDisconnectDialogId(null));
 
   // Show feedback from Google OAuth redirect
   const googleParam = searchParams.get('google');

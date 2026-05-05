@@ -10,6 +10,7 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
+import { useBackButtonClose } from '@/lib/hooks/useBackButtonClose';
 import type { PlanSlot } from '@/lib/types/plans';
 
 interface PlanResolveConfirmProps {
@@ -52,6 +53,10 @@ export default function PlanResolveConfirm({
   const locale = useLocale();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Don't intercept back while a network call is in flight (matches the
+  // existing onClose-disable behaviour on the Dialog).
+  useBackButtonClose(open && !loading, onClose);
 
   const handleConfirm = async () => {
     if (!slot) return;

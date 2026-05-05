@@ -20,6 +20,7 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import type { CalendarEvent, EventType } from '@/lib/types/events';
 import type { GroupMember } from './GroupDetailContent';
 import EventDialog from './EventDialog';
+import { useBackButtonClose } from '@/lib/hooks/useBackButtonClose';
 
 interface EventDetailDialogProps {
   open: boolean;
@@ -48,6 +49,8 @@ export default function EventDetailDialog({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [editOpen, setEditOpen] = useState(false);
+
+  useBackButtonClose(open, onClose);
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const isOwner = event.user_id === currentUserId;

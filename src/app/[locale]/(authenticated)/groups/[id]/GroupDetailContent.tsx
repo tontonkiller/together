@@ -38,6 +38,7 @@ import { MEMBER_COLORS } from '@/lib/utils/colors';
 import EventList from './EventList';
 import GroupCalendar from './GroupCalendar';
 import PlanList from './PlanList';
+import { useBackButtonClose } from '@/lib/hooks/useBackButtonClose';
 import type { PlanWithSlots } from '@/lib/types/plans';
 
 // Dialogs only render when the user opens them — defer their JS so the
@@ -168,6 +169,14 @@ export default function GroupDetailContent({
 
   // Invite dialog
   const [inviteOpen, setInviteOpen] = useState(false);
+
+  // Hardware/browser back button closes any open inline confirm Dialog
+  // before navigating away from this page. Skipped while a request is in
+  // flight to match the disabled-onClose behaviour the dialogs already have.
+  useBackButtonClose(renameOpen && !renameLoading, () => setRenameOpen(false));
+  useBackButtonClose(!!kickMemberId && !kickLoading, () => setKickMemberId(null));
+  useBackButtonClose(deleteOpen && !deleteLoading, () => setDeleteOpen(false));
+  useBackButtonClose(leaveOpen && !leaveLoading, () => setLeaveOpen(false));
 
   // Color picker
   const [colorAnchor, setColorAnchor] = useState<HTMLElement | null>(null);

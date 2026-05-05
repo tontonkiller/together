@@ -17,6 +17,7 @@ import Divider from '@mui/material/Divider';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CircularProgress from '@mui/material/CircularProgress';
 import { createClient } from '@/lib/supabase/client';
+import { useBackButtonClose } from '@/lib/hooks/useBackButtonClose';
 
 interface InviteDialogProps {
   open: boolean;
@@ -37,6 +38,8 @@ export default function InviteDialog({
   const tCommon = useTranslations('common');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  useBackButtonClose(open, onClose);
 
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
