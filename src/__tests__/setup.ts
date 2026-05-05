@@ -29,6 +29,7 @@ vi.mock('@/lib/i18n/navigation', () => ({
     replace: vi.fn(),
     refresh: vi.fn(),
     back: vi.fn(),
+    prefetch: vi.fn(),
   })),
   Link: 'a',
 }));

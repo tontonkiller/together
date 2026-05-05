@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { usePathname, useRouter } from '@/lib/i18n/navigation';
 import BottomNavigation from '@mui/material/BottomNavigation';
@@ -11,6 +11,8 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import SyncIcon from '@mui/icons-material/Sync';
 import MicIcon from '@mui/icons-material/Mic';
 import PersonIcon from '@mui/icons-material/Person';
+
+const TAB_ROUTES = ['/dashboard', '/calendar', '/google-sync', '/bob', '/profile'] as const;
 
 export default function BottomNav() {
   const t = useTranslations('nav');
@@ -26,24 +28,21 @@ export default function BottomNav() {
     return 0;
   }, [pathname]);
 
-  const handleChange = (_: React.SyntheticEvent, newValue: number) => {
-    switch (newValue) {
-      case 0:
-        router.push('/dashboard');
-        break;
-      case 1:
-        router.push('/calendar');
-        break;
-      case 2:
-        router.push('/google-sync');
-        break;
-      case 3:
-        router.push('/bob');
-        break;
-      case 4:
-        router.push('/profile');
-        break;
+  // Prefetch every tab so taps feel instant. The router dedupes, so this is safe to re-run.
+  useEffect(() => {
+    for (const href of TAB_ROUTES) {
+      router.prefetch(href);
     }
+  }, [router]);
+
+  const handleChange = (_: React.SyntheticEvent, newValue: number) => {
+    const href = TAB_ROUTES[newValue];
+    if (href) router.push(href);
+  };
+
+  const handlePrefetch = (idx: number) => {
+    const href = TAB_ROUTES[idx];
+    if (href) router.prefetch(href);
   };
 
   return (
@@ -65,22 +64,32 @@ export default function BottomNav() {
         <BottomNavigationAction
           label={t('groups')}
           icon={<GroupsIcon />}
+          onMouseEnter={() => handlePrefetch(0)}
+          onTouchStart={() => handlePrefetch(0)}
         />
         <BottomNavigationAction
           label={t('calendar')}
           icon={<CalendarMonthIcon />}
+          onMouseEnter={() => handlePrefetch(1)}
+          onTouchStart={() => handlePrefetch(1)}
         />
         <BottomNavigationAction
           label={t('googleSync')}
           icon={<SyncIcon />}
+          onMouseEnter={() => handlePrefetch(2)}
+          onTouchStart={() => handlePrefetch(2)}
         />
         <BottomNavigationAction
           label={t('bob')}
           icon={<MicIcon />}
+          onMouseEnter={() => handlePrefetch(3)}
+          onTouchStart={() => handlePrefetch(3)}
         />
         <BottomNavigationAction
           label={t('profile')}
           icon={<PersonIcon />}
+          onMouseEnter={() => handlePrefetch(4)}
+          onTouchStart={() => handlePrefetch(4)}
         />
       </BottomNavigation>
     </Paper>

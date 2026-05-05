@@ -17,7 +17,7 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import EventIcon from '@mui/icons-material/Event';
 import EventDialog from '@/app/[locale]/(authenticated)/groups/[id]/EventDialog';
-import { useRouter } from '@/lib/i18n/navigation';
+import { Link } from '@/lib/i18n/navigation';
 import type { CalendarEvent, EventType } from '@/lib/types/events';
 
 export type UpcomingEvent = CalendarEvent;
@@ -53,7 +53,6 @@ export default function DashboardContent({ profile, groups, upcomingEvents, even
   const t = useTranslations('dashboard');
   const tPlans = useTranslations('plans');
   const locale = useLocale();
-  const router = useRouter();
   const [events, setEvents] = useState(upcomingEvents);
   const [editEvent, setEditEvent] = useState<CalendarEvent | null>(null);
 
@@ -93,7 +92,8 @@ export default function DashboardContent({ profile, groups, upcomingEvents, even
           {groups.map((gm) => (
             <Card key={gm.group_id} sx={{ '&:hover': { transform: 'translateY(-1px)' } }}>
               <CardActionArea
-                onClick={() => router.push(`/groups/${gm.group_id}`)}
+                LinkComponent={Link}
+                href={`/groups/${gm.group_id}`}
               >
                 <CardContent
                   sx={{
@@ -154,7 +154,8 @@ export default function DashboardContent({ profile, groups, upcomingEvents, even
         variant="outlined"
         startIcon={<AddIcon />}
         fullWidth
-        onClick={() => router.push('/groups/new')}
+        LinkComponent={Link}
+        href="/groups/new"
         sx={{ mb: 4 }}
       >
         {t('createGroup')}

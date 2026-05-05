@@ -19,7 +19,10 @@ vi.mock('@/app/[locale]/groups/[id]/EventDialog', () => ({
 
 const mockPush = vi.fn();
 vi.mock('@/lib/i18n/navigation', () => ({
-  useRouter: () => ({ push: mockPush, replace: vi.fn(), refresh: vi.fn() }),
+  useRouter: () => ({ push: mockPush, replace: vi.fn(), refresh: vi.fn(), prefetch: vi.fn() }),
+  Link: ({ href, children, ...rest }: { href: string; children: React.ReactNode } & React.ComponentProps<'a'>) => (
+    <a href={typeof href === 'string' ? href : '#'} {...rest}>{children}</a>
+  ),
 }));
 
 function makeEvent(overrides: Partial<UpcomingEvent> = {}): UpcomingEvent {
