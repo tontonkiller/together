@@ -1,5 +1,6 @@
-'use client';
-
+// Server component: contains no hooks or event handlers, so the layout shell
+// (Box, Container) renders on the server. Only its children (TopBar, BottomNav,
+// AutoSync) cross the client boundary.
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import TopBar from './TopBar';

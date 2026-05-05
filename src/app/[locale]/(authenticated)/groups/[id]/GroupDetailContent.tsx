@@ -30,17 +30,21 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import CameraAltIcon from '@mui/icons-material/CameraAlt';
 import GroupsIcon from '@mui/icons-material/Groups';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import dynamic from 'next/dynamic';
 import { useRouter } from '@/lib/i18n/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useImageUpload } from '@/lib/hooks/useImageUpload';
 import { MEMBER_COLORS } from '@/lib/utils/colors';
-import InviteDialog from './InviteDialog';
 import EventList from './EventList';
-import EventDialog from './EventDialog';
 import GroupCalendar from './GroupCalendar';
 import PlanList from './PlanList';
-import PlanDialog from './PlanDialog';
 import type { PlanWithSlots } from '@/lib/types/plans';
+
+// Dialogs only render when the user opens them — defer their JS so the
+// initial group page paints faster.
+const InviteDialog = dynamic(() => import('./InviteDialog'));
+const EventDialog = dynamic(() => import('./EventDialog'));
+const PlanDialog = dynamic(() => import('./PlanDialog'));
 import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 
 export interface GroupMember {
@@ -542,13 +546,15 @@ export default function GroupDetailContent({
         )}
       </Box>
 
-      <PlanDialog
-        open={planDialogOpen}
-        onClose={() => setPlanDialogOpen(false)}
-        groupId={group.id}
-        memberCount={members.length}
-        onPlanCreated={refreshPlans}
-      />
+      {planDialogOpen && (
+        <PlanDialog
+          open
+          onClose={() => setPlanDialogOpen(false)}
+          groupId={group.id}
+          memberCount={members.length}
+          onPlanCreated={refreshPlans}
+        />
+      )}
 
       <Divider sx={{ my: 3 }} />
 
@@ -568,16 +574,18 @@ export default function GroupDetailContent({
       />
 
       {/* Create event dialog (from calendar day click) */}
-      <EventDialog
-        open={createOpen}
-        onClose={() => { setCreateOpen(false); setCreateDefaultDate(undefined); }}
-        event={null}
-        eventTypes={eventTypes}
-        groupId={group.id}
-        onEventCreated={handleEventCreated}
-        onEventUpdated={handleEventUpdated}
-        defaultDate={createDefaultDate}
-      />
+      {createOpen && (
+        <EventDialog
+          open
+          onClose={() => { setCreateOpen(false); setCreateDefaultDate(undefined); }}
+          event={null}
+          eventTypes={eventTypes}
+          groupId={group.id}
+          onEventCreated={handleEventCreated}
+          onEventUpdated={handleEventUpdated}
+          defaultDate={createDefaultDate}
+        />
+      )}
 
       <Divider sx={{ my: 3 }} />
 
@@ -693,16 +701,18 @@ export default function GroupDetailContent({
       </Dialog>
 
       {/* Invite Dialog (M3) */}
-      <InviteDialog
-        open={inviteOpen}
-        onClose={() => setInviteOpen(false)}
-        groupId={group.id}
-        inviteCode={group.invite_code}
-        onInviteSent={() => {
-          setSuccess(t('inviteSent'));
-          router.refresh();
-        }}
-      />
+      {inviteOpen && (
+        <InviteDialog
+          open
+          onClose={() => setInviteOpen(false)}
+          groupId={group.id}
+          inviteCode={group.invite_code}
+          onInviteSent={() => {
+            setSuccess(t('inviteSent'));
+            router.refresh();
+          }}
+        />
+      )}
     </Box>
   );
 }

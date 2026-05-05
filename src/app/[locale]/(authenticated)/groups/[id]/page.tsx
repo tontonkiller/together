@@ -104,6 +104,9 @@ export default async function GroupDetailPage({
 
   let plansData = rawPlans ?? [];
   if (staleOpenPlanIds.length > 0) {
+    // expire_plan can transition to 'expired', 'resolved' (with resolved_slot_id
+    // + event_id) or 'pending_tiebreak' depending on votes — refetch to read
+    // the authoritative shape rather than guessing.
     await Promise.all(
       staleOpenPlanIds.map((pid) => supabase.rpc('expire_plan', { p_plan_id: pid })),
     );

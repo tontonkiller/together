@@ -16,9 +16,13 @@ import AddIcon from '@mui/icons-material/Add';
 import GroupsIcon from '@mui/icons-material/Groups';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import EventIcon from '@mui/icons-material/Event';
-import EventDialog from '@/app/[locale]/(authenticated)/groups/[id]/EventDialog';
+import dynamic from 'next/dynamic';
 import { Link } from '@/lib/i18n/navigation';
 import type { CalendarEvent, EventType } from '@/lib/types/events';
+
+// Dialog ships forms + validation + a heavy MUI Dialog tree. Only load it
+// when the user actually opens it.
+const EventDialog = dynamic(() => import('@/app/[locale]/(authenticated)/groups/[id]/EventDialog'));
 
 export type UpcomingEvent = CalendarEvent;
 
