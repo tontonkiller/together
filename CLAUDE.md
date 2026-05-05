@@ -15,6 +15,7 @@
 
 - **Simplicity First**: Make every change as simple as possible. Impact minimal code.
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
+- **Performance Is a Feature**: Most users are on mobile PWAs and will abandon the app if interactions feel slow. Treat perf as a hard requirement, not a polish step. For every non-trivial change ask: how many round-trips does this add, what's the RSC payload, what re-renders, does it block hydration? Prefer parallel queries over waterfalls, narrow `select()` shapes over fetching everything, lazy/dynamic imports for anything not on the critical path, and `<Link>` (or `router.prefetch`) over imperative `router.push` so navigations feel instant. If a change is unavoidably slow, gate it behind a Suspense boundary or `requestIdleCallback` so it never blocks the page the user just opened.
 
 ## Workflow Rules
 
