@@ -12,9 +12,8 @@ export default async function DashboardPage({
   const { locale } = await params;
   const supabase = await createClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const user = session?.user;
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     return redirect({ href: '/login', locale });
