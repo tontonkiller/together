@@ -30,10 +30,7 @@ export async function POST(
 
   if (error) {
     console.error('[api/plans/resolve] Failed:', error.message);
-    return NextResponse.json(
-      { error: 'resolveFailed', detail: error.message },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: 'resolveFailed' }, { status: 400 });
   }
 
   return NextResponse.json({ success: true, eventId });

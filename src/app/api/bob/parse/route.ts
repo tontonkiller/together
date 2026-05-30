@@ -22,7 +22,11 @@ interface ParsedEvent {
 }
 
 function isValidDate(str: string): boolean {
-  return /^\d{4}-\d{2}-\d{2}$/.test(str) && !isNaN(Date.parse(str));
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
+  // Date.parse accepts impossible dates (e.g. 2026-02-31 rolls over), so
+  // round-trip and confirm the normalized date matches.
+  const d = new Date(`${str}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === str;
 }
 
 function isValidTime(str: string): boolean {

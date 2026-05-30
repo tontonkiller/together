@@ -32,15 +32,7 @@ export async function GET(
 
   if (error) {
     console.error('[api/plans] List failed:', JSON.stringify(error));
-    return NextResponse.json(
-      {
-        error: 'Failed to load plans',
-        detail: error.message,
-        code: error.code,
-        hint: error.hint,
-      },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'Failed to load plans' }, { status: 500 });
   }
 
   // Fetch creator profiles separately
@@ -141,7 +133,7 @@ export async function POST(
 
   if (error) {
     console.error('[api/plans] Create failed:', error.message);
-    return NextResponse.json({ error: 'createFailed', detail: error.message }, { status: 400 });
+    return NextResponse.json({ error: 'createFailed' }, { status: 400 });
   }
 
   return NextResponse.json({ id: planId }, { status: 201 });

@@ -2,6 +2,10 @@
 -- Run interactively in Supabase SQL Editor.
 -- Each test is wrapped in begin/rollback so the DB stays clean.
 --
+-- NOTE: updated for the post-011 schema — plans no longer have a `duration`
+-- column, plan_slots use start_date/end_date/start_time/end_time (not date/time),
+-- and create_plan_with_slots takes (group_id, title, description, quorum, slots).
+--
 -- Setup: create 2 users + 1 non-member + 1 group where u1 and u2 are members
 -- Replace the UUIDs below with real auth.users ids from your Supabase project.
 
@@ -32,8 +36,8 @@ begin;
   set local request.jwt.claims = json_build_object('sub', :'u1_uuid')::text;
 
   -- Should succeed
-  insert into plans (group_id, created_by, title, duration, quorum)
-  values (:'group_id', :'u1_uuid', 'Plan A', '1h', 2)
+  insert into plans (group_id, created_by, title, quorum)
+  values (:'group_id', :'u1_uuid', 'Plan A', 2)
   returning id as plan_a_id;
 rollback;
 
@@ -43,8 +47,8 @@ begin;
 
   -- Should fail: non-member
   do $$ begin
-    insert into plans (group_id, created_by, title, duration, quorum)
-    values (:'group_id', :'u3_uuid', 'Plan B', '1h', 2);
+    insert into plans (group_id, created_by, title, quorum)
+    values (:'group_id', :'u3_uuid', 'Plan B', 2);
     raise exception 'TEST FAIL: non-member inserted a plan';
   exception when others then
     raise notice 'TEST PASS: non-member blocked (%)', sqlerrm;
@@ -59,8 +63,8 @@ begin;
   set local request.jwt.claims = json_build_object('sub', :'u1_uuid')::text;
 
   do $$ begin
-    insert into plans (group_id, created_by, title, duration, quorum)
-    values (:'group_id', :'u2_uuid', 'Impersonated', '1h', 2);
+    insert into plans (group_id, created_by, title, quorum)
+    values (:'group_id', :'u2_uuid', 'Impersonated', 2);
     raise exception 'TEST FAIL: inserted plan with wrong created_by';
   exception when others then
     raise notice 'TEST PASS: created_by mismatch blocked (%)', sqlerrm;
@@ -78,11 +82,10 @@ begin;
     :'group_id'::uuid,
     'Apéro',
     'description test',
-    '2h',
     2,
     jsonb_build_array(
-      jsonb_build_object('date', '2026-05-15', 'time', '19:00', 'position', 0),
-      jsonb_build_object('date', '2026-05-16', 'time', null,    'position', 1)
+      jsonb_build_object('start_date', '2026-05-15', 'start_time', '19:00', 'position', 0),
+      jsonb_build_object('start_date', '2026-05-16', 'start_time', null,    'position', 1)
     )
   ) as new_plan_id;
 
@@ -101,8 +104,8 @@ begin;
 
   do $$ begin
     perform create_plan_with_slots(
-      :'group_id'::uuid, 'Bad', null, '1h', 2,
-      jsonb_build_array(jsonb_build_object('date', '2026-05-15', 'time', null, 'position', 0))
+      :'group_id'::uuid, 'Bad', null, 2,
+      jsonb_build_array(jsonb_build_object('start_date', '2026-05-15', 'start_time', null, 'position', 0))
     );
     raise exception 'TEST FAIL: < 2 slots accepted';
   exception when others then
@@ -111,10 +114,10 @@ begin;
 
   do $$ begin
     perform create_plan_with_slots(
-      :'group_id'::uuid, 'Bad', null, '1h', 99,
+      :'group_id'::uuid, 'Bad', null, 99,
       jsonb_build_array(
-        jsonb_build_object('date', '2026-05-15', 'time', null, 'position', 0),
-        jsonb_build_object('date', '2026-05-16', 'time', null, 'position', 1)
+        jsonb_build_object('start_date', '2026-05-15', 'start_time', null, 'position', 0),
+        jsonb_build_object('start_date', '2026-05-16', 'start_time', null, 'position', 1)
       )
     );
     raise exception 'TEST FAIL: quorum > members accepted';
@@ -132,13 +135,13 @@ begin;
 
   -- Setup: plan + 1 slot
   with p as (
-    insert into plans (group_id, created_by, title, duration, quorum)
-    values (:'group_id', :'u1_uuid', 'Vote Test', '1h', 2)
+    insert into plans (group_id, created_by, title, quorum)
+    values (:'group_id', :'u1_uuid', 'Vote Test', 2)
     returning id
   ),
   s as (
-    insert into plan_slots (plan_id, date, position)
-    select id, '2026-06-01', 0 from p
+    insert into plan_slots (plan_id, start_date, end_date, position)
+    select id, '2026-06-01', '2026-06-01', 0 from p
     returning id as slot_id
   )
   select slot_id from s \gset
@@ -163,13 +166,13 @@ begin;
   set local request.jwt.claims = json_build_object('sub', :'u1_uuid')::text;
 
   with p as (
-    insert into plans (group_id, created_by, title, duration, quorum)
-    values (:'group_id', :'u1_uuid', 'Non-member test', '1h', 2)
+    insert into plans (group_id, created_by, title, quorum)
+    values (:'group_id', :'u1_uuid', 'Non-member test', 2)
     returning id
   ),
   s as (
-    insert into plan_slots (plan_id, date, position)
-    select id, '2026-06-02', 0 from p
+    insert into plan_slots (plan_id, start_date, end_date, position)
+    select id, '2026-06-02', '2026-06-02', 0 from p
     returning id as slot_id
   )
   select slot_id from s \gset
@@ -192,13 +195,13 @@ begin;
   set local request.jwt.claims = json_build_object('sub', :'u1_uuid')::text;
 
   with p as (
-    insert into plans (group_id, created_by, title, duration, quorum)
-    values (:'group_id', :'u1_uuid', 'Manual resolve', '1h', 5)
+    insert into plans (group_id, created_by, title, quorum)
+    values (:'group_id', :'u1_uuid', 'Manual resolve', 5)
     returning id
   ),
   s as (
-    insert into plan_slots (plan_id, date, time, position)
-    select id, '2026-07-01', '19:00', 0 from p
+    insert into plan_slots (plan_id, start_date, end_date, start_time, position)
+    select id, '2026-07-01', '2026-07-01', '19:00', 0 from p
     returning id as slot_id, plan_id
   )
   select plan_id, slot_id from s \gset
@@ -218,13 +221,13 @@ begin;
   set local request.jwt.claims = json_build_object('sub', :'u1_uuid')::text;
 
   with p as (
-    insert into plans (group_id, created_by, title, duration, quorum)
-    values (:'group_id', :'u1_uuid', 'Quorum gate', '1h', 2)
+    insert into plans (group_id, created_by, title, quorum)
+    values (:'group_id', :'u1_uuid', 'Quorum gate', 2)
     returning id
   ),
   s as (
-    insert into plan_slots (plan_id, date, position)
-    select id, '2026-07-02', 0 from p
+    insert into plan_slots (plan_id, start_date, end_date, position)
+    select id, '2026-07-02', '2026-07-02', 0 from p
     returning id as slot_id, plan_id
   )
   select plan_id, slot_id from s \gset
@@ -248,13 +251,13 @@ begin;
   set local request.jwt.claims = json_build_object('sub', :'u1_uuid')::text;
 
   with p as (
-    insert into plans (group_id, created_by, title, duration, quorum, expires_at)
-    values (:'group_id', :'u1_uuid', 'Expire empty', '1h', 2, now() - interval '1 day')
+    insert into plans (group_id, created_by, title, quorum, expires_at)
+    values (:'group_id', :'u1_uuid', 'Expire empty', 2, now() - interval '1 day')
     returning id
   ),
   s as (
-    insert into plan_slots (plan_id, date, position)
-    select id, '2026-08-01', 0 from p
+    insert into plan_slots (plan_id, start_date, end_date, position)
+    select id, '2026-08-01', '2026-08-01', 0 from p
     returning plan_id
   )
   select plan_id from s \gset
@@ -271,18 +274,18 @@ begin;
   set local request.jwt.claims = json_build_object('sub', :'u1_uuid')::text;
 
   with p as (
-    insert into plans (group_id, created_by, title, duration, quorum, expires_at)
-    values (:'group_id', :'u1_uuid', 'Expire winner', '1h', 5, now() - interval '1 day')
+    insert into plans (group_id, created_by, title, quorum, expires_at)
+    values (:'group_id', :'u1_uuid', 'Expire winner', 5, now() - interval '1 day')
     returning id
   ),
   s1 as (
-    insert into plan_slots (plan_id, date, time, position)
-    select id, '2026-08-05', '19:00', 0 from p
+    insert into plan_slots (plan_id, start_date, end_date, start_time, position)
+    select id, '2026-08-05', '2026-08-05', '19:00', 0 from p
     returning id as slot_id_1, plan_id
   ),
   s2 as (
-    insert into plan_slots (plan_id, date, time, position)
-    select plan_id, '2026-08-06', '19:00', 1 from s1
+    insert into plan_slots (plan_id, start_date, end_date, start_time, position)
+    select plan_id, '2026-08-06', '2026-08-06', '19:00', 1 from s1
     returning id as slot_id_2, plan_id
   )
   select plan_id, slot_id_1, slot_id_2 from s2, s1 where s1.plan_id = s2.plan_id \gset
@@ -311,18 +314,18 @@ begin;
   set local request.jwt.claims = json_build_object('sub', :'u1_uuid')::text;
 
   with p as (
-    insert into plans (group_id, created_by, title, duration, quorum, expires_at)
-    values (:'group_id', :'u1_uuid', 'Expire tie', '1h', 5, now() - interval '1 day')
+    insert into plans (group_id, created_by, title, quorum, expires_at)
+    values (:'group_id', :'u1_uuid', 'Expire tie', 5, now() - interval '1 day')
     returning id
   ),
   s1 as (
-    insert into plan_slots (plan_id, date, position)
-    select id, '2026-09-01', 0 from p
+    insert into plan_slots (plan_id, start_date, end_date, position)
+    select id, '2026-09-01', '2026-09-01', 0 from p
     returning id as slot_id_1, plan_id
   ),
   s2 as (
-    insert into plan_slots (plan_id, date, position)
-    select plan_id, '2026-09-02', 1 from s1
+    insert into plan_slots (plan_id, start_date, end_date, position)
+    select plan_id, '2026-09-02', '2026-09-02', 1 from s1
     returning id as slot_id_2
   )
   select plan_id, slot_id_1, slot_id_2 from s1, s2 \gset
@@ -344,8 +347,8 @@ begin;
   set local request.jwt.claims = json_build_object('sub', :'u1_uuid')::text;
 
   with p as (
-    insert into plans (group_id, created_by, title, duration, quorum, status)
-    values (:'group_id', :'u1_uuid', 'Cant delete resolved', '1h', 2, 'resolved')
+    insert into plans (group_id, created_by, title, quorum, status)
+    values (:'group_id', :'u1_uuid', 'Cant delete resolved', 2, 'resolved')
     returning id
   )
   select id from p \gset

@@ -98,6 +98,16 @@ describe('validatePlanInput', () => {
     ).toEqual({ valid: false, errorKey: 'slotEndBeforeStart' });
   });
 
+  it('rejects an impossible calendar date that the regex alone would pass', () => {
+    expect(
+      validateSlotInput({
+        start_date: '2026-02-31',
+        end_date: '2026-02-31',
+        position: 0,
+      }),
+    ).toEqual({ valid: false, errorKey: 'invalidSlotDate' });
+  });
+
   it('accepts slot with null times', () => {
     expect(
       validateSlotInput({

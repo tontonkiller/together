@@ -5,6 +5,18 @@ export type ValidationResult = { valid: true } | { valid: false; errorKey: strin
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/;
 
+/**
+ * True only for a real calendar date in YYYY-MM-DD form. The regex alone lets
+ * through impossible dates like 2026-02-31, and `new Date(...)` silently rolls
+ * those over (to March 3) instead of returning NaN — so we round-trip and check
+ * the normalized date matches the input.
+ */
+function isRealDate(str: string): boolean {
+  if (!DATE_RE.test(str)) return false;
+  const d = new Date(`${str}T00:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === str;
+}
+
 export function validatePlanInput(input: unknown, memberCount: number): ValidationResult {
   if (!input || typeof input !== 'object') {
     return { valid: false, errorKey: 'invalidBody' };
@@ -50,18 +62,12 @@ export function validateSlotInput(input: unknown): ValidationResult {
   }
   const s = input as Record<string, unknown>;
 
-  if (typeof s.start_date !== 'string' || !DATE_RE.test(s.start_date)) {
-    return { valid: false, errorKey: 'invalidSlotDate' };
-  }
-  if (Number.isNaN(new Date(s.start_date + 'T00:00:00Z').getTime())) {
+  if (typeof s.start_date !== 'string' || !isRealDate(s.start_date)) {
     return { valid: false, errorKey: 'invalidSlotDate' };
   }
 
   if (s.end_date !== null && s.end_date !== undefined && s.end_date !== '') {
-    if (typeof s.end_date !== 'string' || !DATE_RE.test(s.end_date)) {
-      return { valid: false, errorKey: 'invalidSlotDate' };
-    }
-    if (Number.isNaN(new Date(s.end_date + 'T00:00:00Z').getTime())) {
+    if (typeof s.end_date !== 'string' || !isRealDate(s.end_date)) {
       return { valid: false, errorKey: 'invalidSlotDate' };
     }
     if (s.end_date < s.start_date) {
