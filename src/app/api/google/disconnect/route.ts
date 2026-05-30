@@ -17,7 +17,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing accountId' }, { status: 400 });
   }
 
-  // First, delete linked Together events via SECURITY DEFINER function
+  // Verify the account belongs to the caller before doing anything destructive.
+  // The RPC below is SECURITY DEFINER (bypasses RLS), so we must not call it
+  // with an arbitrary account id.
+  const { data: ownedAccount } = await supabase
+    .from('google_accounts')
+    .select('id')
+    .eq('id', accountId)
+    .eq('user_id', user.id)
+    .single();
+
+  if (!ownedAccount) {
+    return NextResponse.json({ error: 'Account not found' }, { status: 404 });
+  }
+
+  // Delete linked Together events via SECURITY DEFINER function (which also
+  // re-checks ownership against auth.uid() as defense-in-depth).
   const { error: deleteEventsError } = await supabase
     .rpc('delete_events_for_google_account', { p_google_account_id: accountId });
 
