@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { exchangeCodeForTokens } from '@/lib/google/tokens';
+import { encryptToken } from '@/lib/google/crypto';
+
+const SUPPORTED_LOCALES = ['fr', 'en'];
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -13,7 +16,11 @@ export async function GET(request: Request) {
   let stateUserId: string | null = null;
   try {
     const state = JSON.parse(stateParam ?? '{}');
-    locale = state.locale ?? 'fr';
+    // Validate locale against an allowlist — it's reflected back through Google
+    // and used to build redirect paths, so never trust it verbatim.
+    if (SUPPORTED_LOCALES.includes(state.locale)) {
+      locale = state.locale;
+    }
     stateUserId = state.userId ?? null;
   } catch {
     // ignore parse error
@@ -35,9 +42,11 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${profileUrl}?google=error`);
   }
 
-  // Verify state matches current user
-  if (stateUserId && stateUserId !== user.id) {
-    console.error('[google/callback] State user mismatch');
+  // Verify state matches current user. The state isn't a signed CSRF nonce, but
+  // requiring it to be present AND match the authenticated user blocks a forged
+  // callback from binding another user's Google account to this session.
+  if (!stateUserId || stateUserId !== user.id) {
+    console.error('[google/callback] State user missing or mismatch');
     return NextResponse.redirect(`${profileUrl}?google=error`);
   }
 
@@ -60,14 +69,35 @@ export async function GET(request: Request) {
     // Upsert google account (in case user reconnects same account)
     const expiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
+    // Google only returns a refresh token on first consent. If it didn't send
+    // one, preserve whatever is already stored instead of clobbering it with an
+    // empty string (which would silently break future syncs).
+    let refreshTokenColumn: string;
+    if (tokens.refresh_token) {
+      refreshTokenColumn = encryptToken(tokens.refresh_token);
+    } else {
+      const { data: existing } = await supabase
+        .from('google_accounts')
+        .select('refresh_token')
+        .eq('user_id', user.id)
+        .eq('google_email', googleEmail)
+        .single();
+      if (!existing?.refresh_token) {
+        console.error('[google/callback] No refresh token returned and none stored');
+        return NextResponse.redirect(`${profileUrl}?google=error`);
+      }
+      // Keep the stored value as-is (already encrypted / legacy plaintext).
+      refreshTokenColumn = existing.refresh_token;
+    }
+
     const { error: upsertError } = await supabase
       .from('google_accounts')
       .upsert(
         {
           user_id: user.id,
           google_email: googleEmail,
-          refresh_token: tokens.refresh_token ?? '',
-          access_token: tokens.access_token,
+          refresh_token: refreshTokenColumn,
+          access_token: encryptToken(tokens.access_token),
           token_expires_at: expiresAt,
         },
         { onConflict: 'user_id,google_email' },

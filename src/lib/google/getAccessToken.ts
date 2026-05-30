@@ -4,6 +4,7 @@
  */
 import { type SupabaseClient } from '@supabase/supabase-js';
 import { refreshAccessToken } from './tokens';
+import { decryptToken, encryptToken } from './crypto';
 
 interface GoogleAccount {
   id: string;
@@ -21,18 +22,20 @@ export async function getAccessToken(
     const expiresAt = new Date(account.token_expires_at);
     const buffer = 5 * 60 * 1000; // 5 minutes
     if (expiresAt.getTime() - buffer > Date.now()) {
-      return account.access_token;
+      return decryptToken(account.access_token);
     }
   }
 
-  // Refresh the token
-  const { access_token, expires_at } = await refreshAccessToken(account.refresh_token);
+  // Refresh the token (refresh_token is stored encrypted at rest)
+  const { access_token, expires_at } = await refreshAccessToken(
+    decryptToken(account.refresh_token),
+  );
 
-  // Update in DB
+  // Update in DB (store the new access token encrypted)
   await supabase
     .from('google_accounts')
     .update({
-      access_token,
+      access_token: encryptToken(access_token),
       token_expires_at: expires_at.toISOString(),
     })
     .eq('id', account.id);
