@@ -1,5 +1,10 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { rateLimit } from '@/lib/rateLimit';
+
+const MAX_AUDIO_BYTES = 25 * 1024 * 1024; // OpenAI Whisper hard limit
+const RATE_LIMIT = 15; // requests
+const RATE_WINDOW_MS = 60 * 1000; // per minute, per user
 
 /**
  * POST /api/bob/transcribe
@@ -15,6 +20,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
 
+  // Throttle the paid Whisper call per user.
+  const limit = rateLimit(`bob:transcribe:${user.id}`, RATE_LIMIT, RATE_WINDOW_MS);
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil(limit.retryAfterMs / 1000)) } },
+    );
+  }
+
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     console.error('[bob/transcribe] OPENAI_API_KEY not configured');
@@ -28,6 +42,10 @@ export async function POST(request: Request) {
 
     if (!audio) {
       return NextResponse.json({ error: 'No audio provided' }, { status: 400 });
+    }
+
+    if (audio.size > MAX_AUDIO_BYTES) {
+      return NextResponse.json({ error: 'Audio file too large' }, { status: 413 });
     }
 
     // Send to Whisper API

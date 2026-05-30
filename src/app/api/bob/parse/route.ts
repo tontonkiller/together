@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@/lib/supabase/server';
+import { rateLimit } from '@/lib/rateLimit';
 
 const anthropic = new Anthropic();
+
+const MAX_TRANSCRIPT_LENGTH = 4000;
+const RATE_LIMIT = 20; // requests
+const RATE_WINDOW_MS = 60 * 1000; // per minute, per user
 
 interface ParsedEvent {
   title: string;
@@ -72,10 +77,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
 
+  // Throttle the paid Anthropic call per user.
+  const limit = rateLimit(`bob:parse:${user.id}`, RATE_LIMIT, RATE_WINDOW_MS);
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil(limit.retryAfterMs / 1000)) } },
+    );
+  }
+
   const { transcript, locale } = await request.json();
 
   if (!transcript || typeof transcript !== 'string' || transcript.trim().length === 0) {
     return NextResponse.json({ error: 'Empty transcript' }, { status: 400 });
+  }
+
+  if (transcript.length > MAX_TRANSCRIPT_LENGTH) {
+    return NextResponse.json({ error: 'Transcript too long' }, { status: 413 });
   }
 
   const today = new Date().toISOString().split('T')[0];
