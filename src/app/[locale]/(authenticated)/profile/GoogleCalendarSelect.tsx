@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 
 import Box from '@mui/material/Box';
@@ -34,28 +34,6 @@ export default function GoogleCalendarSelect({ accountId, accountEmail }: Google
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [loaded, setLoaded] = useState(false);
-  const [autoExpanded, setAutoExpanded] = useState(false);
-
-  const fetchCalendars = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/google/calendars?accountId=${accountId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setCalendars(data.calendars);
-        setLoaded(true);
-        // Auto-expand on first connection (no calendars enabled yet)
-        const hasAnyEnabled = data.calendars.some((c: CalendarItem) => c.is_enabled);
-        if (!hasAnyEnabled && !autoExpanded) {
-          setExpanded(true);
-          setAutoExpanded(true);
-        }
-      }
-    } catch {
-      // Silently fail — user can retry
-    }
-    setLoading(false);
-  }, [accountId, autoExpanded]);
 
   // Fetch calendars on mount to check if we need to auto-expand
   useEffect(() => {
@@ -70,7 +48,6 @@ export default function GoogleCalendarSelect({ accountId, accountEmail }: Google
         const hasAnyEnabled = data.calendars.some((c: CalendarItem) => c.is_enabled);
         if (!hasAnyEnabled) {
           setExpanded(true);
-          setAutoExpanded(true);
         }
       })
       .finally(() => {

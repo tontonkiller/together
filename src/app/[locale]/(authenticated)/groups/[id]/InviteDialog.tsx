@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { useTheme } from '@mui/material/styles';
@@ -46,10 +46,11 @@ export default function InviteDialog({
   const [error, setError] = useState('');
   const [linkCopied, setLinkCopied] = useState(false);
 
-  const [origin, setOrigin] = useState('');
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
+  // Dialogs are client-only (dynamically imported), so window is available at
+  // first render — read the origin lazily instead of via a setState-in-effect.
+  const [origin] = useState(() =>
+    typeof window !== 'undefined' ? window.location.origin : '',
+  );
 
   const inviteLink = inviteCode
     ? `${origin}/invite/${inviteCode}`

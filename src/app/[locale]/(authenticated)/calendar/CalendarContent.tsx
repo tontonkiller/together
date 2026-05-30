@@ -198,12 +198,11 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
     const now = new Date();
     setYear(now.getFullYear());
     setMonth(now.getMonth());
-  }, []);
-
-  const daysInMonth = getDaysInMonth(year, month);
-  const firstDayOffset = getFirstDayOfWeek(year, month);
+  }, [setMonth, setYear]);
 
   const calendarDays = useMemo(() => {
+    const daysInMonth = getDaysInMonth(year, month);
+    const firstDayOffset = getFirstDayOfWeek(year, month);
     const days: Array<{ day: number; dateStr: string } | null> = [];
     for (let i = 0; i < firstDayOffset; i++) {
       days.push(null);
@@ -212,7 +211,7 @@ export default function CalendarContent({ events, eventTypes, userGroups = [], c
       days.push({ day: d, dateStr: formatDateStr(year, month, d) });
     }
     return days;
-  }, [year, month, daysInMonth, firstDayOffset]);
+  }, [year, month]);
 
   const eventsByDate = useMemo(() => {
     const map: Record<string, CalendarEvent[]> = {};

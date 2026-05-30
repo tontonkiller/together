@@ -29,9 +29,12 @@ import { useEffect, useRef } from 'react';
  */
 export function useBackButtonClose(open: boolean, onClose: () => void) {
   // Keep a ref so the popstate handler always sees the latest onClose
-  // without us re-running the effect on every render.
+  // without us re-running the effect on every render. Update it in an effect
+  // (not during render) so we never mutate a ref while rendering.
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
   useEffect(() => {
     if (!open) return;
