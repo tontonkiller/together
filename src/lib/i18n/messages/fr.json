@@ -229,6 +229,7 @@
     "cancel": "Annuler",
     "create": "Créer l'événement",
     "error": "Je n'ai pas compris. Réessaie.",
+    "tooLong": "Message trop long. Essaie un enregistrement plus court.",
     "micPermission": "L'accès au micro est nécessaire pour utiliser Bob.",
     "noSpeech": "Aucune voix détectée. Réessaie.",
     "apiError": "Erreur de traitement. Réessaie.",

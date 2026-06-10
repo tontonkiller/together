@@ -229,6 +229,7 @@
     "cancel": "Cancel",
     "create": "Create event",
     "error": "Could not understand. Try again.",
+    "tooLong": "Recording too long. Try a shorter one.",
     "micPermission": "Microphone access is required to use Bob.",
     "noSpeech": "No speech detected. Try again.",
     "apiError": "Failed to process. Try again.",

@@ -117,7 +117,7 @@ export default function BobContent({ locale }: BobContentProps) {
           });
 
           if (!parseRes.ok) {
-            setError(t('error'));
+            setError(parseRes.status === 413 ? t('tooLong') : t('error'));
             setState('error');
             return;
           }

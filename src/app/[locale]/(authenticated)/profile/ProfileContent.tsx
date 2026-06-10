@@ -186,11 +186,13 @@ export default function ProfileContent({ profile, email, googleAccounts: initial
         body: JSON.stringify({ accountId: disconnectDialogId }),
       });
 
-      if (!res.ok) {
-        setGoogleError(tGoogle('disconnectError'));
-      } else {
+      // 404 means the account is already gone (double-submit / second tab) —
+      // treat it as success so the UI converges instead of showing a false error.
+      if (res.ok || res.status === 404) {
         setGoogleAccounts((prev) => prev.filter((a) => a.id !== disconnectDialogId));
         setGoogleSuccess(tGoogle('disconnectSuccess'));
+      } else {
+        setGoogleError(tGoogle('disconnectError'));
       }
     } catch {
       setGoogleError(tGoogle('disconnectError'));
