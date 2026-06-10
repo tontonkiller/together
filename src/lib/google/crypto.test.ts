@@ -28,10 +28,12 @@ describe('token crypto', () => {
     expect(decryptToken('legacy-plaintext-token')).toBe('legacy-plaintext-token');
   });
 
-  it('is a no-op when no key is configured', () => {
-    const plain = 'no-key-here';
-    expect(encryptToken(plain)).toBe(plain);
-    expect(decryptToken(plain)).toBe(plain);
+  it('throws on encrypt when no key is configured (fail loud)', () => {
+    expect(() => encryptToken('no-key-here')).toThrow();
+  });
+
+  it('still passes through legacy plaintext on decrypt without a key', () => {
+    expect(decryptToken('legacy-plaintext-token')).toBe('legacy-plaintext-token');
   });
 
   it('rejects a key that is not 32 bytes', () => {

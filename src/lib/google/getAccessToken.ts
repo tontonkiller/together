@@ -4,7 +4,7 @@
  */
 import { type SupabaseClient } from '@supabase/supabase-js';
 import { refreshAccessToken } from './tokens';
-import { decryptToken, encryptToken } from './crypto';
+import { decryptToken, encryptToken, isEncrypted } from './crypto';
 
 interface GoogleAccount {
   id: string;
@@ -27,18 +27,23 @@ export async function getAccessToken(
   }
 
   // Refresh the token (refresh_token is stored encrypted at rest)
-  const { access_token, expires_at } = await refreshAccessToken(
-    decryptToken(account.refresh_token),
-  );
+  const refreshToken = decryptToken(account.refresh_token);
+  const { access_token, expires_at } = await refreshAccessToken(refreshToken);
 
-  // Update in DB (store the new access token encrypted)
-  await supabase
-    .from('google_accounts')
-    .update({
-      access_token: encryptToken(access_token),
-      token_expires_at: expires_at.toISOString(),
-    })
-    .eq('id', account.id);
+  // Update in DB (store the new access token encrypted).
+  const update: {
+    access_token: string;
+    token_expires_at: string;
+    refresh_token?: string;
+  } = {
+    access_token: encryptToken(access_token),
+    token_expires_at: expires_at.toISOString(),
+  };
+  // Opportunistically migrate a legacy plaintext refresh token to ciphertext.
+  if (!isEncrypted(account.refresh_token)) {
+    update.refresh_token = encryptToken(refreshToken);
+  }
+  await supabase.from('google_accounts').update(update).eq('id', account.id);
 
   return access_token;
 }

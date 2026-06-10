@@ -9,11 +9,13 @@
  *
  * Backward compatibility: `decryptToken` returns any value that lacks the
  * `gcm.v1.` prefix unchanged, so rows written before this change (plaintext)
- * keep working and get re-encrypted on the next write.
+ * keep working. Legacy plaintext refresh tokens are migrated to ciphertext
+ * opportunistically the next time the account's token is refreshed (see
+ * getAccessToken).
  *
- * If the env var is absent, encryption is a no-op (a warning is logged once).
- * This keeps the app functional in environments where the key hasn't been set
- * yet, while production should always configure it.
+ * The key is mandatory: both encrypt and decrypt throw when it's missing, so a
+ * misconfigured environment fails loudly on the first Google operation instead
+ * of silently writing plaintext that a correctly-configured instance can't read.
  */
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
 
@@ -31,22 +33,16 @@ function getKey(): Buffer | null {
   return key;
 }
 
-let warned = false;
-function warnMissingKey() {
-  if (!warned) {
-    warned = true;
-    console.warn(
-      '[google/crypto] GOOGLE_TOKEN_ENCRYPTION_KEY not set — Google tokens are stored in plaintext. Set it in production.',
-    );
-  }
+/** True if the stored value is already encrypted (vs. legacy plaintext). */
+export function isEncrypted(value: string): boolean {
+  return value.startsWith(PREFIX);
 }
 
-/** Encrypt a token for storage. Returns plaintext unchanged if no key is configured. */
+/** Encrypt a token for storage. Throws if GOOGLE_TOKEN_ENCRYPTION_KEY is not configured. */
 export function encryptToken(plain: string): string {
   const key = getKey();
   if (!key) {
-    warnMissingKey();
-    return plain;
+    throw new Error('GOOGLE_TOKEN_ENCRYPTION_KEY is not set');
   }
   const iv = randomBytes(12);
   const cipher = createCipheriv('aes-256-gcm', key, iv);
