@@ -6,6 +6,8 @@
  * it's enough to blunt accidental loops and casual abuse against the paid
  * Anthropic / OpenAI endpoints without pulling in external infrastructure.
  */
+import { NextResponse } from 'next/server';
+
 interface Bucket {
   count: number;
   resetAt: number;
@@ -41,4 +43,12 @@ export function rateLimit(key: string, limit: number, windowMs: number): RateLim
 
   bucket.count += 1;
   return { ok: true, retryAfterMs: 0 };
+}
+
+/** Standard 429 response carrying a Retry-After header derived from the limit result. */
+export function tooManyRequests(result: RateLimitResult): NextResponse {
+  return NextResponse.json(
+    { error: 'Too many requests' },
+    { status: 429, headers: { 'Retry-After': String(Math.ceil(result.retryAfterMs / 1000)) } },
+  );
 }

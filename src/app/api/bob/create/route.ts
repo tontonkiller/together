@@ -1,13 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-
-function isValidDate(str: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
-  // Date.parse accepts impossible dates (e.g. 2026-02-31 rolls over), so
-  // round-trip and confirm the normalized date matches.
-  const d = new Date(`${str}T00:00:00Z`);
-  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === str;
-}
+import { isValidCalendarDate } from '@/lib/utils/date';
 
 function isValidTime(str: string): boolean {
   return /^\d{2}:\d{2}$/.test(str);
@@ -35,7 +28,7 @@ export async function POST(request: Request) {
   if (typeof title !== 'string' || title.trim().length === 0 || title.length > 200) {
     return NextResponse.json({ error: 'Invalid title' }, { status: 400 });
   }
-  if (!isValidDate(start_date) || !isValidDate(end_date) || end_date < start_date) {
+  if (!isValidCalendarDate(start_date) || !isValidCalendarDate(end_date) || end_date < start_date) {
     return NextResponse.json({ error: 'Invalid dates' }, { status: 400 });
   }
   if (typeof is_all_day !== 'boolean' || typeof is_private !== 'boolean') {

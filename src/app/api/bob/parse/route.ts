@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@/lib/supabase/server';
-import { rateLimit } from '@/lib/rateLimit';
+import { rateLimit, tooManyRequests } from '@/lib/rateLimit';
+import { isValidCalendarDate } from '@/lib/utils/date';
 
 const anthropic = new Anthropic();
 
@@ -21,14 +22,6 @@ interface ParsedEvent {
   is_private: boolean;
 }
 
-function isValidDate(str: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
-  // Date.parse accepts impossible dates (e.g. 2026-02-31 rolls over), so
-  // round-trip and confirm the normalized date matches.
-  const d = new Date(`${str}T00:00:00Z`);
-  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === str;
-}
-
 function isValidTime(str: string): boolean {
   return /^\d{2}:\d{2}$/.test(str);
 }
@@ -42,8 +35,8 @@ function validateParsedEvent(data: unknown): ParsedEvent | null {
   if (d.title.length > 200) return null;
 
   // Dates required
-  if (typeof d.start_date !== 'string' || !isValidDate(d.start_date)) return null;
-  if (typeof d.end_date !== 'string' || !isValidDate(d.end_date)) return null;
+  if (typeof d.start_date !== 'string' || !isValidCalendarDate(d.start_date)) return null;
+  if (typeof d.end_date !== 'string' || !isValidCalendarDate(d.end_date)) return null;
   if (d.end_date < d.start_date) return null;
 
   // Booleans required
@@ -83,12 +76,7 @@ export async function POST(request: Request) {
 
   // Throttle the paid Anthropic call per user.
   const limit = rateLimit(`bob:parse:${user.id}`, RATE_LIMIT, RATE_WINDOW_MS);
-  if (!limit.ok) {
-    return NextResponse.json(
-      { error: 'Too many requests' },
-      { status: 429, headers: { 'Retry-After': String(Math.ceil(limit.retryAfterMs / 1000)) } },
-    );
-  }
+  if (!limit.ok) return tooManyRequests(limit);
 
   const { transcript, locale } = await request.json();
 

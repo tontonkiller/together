@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { rateLimit } from '@/lib/rateLimit';
+import { rateLimit, tooManyRequests } from '@/lib/rateLimit';
 
 const MAX_AUDIO_BYTES = 25 * 1024 * 1024; // OpenAI Whisper hard limit
 const RATE_LIMIT = 15; // requests
@@ -22,12 +22,7 @@ export async function POST(request: Request) {
 
   // Throttle the paid Whisper call per user.
   const limit = rateLimit(`bob:transcribe:${user.id}`, RATE_LIMIT, RATE_WINDOW_MS);
-  if (!limit.ok) {
-    return NextResponse.json(
-      { error: 'Too many requests' },
-      { status: 429, headers: { 'Retry-After': String(Math.ceil(limit.retryAfterMs / 1000)) } },
-    );
-  }
+  if (!limit.ok) return tooManyRequests(limit);
 
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
