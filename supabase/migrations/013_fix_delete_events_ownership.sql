@@ -11,11 +11,13 @@ create or replace function delete_events_for_google_account(p_google_account_id 
 returns void language plpgsql security definer set search_path = public as $$
 begin
   -- Refuse to touch anything unless the caller actually owns the account.
+  -- Raise (not silent return) so a direct/buggy caller fails loudly instead of
+  -- getting a false "events cleaned" success.
   if not exists (
     select 1 from google_accounts
     where id = p_google_account_id and user_id = auth.uid()
   ) then
-    return;
+    raise exception 'Not owner of google account %', p_google_account_id;
   end if;
 
   -- Delete all Together events that were imported from this Google account.
