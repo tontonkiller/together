@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { exchangeCodeForTokens } from '@/lib/google/tokens';
 import { encryptToken } from '@/lib/google/crypto';
-
-const SUPPORTED_LOCALES = ['fr', 'en'];
+import { locales, defaultLocale } from '@/lib/i18n/config';
+import { OAUTH_NONCE_COOKIE } from '@/lib/google/oauth';
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -12,16 +13,18 @@ export async function GET(request: Request) {
   const error = url.searchParams.get('error');
 
   // Parse state to get locale for redirect
-  let locale = 'fr';
+  let locale: string = defaultLocale;
   let stateUserId: string | null = null;
+  let stateNonce: string | null = null;
   try {
     const state = JSON.parse(stateParam ?? '{}');
-    // Validate locale against an allowlist — it's reflected back through Google
-    // and used to build redirect paths, so never trust it verbatim.
-    if (SUPPORTED_LOCALES.includes(state.locale)) {
+    // Validate locale against the canonical list — it's reflected back through
+    // Google and used to build redirect paths, so never trust it verbatim.
+    if ((locales as readonly string[]).includes(state.locale)) {
       locale = state.locale;
     }
     stateUserId = state.userId ?? null;
+    stateNonce = state.nonce ?? null;
   } catch {
     // ignore parse error
   }
@@ -42,11 +45,21 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${profileUrl}?google=error`);
   }
 
-  // Verify state matches current user. The state isn't a signed CSRF nonce, but
-  // requiring it to be present AND match the authenticated user blocks a forged
-  // callback from binding another user's Google account to this session.
+  // CSRF protection: the state nonce must match the httpOnly cookie set when
+  // this user started the connect flow. This is the real guard — an attacker
+  // who only knows the victim's userId can't also forge the cookie. Consume the
+  // cookie regardless so it can't be replayed.
+  const cookieStore = await cookies();
+  const expectedNonce = cookieStore.get(OAUTH_NONCE_COOKIE)?.value ?? null;
+  cookieStore.delete(OAUTH_NONCE_COOKIE);
+
   if (!stateUserId || stateUserId !== user.id) {
     console.error('[google/callback] State user missing or mismatch');
+    return NextResponse.redirect(`${profileUrl}?google=error`);
+  }
+
+  if (!stateNonce || !expectedNonce || stateNonce !== expectedNonce) {
+    console.error('[google/callback] OAuth state nonce missing or mismatch');
     return NextResponse.redirect(`${profileUrl}?google=error`);
   }
 
